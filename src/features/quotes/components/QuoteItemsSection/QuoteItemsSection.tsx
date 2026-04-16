@@ -133,7 +133,7 @@ export function QuoteItemsSection({
       <SectionCard
         title="Lignes du devis"
         actions={
-          <>
+          <div className="quote-items-premium__header-actions">
             <Button
               variant="secondary"
               type="button"
@@ -149,104 +149,105 @@ export function QuoteItemsSection({
             >
               {showForm ? "Fermer" : "Ajouter une ligne"}
             </Button>
-          </>
+          </div>
         }
       >
-        {showCatalogPicker && (
-          <QuoteCatalogPicker
-            services={services}
-            rooms={rooms}
-            search={catalogSearch}
-            selectedCategory={catalogCategory}
-            selectedRoomId={catalogRoomId}
-            addingServiceId={addingCatalogServiceId}
-            onSearchChange={onCatalogSearchChange}
-            onCategoryChange={onCatalogCategoryChange}
-            onRoomChange={onCatalogRoomChange}
-            onAdd={onAddFromCatalog}
-          />
-        )}
-
-        {movingItem && (
-          <div
-            style={{
-              marginBottom: 16,
-              padding: 16,
-              border: "1px solid #e5e7eb",
-              borderRadius: 12,
-              background: "#f9fafb",
-              display: "grid",
-              gap: 12,
-            }}
-          >
-            <div>
-              <strong>Déplacer la ligne :</strong> {movingItem.label}
+        <div className="quote-items-premium">
+          {showCatalogPicker && (
+            <div className="quote-items-premium__catalog-shell">
+              <QuoteCatalogPicker
+                services={services}
+                rooms={rooms}
+                search={catalogSearch}
+                selectedCategory={catalogCategory}
+                selectedRoomId={catalogRoomId}
+                addingServiceId={addingCatalogServiceId}
+                onSearchChange={onCatalogSearchChange}
+                onCategoryChange={onCatalogCategoryChange}
+                onRoomChange={onCatalogRoomChange}
+                onAdd={onAddFromCatalog}
+              />
             </div>
+          )}
 
-            <FormField label="Nouvelle pièce">
-              <Select
-                value={moveRoomId}
-                onChange={(e) => onMoveRoomChange(e.target.value)}
-              >
-                <option value="">Sans pièce</option>
-                {rooms.map((room) => (
-                  <option key={room.id} value={room.id}>
-                    {room.name}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
+          {movingItem && (
+            <div className="quote-items-premium__move-box">
+              <div className="quote-items-premium__move-header">
+                <div>
+                  <p className="quote-items-premium__eyebrow">Déplacement</p>
+                  <h3 className="quote-items-premium__title">
+                    Déplacer la ligne “{movingItem.label}”
+                  </h3>
+                </div>
+              </div>
 
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <Button
-                type="button"
-                onClick={onConfirmMove}
-                disabled={movingItemLoading}
-              >
-                {movingItemLoading ? "Déplacement..." : "Confirmer le déplacement"}
-              </Button>
+              <FormField label="Nouvelle pièce">
+                <Select
+                  value={moveRoomId}
+                  onChange={(e) => onMoveRoomChange(e.target.value)}
+                >
+                  <option value="">Sans pièce</option>
+                  {rooms.map((room) => (
+                    <option key={room.id} value={room.id}>
+                      {room.name}
+                    </option>
+                  ))}
+                </Select>
+              </FormField>
 
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={onCloseMove}
-                disabled={movingItemLoading}
-              >
-                Annuler
-              </Button>
+              <div className="quote-items-premium__move-actions">
+                <Button
+                  type="button"
+                  onClick={onConfirmMove}
+                  disabled={movingItemLoading}
+                >
+                  {movingItemLoading ? "Déplacement..." : "Confirmer le déplacement"}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={onCloseMove}
+                  disabled={movingItemLoading}
+                >
+                  Annuler
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {showForm && (
-          <QuoteItemForm
-            form={form}
-            rooms={rooms}
-            error={error}
-            saving={saving}
-            editing={!!editingItemId}
-            onSubmit={onSubmit}
-            onCancel={onCloseForm}
-            onChange={onChange}
-          />
-        )}
+          {showForm && (
+            <div className="quote-items-premium__form-shell">
+              <QuoteItemForm
+                form={form}
+                rooms={rooms}
+                error={error}
+                saving={saving}
+                editing={!!editingItemId}
+                onSubmit={onSubmit}
+                onCancel={onCloseForm}
+                onChange={onChange}
+              />
+            </div>
+          )}
 
-        {items.length === 0 ? (
-          <EmptyState
-            title="Aucune ligne"
-            description="Ajoute une première prestation à ce devis."
-          />
-        ) : (
-          <QuoteItemsGroupedTables
-            rooms={rooms}
-            items={items}
-            onEdit={onEdit}
-            onDuplicate={onDuplicate}
-            onOpenMove={onOpenMove}
-            onDelete={onDelete}
-            deletingItemId={deletingItemId}
-          />
-        )}
+          {items.length === 0 ? (
+            <EmptyState
+              title="Aucune ligne"
+              description="Ajoute une première prestation, ou insère directement une prestation type depuis le catalogue."
+            />
+          ) : (
+            <QuoteItemsGroupedTables
+              rooms={rooms}
+              items={items}
+              onEdit={onEdit}
+              onDuplicate={onDuplicate}
+              onOpenMove={onOpenMove}
+              onDelete={onDelete}
+              deletingItemId={deletingItemId}
+            />
+          )}
+        </div>
       </SectionCard>
 
       {error && !showForm && !showCatalogPicker && !movingItem && (

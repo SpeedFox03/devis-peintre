@@ -1,16 +1,92 @@
-.quote-summary-section {
+.quote-summary-premium {
   display: grid;
-  gap: 20px;
-}
-
-.quote-summary-section__stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
 
+.quote-summary-premium__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.quote-summary-premium__eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9e8672;
+}
+
+.quote-summary-premium__title {
+  margin: 0;
+  color: #34251b;
+  font-size: 1.28rem;
+}
+
+.quote-summary-premium__tax-chip {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  background: rgba(111, 82, 60, 0.1);
+  color: #6f523c;
+  font-size: 0.84rem;
+  font-weight: 700;
+  border: 1px solid rgba(111, 82, 60, 0.12);
+}
+
+.quote-summary-premium__grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.quote-summary-premium__stat {
+  display: grid;
+  gap: 8px;
+}
+
+.quote-summary-premium__stat--highlight {
+  position: relative;
+}
+
+.quote-summary-premium__label {
+  margin: 0;
+  color: #907966;
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.quote-summary-premium__value {
+  margin: 0;
+  color: #2f2118;
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.quote-summary-premium__value--strong {
+  font-size: 1.8rem;
+  color: #4f3929;
+}
+
+.quote-summary-premium__hint {
+  margin: 0;
+  color: #7d6654;
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
 @media (max-width: 900px) {
-  .quote-summary-section__stats {
+  .quote-summary-premium__header {
+    flex-direction: column;
+  }
+
+  .quote-summary-premium__grid {
     grid-template-columns: 1fr;
   }
 }

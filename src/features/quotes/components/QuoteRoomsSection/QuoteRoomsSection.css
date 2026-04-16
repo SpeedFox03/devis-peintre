@@ -1,15 +1,81 @@
-.quote-rooms-section__list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+.quote-rooms-premium {
+  display: grid;
+  gap: 18px;
 }
 
-.quote-rooms-section__chip {
+.quote-rooms-premium__form-shell {
+  padding: 16px;
+  border: 1px solid rgba(120, 92, 68, 0.12);
+  border-radius: 20px;
+  background: rgba(255, 250, 244, 0.78);
+}
+
+.quote-rooms-premium__grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.quote-rooms-premium__card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(120, 92, 68, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 252, 248, 0.98) 0%, rgba(255, 247, 240, 0.94) 100%);
+  box-shadow:
+    0 12px 28px rgba(90, 63, 44, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.quote-rooms-premium__card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.quote-rooms-premium__card-eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9e8672;
+}
+
+.quote-rooms-premium__card-title {
+  margin: 0;
+  color: #34251b;
+  font-size: 1.12rem;
+}
+
+.quote-rooms-premium__badge {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: #eef2ff;
-  border: 1px solid #c7d2fe;
+  background: rgba(111, 82, 60, 0.1);
+  color: #6f523c;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.quote-rooms-premium__card-description {
+  margin: 0;
+  color: #7d6654;
+  line-height: 1.5;
+}
+
+.quote-rooms-premium__card-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.quote-rooms-premium__hint {
+  margin: 0;
+  color: #9a806d;
+  font-size: 0.84rem;
 }

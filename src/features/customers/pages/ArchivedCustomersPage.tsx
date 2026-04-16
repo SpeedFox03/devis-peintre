@@ -4,7 +4,6 @@ import { supabase } from "../../../lib/supabase";
 import { LoadingBlock } from "../../../components/ui/LoadingBlock/LoadingBlock";
 import { EmptyState } from "../../../components/ui/EmptyState/EmptyState";
 import { ErrorMessage } from "../../../components/ui/ErrorMessage/ErrorMessage";
-import { PageHeader } from "../../../components/ui/PageHeader/PageHeader";
 import { Button } from "../../../components/ui/Button/Button";
 import { Card } from "../../../components/ui/Card/Card";
 import { DataTable } from "../../../components/ui/DataTable/DataTable";
@@ -12,7 +11,7 @@ import { FormField } from "../../../components/ui/FormField/FormField";
 import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import "./ArchivedCustomersPage.css";
 
-type ArchivedCustomerRow = {
+type ArchivedCustomer = {
   id: string;
   company_name: string | null;
   first_name: string | null;
@@ -23,7 +22,7 @@ type ArchivedCustomerRow = {
   archived_at: string | null;
 };
 
-function getCustomerName(customer: ArchivedCustomerRow) {
+function getCustomerName(customer: ArchivedCustomer) {
   return (
     customer.company_name ||
     [customer.first_name, customer.last_name].filter(Boolean).join(" ") ||
@@ -32,11 +31,11 @@ function getCustomerName(customer: ArchivedCustomerRow) {
 }
 
 export function ArchivedCustomersPage() {
-  const [customers, setCustomers] = useState<ArchivedCustomerRow[]>([]);
+  const [customers, setCustomers] = useState<ArchivedCustomer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [restoringCustomerId, setRestoringCustomerId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [restoringCustomerId, setRestoringCustomerId] = useState<string | null>(null);
 
   async function loadArchivedCustomers() {
     setLoading(true);
@@ -56,13 +55,32 @@ export function ArchivedCustomersPage() {
       return;
     }
 
-    setCustomers((data ?? []) as ArchivedCustomerRow[]);
+    setCustomers((data ?? []) as ArchivedCustomer[]);
     setLoading(false);
   }
 
   useEffect(() => {
-    loadArchivedCustomers();
+    void loadArchivedCustomers();
   }, []);
+
+  async function handleRestore(customerId: string) {
+    setRestoringCustomerId(customerId);
+    setError(null);
+
+    const { error } = await supabase
+      .from("customers")
+      .update({ archived_at: null })
+      .eq("id", customerId);
+
+    if (error) {
+      setError(error.message);
+      setRestoringCustomerId(null);
+      return;
+    }
+
+    setRestoringCustomerId(null);
+    await loadArchivedCustomers();
+  }
 
   const filteredCustomers = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -86,49 +104,42 @@ export function ArchivedCustomersPage() {
     });
   }, [customers, search]);
 
-  async function handleRestoreCustomer(customerId: string) {
-    const confirmed = window.confirm("Restaurer ce client ?");
-    if (!confirmed) return;
-
-    setRestoringCustomerId(customerId);
-    setError(null);
-
-    const { error } = await supabase
-      .from("customers")
-      .update({ archived_at: null })
-      .eq("id", customerId);
-
-    if (error) {
-      setError(error.message);
-      setRestoringCustomerId(null);
-      return;
-    }
-
-    setRestoringCustomerId(null);
-    await loadArchivedCustomers();
-  }
-
   if (loading) {
     return <LoadingBlock message="Chargement des clients archivés..." />;
   }
 
   return (
-    <section>
-      <PageHeader
-        title="Clients archivés"
-        description="Liste des clients archivés avec possibilité de restauration."
-        actions={
+    <section className="archived-customers-premium-page">
+      <header className="archived-customers-premium-page__hero">
+        <div className="archived-customers-premium-page__hero-main">
+          <p className="archived-customers-premium-page__eyebrow">Archives</p>
+          <h1 className="archived-customers-premium-page__title">
+            Clients archivés
+          </h1>
+          <p className="archived-customers-premium-page__description">
+            Retrouve les clients mis de côté et restaure-les rapidement si besoin.
+          </p>
+        </div>
+
+        <div className="archived-customers-premium-page__hero-actions">
           <Link to="/clients">
-            <Button type="button" variant="secondary">
-              Retour aux clients
-            </Button>
+            <Button variant="secondary">Retour aux clients</Button>
           </Link>
-        }
-      />
+        </div>
+      </header>
 
       <Card>
-        <div className="archived-customers-page__toolbar">
-          <FormField label="Rechercher un client archivé">
+        <div className="archived-customers-premium-page__filters">
+          <div className="archived-customers-premium-page__filters-intro">
+            <p className="archived-customers-premium-page__section-eyebrow">
+              Recherche
+            </p>
+            <h2 className="archived-customers-premium-page__section-title">
+              Parcourir les archives
+            </h2>
+          </div>
+
+          <FormField label="Recherche">
             <TextInput
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -142,52 +153,54 @@ export function ArchivedCustomersPage() {
 
       {filteredCustomers.length === 0 ? (
         <EmptyState
-          title={customers.length === 0 ? "Aucun client archivé" : "Aucun résultat"}
+          title={customers.length === 0 ? "Aucune archive" : "Aucun résultat"}
           description={
             customers.length === 0
-              ? "Aucun client n'est archivé pour le moment."
-              : "Aucun client archivé ne correspond à ta recherche."
+              ? "Aucun client archivé pour le moment."
+              : "Aucun client archivé ne correspond à la recherche."
           }
         />
       ) : (
-        <DataTable
-          headers={
-            <tr>
-              <th>Nom</th>
-              <th>Email</th>
-              <th>Téléphone</th>
-              <th>Ville</th>
-              <th>Date archivage</th>
-              <th style={{ textAlign: "right" }}>Actions</th>
-            </tr>
-          }
-        >
-          {filteredCustomers.map((customer) => (
-            <tr key={customer.id}>
-              <td>
-                <Link to={`/clients/${customer.id}`}>{getCustomerName(customer)}</Link>
-              </td>
-              <td>{customer.email || "-"}</td>
-              <td>{customer.phone || "-"}</td>
-              <td>{customer.billing_city || "-"}</td>
-              <td>
-                {customer.archived_at
-                  ? new Date(customer.archived_at).toLocaleDateString("fr-BE")
-                  : "-"}
-              </td>
-              <td style={{ textAlign: "right" }}>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => handleRestoreCustomer(customer.id)}
-                  disabled={restoringCustomerId === customer.id}
-                >
-                  {restoringCustomerId === customer.id ? "Restauration..." : "Restaurer"}
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </DataTable>
+        <div className="archived-customers-premium-page__table-shell">
+          <DataTable
+            headers={
+              <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Téléphone</th>
+                <th>Ville</th>
+                <th>Date d’archivage</th>
+                <th style={{ textAlign: "right" }}>Action</th>
+              </tr>
+            }
+          >
+            {filteredCustomers.map((customer) => (
+              <tr key={customer.id}>
+                <td>{getCustomerName(customer)}</td>
+                <td>{customer.email || "-"}</td>
+                <td>{customer.phone || "-"}</td>
+                <td>{customer.billing_city || "-"}</td>
+                <td>
+                  {customer.archived_at
+                    ? new Date(customer.archived_at).toLocaleDateString("fr-BE")
+                    : "-"}
+                </td>
+                <td style={{ textAlign: "right" }}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => handleRestore(customer.id)}
+                    disabled={restoringCustomerId === customer.id}
+                  >
+                    {restoringCustomerId === customer.id
+                      ? "Restauration..."
+                      : "Restaurer"}
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </DataTable>
+        </div>
       )}
     </section>
   );

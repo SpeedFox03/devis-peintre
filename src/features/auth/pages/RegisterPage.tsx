@@ -6,29 +6,42 @@ import { Button } from "../../../components/ui/Button/Button";
 import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import { FormField } from "../../../components/ui/FormField/FormField";
 import { ErrorMessage } from "../../../components/ui/ErrorMessage/ErrorMessage";
-import "./LoginPage.css";
+import "./RegisterPage.css";
 
-export function LoginPage() {
+export function RegisterPage() {
   const navigate = useNavigate();
 
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (password !== confirmPassword) {
+      setError("Les mots de passe ne correspondent pas.");
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { error: signUpError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
+      options: {
+        data: {
+          full_name: fullName.trim() || null,
+        },
+      },
     });
 
-    if (signInError) {
-      setError(signInError.message);
+    if (signUpError) {
+      setError(signUpError.message);
       setSubmitting(false);
       return;
     }
@@ -38,41 +51,42 @@ export function LoginPage() {
   }
 
   return (
-    <section className="auth-premium-page">
+    <section className="auth-premium-page auth-premium-page--register">
       <div className="auth-premium-page__panel auth-premium-page__panel--brand">
         <div className="auth-premium-page__brand-shell">
           <div className="auth-premium-page__logo">DP</div>
 
           <div className="auth-premium-page__brand-copy">
-            <p className="auth-premium-page__eyebrow">Studio métier</p>
-            <h1 className="auth-premium-page__brand-title">Devis Peintre</h1>
+            <p className="auth-premium-page__eyebrow">Création de compte</p>
+            <h1 className="auth-premium-page__brand-title">
+              Démarre ton espace métier
+            </h1>
             <p className="auth-premium-page__brand-description">
-              Une interface élégante pour piloter tes devis, tes clients et ton
-              activité quotidienne avec plus de clarté.
+              Mets en place une base propre pour gérer tes clients, produire tes devis
+              plus vite et structurer ton activité dans une interface premium.
             </p>
           </div>
         </div>
 
         <div className="auth-premium-page__feature-list">
           <article className="auth-premium-page__feature-card">
-            <p className="auth-premium-page__feature-title">Devis plus rapides</p>
+            <p className="auth-premium-page__feature-title">Base professionnelle</p>
             <p className="auth-premium-page__feature-text">
-              Catalogue, pièces, lignes et structure métier pensés pour le terrain.
+              Coordonnées, paramètres entreprise, catalogue et historique réunis au même endroit.
             </p>
           </article>
 
           <article className="auth-premium-page__feature-card">
-            <p className="auth-premium-page__feature-title">Présentation premium</p>
+            <p className="auth-premium-page__feature-title">Parcours fluide</p>
             <p className="auth-premium-page__feature-text">
-              Une ambiance visuelle sable, noisette et espresso pour valoriser ton
-              image professionnelle.
+              Une structure pensée pour réduire la friction et faire gagner du temps au quotidien.
             </p>
           </article>
 
           <article className="auth-premium-page__feature-card">
-            <p className="auth-premium-page__feature-title">Base solide</p>
+            <p className="auth-premium-page__feature-title">Image valorisée</p>
             <p className="auth-premium-page__feature-text">
-              Clients, devis, catalogue et paramètres centralisés dans un même outil.
+              Des documents et une interface cohérents avec une posture artisan premium.
             </p>
           </article>
         </div>
@@ -81,14 +95,22 @@ export function LoginPage() {
       <div className="auth-premium-page__panel auth-premium-page__panel--form">
         <div className="auth-premium-page__form-card">
           <div className="auth-premium-page__form-header">
-            <p className="auth-premium-page__form-eyebrow">Connexion</p>
-            <h2 className="auth-premium-page__form-title">Bienvenue</h2>
+            <p className="auth-premium-page__form-eyebrow">Inscription</p>
+            <h2 className="auth-premium-page__form-title">Créer un compte</h2>
             <p className="auth-premium-page__form-description">
-              Connecte-toi pour retrouver ton espace de travail.
+              Configure ton accès pour commencer à utiliser la plateforme.
             </p>
           </div>
 
           <form className="auth-premium-page__form" onSubmit={handleSubmit}>
+            <FormField label="Nom complet">
+              <TextInput
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Jean Dupont"
+              />
+            </FormField>
+
             <FormField label="Adresse email">
               <TextInput
                 type="email"
@@ -107,20 +129,27 @@ export function LoginPage() {
               />
             </FormField>
 
+            <FormField label="Confirmer le mot de passe">
+              <TextInput
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+            </FormField>
+
             {error && <ErrorMessage message={error} />}
 
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Connexion..." : "Se connecter"}
+              {submitting ? "Création..." : "Créer mon compte"}
             </Button>
           </form>
 
           <div className="auth-premium-page__footer">
-            <p className="auth-premium-page__footer-text">
-              Pas encore de compte ?
-            </p>
+            <p className="auth-premium-page__footer-text">Déjà inscrit ?</p>
 
-            <Link to="/register" className="auth-premium-page__footer-link">
-              Créer un compte
+            <Link to="/login" className="auth-premium-page__footer-link">
+              Se connecter
             </Link>
           </div>
         </div>

@@ -2,17 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
-import { PageHeader } from "../../../components/ui/PageHeader/PageHeader";
 import { LoadingBlock } from "../../../components/ui/LoadingBlock/LoadingBlock";
-import { ErrorMessage } from "../../../components/ui/ErrorMessage/ErrorMessage";
 import { EmptyState } from "../../../components/ui/EmptyState/EmptyState";
+import { ErrorMessage } from "../../../components/ui/ErrorMessage/ErrorMessage";
+import { Button } from "../../../components/ui/Button/Button";
 import { Card } from "../../../components/ui/Card/Card";
 import { DataTable } from "../../../components/ui/DataTable/DataTable";
-import { Button } from "../../../components/ui/Button/Button";
 import { FormField } from "../../../components/ui/FormField/FormField";
 import { FormGrid } from "../../../components/ui/FormGrid/FormGrid";
-import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import { TextArea } from "../../../components/ui/TextArea/TextArea";
+import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import "./CustomerDetailsPage.css";
 
 type CustomerDetails = {
@@ -22,25 +21,37 @@ type CustomerDetails = {
   last_name: string | null;
   email: string | null;
   phone: string | null;
+
   billing_address_line1: string | null;
   billing_address_line2: string | null;
   billing_postal_code: string | null;
   billing_city: string | null;
   billing_country: string | null;
+
   jobsite_address_line1: string | null;
   jobsite_address_line2: string | null;
   jobsite_postal_code: string | null;
   jobsite_city: string | null;
   jobsite_country: string | null;
+
   notes: string | null;
   archived_at: string | null;
+  created_at: string;
 };
 
-type CustomerQuoteRow = {
+type QuoteStatus =
+  | "draft"
+  | "sent"
+  | "accepted"
+  | "rejected"
+  | "expired"
+  | "invoiced";
+
+type CustomerQuote = {
   id: string;
   quote_number: string;
   title: string;
-  status: "draft" | "sent" | "accepted" | "rejected" | "expired" | "invoiced";
+  status: QuoteStatus;
   issue_date: string;
   total_ttc: number;
 };
@@ -51,28 +62,55 @@ type CustomerFormState = {
   last_name: string;
   email: string;
   phone: string;
+
   billing_address_line1: string;
   billing_address_line2: string;
   billing_postal_code: string;
   billing_city: string;
   billing_country: string;
+
   jobsite_address_line1: string;
   jobsite_address_line2: string;
   jobsite_postal_code: string;
   jobsite_city: string;
   jobsite_country: string;
+
   notes: string;
 };
 
-function getCustomerDisplayName(customer: CustomerDetails) {
+function createInitialForm(customer: CustomerDetails | null): CustomerFormState {
+  return {
+    company_name: customer?.company_name ?? "",
+    first_name: customer?.first_name ?? "",
+    last_name: customer?.last_name ?? "",
+    email: customer?.email ?? "",
+    phone: customer?.phone ?? "",
+
+    billing_address_line1: customer?.billing_address_line1 ?? "",
+    billing_address_line2: customer?.billing_address_line2 ?? "",
+    billing_postal_code: customer?.billing_postal_code ?? "",
+    billing_city: customer?.billing_city ?? "",
+    billing_country: customer?.billing_country ?? "Belgique",
+
+    jobsite_address_line1: customer?.jobsite_address_line1 ?? "",
+    jobsite_address_line2: customer?.jobsite_address_line2 ?? "",
+    jobsite_postal_code: customer?.jobsite_postal_code ?? "",
+    jobsite_city: customer?.jobsite_city ?? "",
+    jobsite_country: customer?.jobsite_country ?? "Belgique",
+
+    notes: customer?.notes ?? "",
+  };
+}
+
+function getCustomerName(customer: CustomerDetails) {
   return (
     customer.company_name ||
     [customer.first_name, customer.last_name].filter(Boolean).join(" ") ||
-    "Sans nom"
+    "Client sans nom"
   );
 }
 
-function getStatusLabel(status: CustomerQuoteRow["status"]) {
+function getStatusLabel(status: QuoteStatus) {
   switch (status) {
     case "draft":
       return "Brouillon";
@@ -91,50 +129,12 @@ function getStatusLabel(status: CustomerQuoteRow["status"]) {
   }
 }
 
-function buildAddressLines(address: {
-  line1: string | null;
-  line2: string | null;
-  postalCode: string | null;
-  city: string | null;
-  country: string | null;
-}) {
-  const lines: string[] = [];
-
-  if (address.line1) lines.push(address.line1);
-  if (address.line2) lines.push(address.line2);
-
-  const cityLine = [address.postalCode, address.city].filter(Boolean).join(" ");
-  if (cityLine) lines.push(cityLine);
-
-  if (address.country) lines.push(address.country);
-
-  return lines;
+function formatCurrency(value: number) {
+  return `${Number(value || 0).toFixed(2)} €`;
 }
 
-function createCustomerForm(customer: CustomerDetails | null): CustomerFormState {
-  return {
-    company_name: customer?.company_name ?? "",
-    first_name: customer?.first_name ?? "",
-    last_name: customer?.last_name ?? "",
-    email: customer?.email ?? "",
-    phone: customer?.phone ?? "",
-    billing_address_line1: customer?.billing_address_line1 ?? "",
-    billing_address_line2: customer?.billing_address_line2 ?? "",
-    billing_postal_code: customer?.billing_postal_code ?? "",
-    billing_city: customer?.billing_city ?? "",
-    billing_country: customer?.billing_country ?? "Belgique",
-    jobsite_address_line1: customer?.jobsite_address_line1 ?? "",
-    jobsite_address_line2: customer?.jobsite_address_line2 ?? "",
-    jobsite_postal_code: customer?.jobsite_postal_code ?? "",
-    jobsite_city: customer?.jobsite_city ?? "",
-    jobsite_country: customer?.jobsite_country ?? "Belgique",
-    notes: customer?.notes ?? "",
-  };
-}
-
-function isValidEmail(value: string) {
-  if (!value.trim()) return true;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+function buildAddress(parts: Array<string | null | undefined>) {
+  return parts.filter(Boolean).join(", ");
 }
 
 export function CustomerDetailsPage() {
@@ -142,95 +142,81 @@ export function CustomerDetailsPage() {
   const navigate = useNavigate();
 
   const [customer, setCustomer] = useState<CustomerDetails | null>(null);
-  const [quotes, setQuotes] = useState<CustomerQuoteRow[]>([]);
-  const [form, setForm] = useState<CustomerFormState>(createCustomerForm(null));
+  const [quotes, setQuotes] = useState<CustomerQuote[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [archiving, setArchiving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [form, setForm] = useState<CustomerFormState>(createInitialForm(null));
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadCustomerPage() {
-      if (!customerId) {
-        setError("Client introuvable.");
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-
-      const [customerRes, quotesRes] = await Promise.all([
-        supabase
-          .from("customers")
-          .select(
-            `
-            id,
-            company_name,
-            first_name,
-            last_name,
-            email,
-            phone,
-            billing_address_line1,
-            billing_address_line2,
-            billing_postal_code,
-            billing_city,
-            billing_country,
-            jobsite_address_line1,
-            jobsite_address_line2,
-            jobsite_postal_code,
-            jobsite_city,
-            jobsite_country,
-            notes,
-            archived_at
-          `
-          )
-          .eq("id", customerId)
-          .single(),
-        supabase
-          .from("quotes")
-          .select("id, quote_number, title, status, issue_date, total_ttc")
-          .eq("customer_id", customerId)
-          .order("created_at", { ascending: false }),
-      ]);
-
-      if (cancelled) return;
-
-      if (customerRes.error) {
-        setError(customerRes.error.message);
-        setLoading(false);
-        return;
-      }
-
-      if (quotesRes.error) {
-        setError(quotesRes.error.message);
-        setLoading(false);
-        return;
-      }
-
-      const loadedCustomer = customerRes.data as CustomerDetails;
-
-      setCustomer(loadedCustomer);
-      setForm(createCustomerForm(loadedCustomer));
-      setQuotes((quotesRes.data ?? []) as CustomerQuoteRow[]);
+  async function loadCustomerPage() {
+    if (!customerId) {
+      setError("Client introuvable.");
       setLoading(false);
+      return;
     }
 
-    loadCustomerPage();
+    setLoading(true);
+    setError(null);
 
-    return () => {
-      cancelled = true;
-    };
+    const [customerRes, quotesRes] = await Promise.all([
+      supabase
+        .from("customers")
+        .select(
+          `
+          id,
+          company_name,
+          first_name,
+          last_name,
+          email,
+          phone,
+          billing_address_line1,
+          billing_address_line2,
+          billing_postal_code,
+          billing_city,
+          billing_country,
+          jobsite_address_line1,
+          jobsite_address_line2,
+          jobsite_postal_code,
+          jobsite_city,
+          jobsite_country,
+          notes,
+          archived_at,
+          created_at
+        `
+        )
+        .eq("id", customerId)
+        .single(),
+      supabase
+        .from("quotes")
+        .select("id, quote_number, title, status, issue_date, total_ttc")
+        .eq("customer_id", customerId)
+        .order("created_at", { ascending: false }),
+    ]);
+
+    if (customerRes.error) {
+      setError(customerRes.error.message);
+      setLoading(false);
+      return;
+    }
+
+    if (quotesRes.error) {
+      setError(quotesRes.error.message);
+      setLoading(false);
+      return;
+    }
+
+    const loadedCustomer = customerRes.data as CustomerDetails;
+
+    setCustomer(loadedCustomer);
+    setQuotes((quotesRes.data ?? []) as CustomerQuote[]);
+    setForm(createInitialForm(loadedCustomer));
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    void loadCustomerPage();
   }, [customerId]);
-
-  const signedPotential = useMemo(() => {
-    return quotes
-      .filter((quote) => quote.status === "accepted" || quote.status === "invoiced")
-      .reduce((sum, quote) => sum + Number(quote.total_ttc), 0);
-  }, [quotes]);
 
   function updateField<K extends keyof CustomerFormState>(
     field: K,
@@ -243,9 +229,8 @@ export function CustomerDetailsPage() {
   }
 
   function resetForm() {
-    setForm(createCustomerForm(customer));
+    setForm(createInitialForm(customer));
     setError(null);
-    setSuccessMessage(null);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -258,37 +243,27 @@ export function CustomerDetailsPage() {
 
     setSaving(true);
     setError(null);
-    setSuccessMessage(null);
-
-    if (!form.company_name.trim() && !form.first_name.trim() && !form.last_name.trim()) {
-      setError("Renseigne au moins une société ou un nom de client.");
-      setSaving(false);
-      return;
-    }
-
-    if (!isValidEmail(form.email)) {
-      setError("L’adresse email n’est pas valide.");
-      setSaving(false);
-      return;
-    }
 
     const payload = {
-      company_name: form.company_name.trim() || null,
-      first_name: form.first_name.trim() || null,
-      last_name: form.last_name.trim() || null,
-      email: form.email.trim() || null,
-      phone: form.phone.trim() || null,
-      billing_address_line1: form.billing_address_line1.trim() || null,
-      billing_address_line2: form.billing_address_line2.trim() || null,
-      billing_postal_code: form.billing_postal_code.trim() || null,
-      billing_city: form.billing_city.trim() || null,
-      billing_country: form.billing_country.trim() || "Belgique",
-      jobsite_address_line1: form.jobsite_address_line1.trim() || null,
-      jobsite_address_line2: form.jobsite_address_line2.trim() || null,
-      jobsite_postal_code: form.jobsite_postal_code.trim() || null,
-      jobsite_city: form.jobsite_city.trim() || null,
-      jobsite_country: form.jobsite_country.trim() || "Belgique",
-      notes: form.notes.trim() || null,
+      company_name: form.company_name || null,
+      first_name: form.first_name || null,
+      last_name: form.last_name || null,
+      email: form.email || null,
+      phone: form.phone || null,
+
+      billing_address_line1: form.billing_address_line1 || null,
+      billing_address_line2: form.billing_address_line2 || null,
+      billing_postal_code: form.billing_postal_code || null,
+      billing_city: form.billing_city || null,
+      billing_country: form.billing_country || null,
+
+      jobsite_address_line1: form.jobsite_address_line1 || null,
+      jobsite_address_line2: form.jobsite_address_line2 || null,
+      jobsite_postal_code: form.jobsite_postal_code || null,
+      jobsite_city: form.jobsite_city || null,
+      jobsite_country: form.jobsite_country || null,
+
+      notes: form.notes || null,
     };
 
     const { error: updateError } = await supabase
@@ -302,35 +277,25 @@ export function CustomerDetailsPage() {
       return;
     }
 
-    const updatedCustomer: CustomerDetails = {
-      ...customer,
-      ...payload,
-    };
-
-    setCustomer(updatedCustomer);
-    setForm(createCustomerForm(updatedCustomer));
-    setSuccessMessage("Client mis à jour avec succès.");
     setSaving(false);
+    await loadCustomerPage();
   }
 
-  async function handleArchiveToggle() {
-    if (!customer) return;
+  async function handleArchiveCustomer() {
+    if (!customer) {
+      setError("Client introuvable.");
+      return;
+    }
 
-    const nextArchivedAt = customer.archived_at ? null : new Date().toISOString();
-    const confirmMessage = customer.archived_at
-      ? "Réactiver ce client ?"
-      : "Archiver ce client ?";
-
-    const confirmed = window.confirm(confirmMessage);
+    const confirmed = window.confirm("Archiver ce client ?");
     if (!confirmed) return;
 
     setArchiving(true);
     setError(null);
-    setSuccessMessage(null);
 
     const { error: updateError } = await supabase
       .from("customers")
-      .update({ archived_at: nextArchivedAt })
+      .update({ archived_at: new Date().toISOString() })
       .eq("id", customer.id);
 
     if (updateError) {
@@ -339,21 +304,16 @@ export function CustomerDetailsPage() {
       return;
     }
 
-    const updatedCustomer: CustomerDetails = {
-      ...customer,
-      archived_at: nextArchivedAt,
-    };
-
-    setCustomer(updatedCustomer);
-    setSuccessMessage(
-      nextArchivedAt ? "Client archivé avec succès." : "Client réactivé avec succès."
-    );
     setArchiving(false);
-  }
-
-  async function handleBackToList() {
     navigate("/clients");
   }
+
+  const acceptedQuotesCount = quotes.filter((quote) => quote.status === "accepted").length;
+  const totalPotentialSigned = useMemo(() => {
+    return quotes
+      .filter((quote) => quote.status === "accepted")
+      .reduce((sum, quote) => sum + Number(quote.total_ttc || 0), 0);
+  }, [quotes]);
 
   if (loading) {
     return <LoadingBlock message="Chargement du client..." />;
@@ -372,333 +332,368 @@ export function CustomerDetailsPage() {
     );
   }
 
-  const billingAddressLines = buildAddressLines({
-    line1: customer.billing_address_line1,
-    line2: customer.billing_address_line2,
-    postalCode: customer.billing_postal_code,
-    city: customer.billing_city,
-    country: customer.billing_country,
-  });
+  const billingAddress = buildAddress([
+    customer.billing_address_line1,
+    customer.billing_address_line2,
+    customer.billing_postal_code,
+    customer.billing_city,
+    customer.billing_country,
+  ]);
 
-  const jobsiteAddressLines = buildAddressLines({
-    line1: customer.jobsite_address_line1,
-    line2: customer.jobsite_address_line2,
-    postalCode: customer.jobsite_postal_code,
-    city: customer.jobsite_city,
-    country: customer.jobsite_country,
-  });
+  const jobsiteAddress = buildAddress([
+    customer.jobsite_address_line1,
+    customer.jobsite_address_line2,
+    customer.jobsite_postal_code,
+    customer.jobsite_city,
+    customer.jobsite_country,
+  ]);
 
   return (
-    <section className="customer-details-page">
-      <PageHeader
-        title={getCustomerDisplayName(customer)}
-        description={`Fiche client détaillée — ${customer.archived_at ? "Archivé" : "Actif"}.`}
-        actions={
-          <div className="customer-details-page__actions">
-            {!customer.archived_at && (
-              <Link to={`/?new=1&customerId=${customer.id}`}>
-                <Button type="button" variant="secondary">
-                  Nouveau devis
+    <section className="customer-details-premium-page">
+      <header className="customer-details-premium-page__hero">
+        <div className="customer-details-premium-page__hero-main">
+          <div className="customer-details-premium-page__topline">
+            <Link to="/clients" className="customer-details-premium-page__backlink">
+              ← Retour aux clients
+            </Link>
+          </div>
+
+          <p className="customer-details-premium-page__eyebrow">Fiche client</p>
+          <h1 className="customer-details-premium-page__title">
+            {getCustomerName(customer)}
+          </h1>
+          <p className="customer-details-premium-page__description">
+            Consulte les coordonnées, mets à jour les informations principales
+            et retrouve rapidement l’historique des devis associés.
+          </p>
+        </div>
+
+        <div className="customer-details-premium-page__hero-actions">
+          <Link to={`/?new=1&customerId=${customer.id}`}>
+            <Button type="button">Créer un devis</Button>
+          </Link>
+
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleArchiveCustomer}
+            disabled={archiving}
+          >
+            {archiving ? "Archivage..." : "Archiver"}
+          </Button>
+        </div>
+      </header>
+
+      <div className="customer-details-premium-page__stats">
+        <Card>
+          <p className="customer-details-premium-page__stat-label">Devis liés</p>
+          <p className="customer-details-premium-page__stat-value">{quotes.length}</p>
+        </Card>
+
+        <Card>
+          <p className="customer-details-premium-page__stat-label">Devis acceptés</p>
+          <p className="customer-details-premium-page__stat-value">
+            {acceptedQuotesCount}
+          </p>
+        </Card>
+
+        <Card>
+          <p className="customer-details-premium-page__stat-label">
+            Potentiel signé
+          </p>
+          <p className="customer-details-premium-page__stat-value">
+            {formatCurrency(totalPotentialSigned)}
+          </p>
+        </Card>
+
+        <Card>
+          <p className="customer-details-premium-page__stat-label">Créé le</p>
+          <p className="customer-details-premium-page__stat-value customer-details-premium-page__stat-value--date">
+            {new Date(customer.created_at).toLocaleDateString("fr-BE")}
+          </p>
+        </Card>
+      </div>
+
+      <div className="customer-details-premium-page__layout">
+        <aside className="customer-details-premium-page__left">
+          <Card>
+            <div className="customer-details-premium-page__side-card">
+              <p className="customer-details-premium-page__side-label">Résumé</p>
+
+              <ul className="customer-details-premium-page__meta-list">
+                <li>
+                  <span>Email</span>
+                  <strong>{customer.email || "-"}</strong>
+                </li>
+                <li>
+                  <span>Téléphone</span>
+                  <strong>{customer.phone || "-"}</strong>
+                </li>
+                <li>
+                  <span>Adresse facturation</span>
+                  <strong>{billingAddress || "-"}</strong>
+                </li>
+                <li>
+                  <span>Adresse chantier</span>
+                  <strong>{jobsiteAddress || "-"}</strong>
+                </li>
+              </ul>
+            </div>
+          </Card>
+        </aside>
+
+        <div className="customer-details-premium-page__center">
+          <Card>
+            <div className="customer-details-premium-page__section-header">
+              <div>
+                <p className="customer-details-premium-page__section-eyebrow">
+                  Informations
+                </p>
+                <h2 className="customer-details-premium-page__section-title">
+                  Modifier la fiche client
+                </h2>
+              </div>
+            </div>
+
+            <form
+              className="customer-details-premium-page__form"
+              onSubmit={handleSubmit}
+            >
+              <FormGrid columns="2">
+                <FormField label="Société">
+                  <TextInput
+                    value={form.company_name}
+                    onChange={(e) => updateField("company_name", e.target.value)}
+                  />
+                </FormField>
+
+                <FormField label="Email">
+                  <TextInput
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => updateField("email", e.target.value)}
+                  />
+                </FormField>
+              </FormGrid>
+
+              <FormGrid columns="2">
+                <FormField label="Prénom">
+                  <TextInput
+                    value={form.first_name}
+                    onChange={(e) => updateField("first_name", e.target.value)}
+                  />
+                </FormField>
+
+                <FormField label="Nom">
+                  <TextInput
+                    value={form.last_name}
+                    onChange={(e) => updateField("last_name", e.target.value)}
+                  />
+                </FormField>
+              </FormGrid>
+
+              <FormGrid columns="2">
+                <FormField label="Téléphone">
+                  <TextInput
+                    value={form.phone}
+                    onChange={(e) => updateField("phone", e.target.value)}
+                  />
+                </FormField>
+
+                <FormField label="Pays facturation">
+                  <TextInput
+                    value={form.billing_country}
+                    onChange={(e) => updateField("billing_country", e.target.value)}
+                  />
+                </FormField>
+              </FormGrid>
+
+              <div className="customer-details-premium-page__address-block">
+                <h3 className="customer-details-premium-page__subsection-title">
+                  Adresse de facturation
+                </h3>
+
+                <FormGrid columns="2">
+                  <FormField label="Adresse ligne 1">
+                    <TextInput
+                      value={form.billing_address_line1}
+                      onChange={(e) =>
+                        updateField("billing_address_line1", e.target.value)
+                      }
+                    />
+                  </FormField>
+
+                  <FormField label="Adresse ligne 2">
+                    <TextInput
+                      value={form.billing_address_line2}
+                      onChange={(e) =>
+                        updateField("billing_address_line2", e.target.value)
+                      }
+                    />
+                  </FormField>
+                </FormGrid>
+
+                <FormGrid columns="3">
+                  <FormField label="Code postal">
+                    <TextInput
+                      value={form.billing_postal_code}
+                      onChange={(e) =>
+                        updateField("billing_postal_code", e.target.value)
+                      }
+                    />
+                  </FormField>
+
+                  <FormField label="Ville">
+                    <TextInput
+                      value={form.billing_city}
+                      onChange={(e) => updateField("billing_city", e.target.value)}
+                    />
+                  </FormField>
+
+                  <FormField label="Pays">
+                    <TextInput
+                      value={form.billing_country}
+                      onChange={(e) =>
+                        updateField("billing_country", e.target.value)
+                      }
+                    />
+                  </FormField>
+                </FormGrid>
+              </div>
+
+              <div className="customer-details-premium-page__address-block">
+                <h3 className="customer-details-premium-page__subsection-title">
+                  Adresse chantier
+                </h3>
+
+                <FormGrid columns="2">
+                  <FormField label="Adresse ligne 1">
+                    <TextInput
+                      value={form.jobsite_address_line1}
+                      onChange={(e) =>
+                        updateField("jobsite_address_line1", e.target.value)
+                      }
+                    />
+                  </FormField>
+
+                  <FormField label="Adresse ligne 2">
+                    <TextInput
+                      value={form.jobsite_address_line2}
+                      onChange={(e) =>
+                        updateField("jobsite_address_line2", e.target.value)
+                      }
+                    />
+                  </FormField>
+                </FormGrid>
+
+                <FormGrid columns="3">
+                  <FormField label="Code postal">
+                    <TextInput
+                      value={form.jobsite_postal_code}
+                      onChange={(e) =>
+                        updateField("jobsite_postal_code", e.target.value)
+                      }
+                    />
+                  </FormField>
+
+                  <FormField label="Ville">
+                    <TextInput
+                      value={form.jobsite_city}
+                      onChange={(e) => updateField("jobsite_city", e.target.value)}
+                    />
+                  </FormField>
+
+                  <FormField label="Pays">
+                    <TextInput
+                      value={form.jobsite_country}
+                      onChange={(e) =>
+                        updateField("jobsite_country", e.target.value)
+                      }
+                    />
+                  </FormField>
+                </FormGrid>
+              </div>
+
+              <FormField label="Notes">
+                <TextArea
+                  rows={5}
+                  value={form.notes}
+                  onChange={(e) => updateField("notes", e.target.value)}
+                />
+              </FormField>
+
+              {error && <ErrorMessage message={error} />}
+
+              <div className="customer-details-premium-page__form-actions">
+                <Button type="submit" disabled={saving}>
+                  {saving ? "Enregistrement..." : "Enregistrer"}
                 </Button>
-              </Link>
-            )}
 
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleArchiveToggle}
-              disabled={archiving}
-            >
-              {archiving
-                ? "Mise à jour..."
-                : customer.archived_at
-                ? "Réactiver"
-                : "Archiver"}
-            </Button>
-
-            <Button type="button" variant="secondary" onClick={handleBackToList}>
-              Retour aux clients
-            </Button>
-          </div>
-        }
-      />
-
-      <div className="customer-details-page__grid">
-        <Card>
-          <div className="customer-details-page__section">
-            <h2 className="customer-details-page__title">Identité actuelle</h2>
-
-            <dl className="customer-details-page__list">
-              <div>
-                <dt>Société</dt>
-                <dd>{customer.company_name || "-"}</dd>
+                <Button type="button" variant="secondary" onClick={resetForm}>
+                  Réinitialiser
+                </Button>
               </div>
+            </form>
+          </Card>
+
+          <Card>
+            <div className="customer-details-premium-page__section-header">
               <div>
-                <dt>Prénom</dt>
-                <dd>{customer.first_name || "-"}</dd>
+                <p className="customer-details-premium-page__section-eyebrow">
+                  Historique
+                </p>
+                <h2 className="customer-details-premium-page__section-title">
+                  Devis liés
+                </h2>
               </div>
-              <div>
-                <dt>Nom</dt>
-                <dd>{customer.last_name || "-"}</dd>
-              </div>
-              <div>
-                <dt>Email</dt>
-                <dd>{customer.email || "-"}</dd>
-              </div>
-              <div>
-                <dt>Téléphone</dt>
-                <dd>{customer.phone || "-"}</dd>
-              </div>
-              <div>
-                <dt>Statut</dt>
-                <dd>{customer.archived_at ? "Archivé" : "Actif"}</dd>
-              </div>
-            </dl>
-          </div>
-        </Card>
+            </div>
 
-        <Card>
-          <div className="customer-details-page__section">
-            <h2 className="customer-details-page__title">Résumé commercial</h2>
-
-            <dl className="customer-details-page__list">
-              <div>
-                <dt>Nombre de devis</dt>
-                <dd>{quotes.length}</dd>
-              </div>
-              <div>
-                <dt>Total signé potentiel</dt>
-                <dd>{signedPotential.toFixed(2)} €</dd>
-              </div>
-            </dl>
-          </div>
-        </Card>
-      </div>
-
-      <Card>
-        <form className="customer-details-page__form" onSubmit={handleSubmit}>
-          <h2 className="customer-details-page__title">Modifier le client</h2>
-
-          <FormGrid columns="2">
-            <FormField label="Société">
-              <TextInput
-                value={form.company_name}
-                onChange={(e) => updateField("company_name", e.target.value)}
+            {quotes.length === 0 ? (
+              <EmptyState
+                title="Aucun devis lié"
+                description="Ce client ne possède encore aucun devis. Crée-en un pour démarrer son historique commercial."
               />
-            </FormField>
-
-            <FormField label="Email">
-              <TextInput
-                type="email"
-                value={form.email}
-                onChange={(e) => updateField("email", e.target.value)}
-              />
-            </FormField>
-          </FormGrid>
-
-          <FormGrid columns="2">
-            <FormField label="Prénom">
-              <TextInput
-                value={form.first_name}
-                onChange={(e) => updateField("first_name", e.target.value)}
-              />
-            </FormField>
-
-            <FormField label="Nom">
-              <TextInput
-                value={form.last_name}
-                onChange={(e) => updateField("last_name", e.target.value)}
-              />
-            </FormField>
-          </FormGrid>
-
-          <FormGrid columns="2">
-            <FormField label="Téléphone">
-              <TextInput
-                value={form.phone}
-                onChange={(e) => updateField("phone", e.target.value)}
-              />
-            </FormField>
-
-            <FormField label="Pays facturation">
-              <TextInput
-                value={form.billing_country}
-                onChange={(e) => updateField("billing_country", e.target.value)}
-              />
-            </FormField>
-          </FormGrid>
-
-          <h3 className="customer-details-page__subtitle">Adresse de facturation</h3>
-
-          <FormField label="Adresse">
-            <TextInput
-              value={form.billing_address_line1}
-              onChange={(e) => updateField("billing_address_line1", e.target.value)}
-            />
-          </FormField>
-
-          <FormField label="Complément d’adresse">
-            <TextInput
-              value={form.billing_address_line2}
-              onChange={(e) => updateField("billing_address_line2", e.target.value)}
-            />
-          </FormField>
-
-          <FormGrid columns="2">
-            <FormField label="Code postal">
-              <TextInput
-                value={form.billing_postal_code}
-                onChange={(e) => updateField("billing_postal_code", e.target.value)}
-              />
-            </FormField>
-
-            <FormField label="Ville">
-              <TextInput
-                value={form.billing_city}
-                onChange={(e) => updateField("billing_city", e.target.value)}
-              />
-            </FormField>
-          </FormGrid>
-
-          <h3 className="customer-details-page__subtitle">Adresse chantier</h3>
-
-          <FormGrid columns="2">
-            <FormField label="Pays chantier">
-              <TextInput
-                value={form.jobsite_country}
-                onChange={(e) => updateField("jobsite_country", e.target.value)}
-              />
-            </FormField>
-
-            <div />
-          </FormGrid>
-
-          <FormField label="Adresse chantier">
-            <TextInput
-              value={form.jobsite_address_line1}
-              onChange={(e) => updateField("jobsite_address_line1", e.target.value)}
-            />
-          </FormField>
-
-          <FormField label="Complément d’adresse chantier">
-            <TextInput
-              value={form.jobsite_address_line2}
-              onChange={(e) => updateField("jobsite_address_line2", e.target.value)}
-            />
-          </FormField>
-
-          <FormGrid columns="2">
-            <FormField label="Code postal chantier">
-              <TextInput
-                value={form.jobsite_postal_code}
-                onChange={(e) => updateField("jobsite_postal_code", e.target.value)}
-              />
-            </FormField>
-
-            <FormField label="Ville chantier">
-              <TextInput
-                value={form.jobsite_city}
-                onChange={(e) => updateField("jobsite_city", e.target.value)}
-              />
-            </FormField>
-          </FormGrid>
-
-          <FormField label="Notes internes">
-            <TextArea
-              rows={5}
-              value={form.notes}
-              onChange={(e) => updateField("notes", e.target.value)}
-            />
-          </FormField>
-
-          {error && <ErrorMessage message={error} />}
-          {successMessage && (
-            <p className="customer-details-page__success">{successMessage}</p>
-          )}
-
-          <div className="customer-details-page__actions">
-            <Button type="submit" disabled={saving}>
-              {saving ? "Enregistrement..." : "Enregistrer"}
-            </Button>
-
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={resetForm}
-              disabled={saving}
-            >
-              Réinitialiser
-            </Button>
-          </div>
-        </form>
-      </Card>
-
-      <div className="customer-details-page__grid">
-        <Card>
-          <div className="customer-details-page__section">
-            <h2 className="customer-details-page__title">Adresse de facturation</h2>
-
-            {billingAddressLines.length === 0 ? (
-              <p className="customer-details-page__empty">Aucune adresse renseignée.</p>
             ) : (
-              <div className="customer-details-page__address">
-                {billingAddressLines.map((line) => (
-                  <p key={line}>{line}</p>
-                ))}
-              </div>
-            )}
-          </div>
-        </Card>
+              <DataTable
+                headers={
+                  <tr>
+                    <th>Numéro</th>
+                    <th>Titre</th>
+                    <th>Statut</th>
+                    <th>Date</th>
+                    <th style={{ textAlign: "right" }}>Total TTC</th>
+                    <th style={{ textAlign: "right" }}>Action</th>
+                  </tr>
+                }
+              >
+                {quotes.map((quote) => (
+                  <tr key={quote.id}>
+                    <td>
+                      <span className="customer-details-premium-page__quote-number">
+                        {quote.quote_number}
+                      </span>
+                    </td>
 
-        <Card>
-          <div className="customer-details-page__section">
-            <h2 className="customer-details-page__title">Adresse chantier</h2>
-
-            {jobsiteAddressLines.length === 0 ? (
-              <p className="customer-details-page__empty">Aucune adresse renseignée.</p>
-            ) : (
-              <div className="customer-details-page__address">
-                {jobsiteAddressLines.map((line) => (
-                  <p key={line}>{line}</p>
+                    <td>{quote.title}</td>
+                    <td>{getStatusLabel(quote.status)}</td>
+                    <td>{quote.issue_date}</td>
+                    <td style={{ textAlign: "right" }}>
+                      <strong>{formatCurrency(quote.total_ttc)}</strong>
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      <Link to={`/devis/${quote.id}`}>
+                        <Button type="button" variant="secondary">
+                          Ouvrir
+                        </Button>
+                      </Link>
+                    </td>
+                  </tr>
                 ))}
-              </div>
+              </DataTable>
             )}
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
-
-      {quotes.length === 0 ? (
-        <EmptyState
-          title="Aucun devis lié"
-          description="Ce client n'a encore aucun devis."
-        />
-      ) : (
-        <DataTable
-          headers={
-            <tr>
-              <th>Numéro</th>
-              <th>Titre</th>
-              <th>Statut</th>
-              <th>Date</th>
-              <th style={{ textAlign: "right" }}>Total TTC</th>
-            </tr>
-          }
-        >
-          {quotes.map((quote) => (
-            <tr key={quote.id}>
-              <td>{quote.quote_number}</td>
-              <td>
-                <Link to={`/devis/${quote.id}`}>{quote.title}</Link>
-              </td>
-              <td>{getStatusLabel(quote.status)}</td>
-              <td>{quote.issue_date}</td>
-              <td style={{ textAlign: "right" }}>
-                {Number(quote.total_ttc).toFixed(2)} €
-              </td>
-            </tr>
-          ))}
-        </DataTable>
-      )}
     </section>
   );
 }

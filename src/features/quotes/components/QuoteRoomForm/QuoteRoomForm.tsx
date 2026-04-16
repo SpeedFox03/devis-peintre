@@ -32,7 +32,15 @@ export function QuoteRoomForm({
   onChange,
 }: QuoteRoomFormProps) {
   return (
-    <form className="quote-room-form" onSubmit={onSubmit}>
+    <form className="quote-room-form-premium" onSubmit={onSubmit}>
+      <div className="quote-room-form-premium__intro">
+        <p className="quote-room-form-premium__eyebrow">Nouvelle pièce</p>
+        <h3 className="quote-room-form-premium__title">Créer une zone de travail</h3>
+        <p className="quote-room-form-premium__description">
+          Ajoute une pièce pour structurer le devis et mieux répartir les prestations.
+        </p>
+      </div>
+
       <FormGrid columns="2">
         <FormField label="Nom de la pièce">
           <TextInput
@@ -53,7 +61,7 @@ export function QuoteRoomForm({
 
       {error && <ErrorMessage message={error} />}
 
-      <div className="quote-room-form__actions">
+      <div className="quote-room-form-premium__actions">
         <Button type="submit" disabled={saving}>
           {saving ? "Ajout..." : "Créer la pièce"}
         </Button>

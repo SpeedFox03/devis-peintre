@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
 import { LoadingBlock } from "../../../components/ui/LoadingBlock/LoadingBlock";
 import { EmptyState } from "../../../components/ui/EmptyState/EmptyState";
 import { ErrorMessage } from "../../../components/ui/ErrorMessage/ErrorMessage";
-import { PageHeader } from "../../../components/ui/PageHeader/PageHeader";
 import { Button } from "../../../components/ui/Button/Button";
 import { DataTable } from "../../../components/ui/DataTable/DataTable";
 import { Card } from "../../../components/ui/Card/Card";
@@ -113,6 +112,10 @@ function getStatusLabel(status: QuoteStatus) {
   }
 }
 
+function formatCurrency(value: number) {
+  return `${Number(value || 0).toFixed(2)} €`;
+}
+
 export function QuotesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const presetCustomerId = searchParams.get("customerId") ?? "";
@@ -129,6 +132,9 @@ export function QuotesPage() {
   const [duplicatingQuoteId, setDuplicatingQuoteId] = useState<string | null>(null);
   const [deletingQuoteId, setDeletingQuoteId] = useState<string | null>(null);
   const [updatingStatusQuoteId, setUpdatingStatusQuoteId] = useState<string | null>(null);
+
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
     let cancelled = false;
@@ -184,7 +190,7 @@ export function QuotesPage() {
       setLoading(false);
     }
 
-    fetchPageData();
+    void fetchPageData();
 
     return () => {
       cancelled = true;
@@ -366,27 +372,94 @@ export function QuotesPage() {
     );
   }
 
+  const filteredQuotes = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
+    return quotes.filter((quote) => {
+      const matchesSearch =
+        !normalizedSearch ||
+        quote.quote_number.toLowerCase().includes(normalizedSearch) ||
+        quote.title.toLowerCase().includes(normalizedSearch);
+
+      const matchesStatus =
+        statusFilter === "all" || quote.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [quotes, search, statusFilter]);
+
+  const totalQuotes = quotes.length;
+  const draftCount = quotes.filter((quote) => quote.status === "draft").length;
+  const acceptedCount = quotes.filter((quote) => quote.status === "accepted").length;
+  const totalPortfolio = quotes.reduce(
+    (sum, quote) => sum + Number(quote.total_ttc || 0),
+    0
+  );
+
   if (loading) {
     return <LoadingBlock message="Chargement des devis..." />;
   }
 
   return (
-    <section>
-      <PageHeader
-        title="Devis"
-        description="Liste des devis enregistrés."
-        actions={
-          <Button variant="secondary" onClick={showForm ? closeCreateForm : openCreateForm}>
-            {showForm ? "Fermer" : "Nouveau devis"}
+    <section className="quotes-premium-page">
+      <header className="quotes-premium-page__hero">
+        <div className="quotes-premium-page__hero-main">
+          <p className="quotes-premium-page__eyebrow">Pilotage commercial</p>
+          <h1 className="quotes-premium-page__title">Devis</h1>
+          <p className="quotes-premium-page__description">
+            Crée, duplique et pilote tes devis dans une interface plus claire,
+            plus rapide et plus premium.
+          </p>
+        </div>
+
+        <div className="quotes-premium-page__hero-actions">
+          <Button
+            variant="primary"
+            onClick={showForm ? closeCreateForm : openCreateForm}
+          >
+            {showForm ? "Fermer le formulaire" : "Nouveau devis"}
           </Button>
-        }
-      />
+        </div>
+      </header>
+
+      <div className="quotes-premium-page__stats">
+        <Card>
+          <p className="quotes-premium-page__stat-label">Nombre de devis</p>
+          <p className="quotes-premium-page__stat-value">{totalQuotes}</p>
+        </Card>
+
+        <Card>
+          <p className="quotes-premium-page__stat-label">Brouillons</p>
+          <p className="quotes-premium-page__stat-value">{draftCount}</p>
+        </Card>
+
+        <Card>
+          <p className="quotes-premium-page__stat-label">Acceptés</p>
+          <p className="quotes-premium-page__stat-value">{acceptedCount}</p>
+        </Card>
+
+        <Card>
+          <p className="quotes-premium-page__stat-label">Montant cumulé TTC</p>
+          <p className="quotes-premium-page__stat-value">
+            {formatCurrency(totalPortfolio)}
+          </p>
+        </Card>
+      </div>
 
       {showForm && (
         <Card>
-          <form className="quotes-page__form" onSubmit={handleSubmit}>
-            <h2 className="quotes-page__form-title">Créer un devis</h2>
+          <div className="quotes-premium-page__form-intro">
+            <div>
+              <p className="quotes-premium-page__section-eyebrow">Création</p>
+              <h2 className="quotes-premium-page__section-title">Créer un devis</h2>
+              <p className="quotes-premium-page__section-description">
+                Sélectionne l’entreprise, le client, puis prépare les informations
+                générales du document.
+              </p>
+            </div>
+          </div>
 
+          <form className="quotes-premium-page__form" onSubmit={handleSubmit}>
             <FormGrid columns="2">
               <FormField label="Entreprise">
                 <Select
@@ -492,7 +565,7 @@ export function QuotesPage() {
 
             {error && <ErrorMessage message={error} />}
 
-            <div className="quotes-page__actions">
+            <div className="quotes-premium-page__form-actions">
               <Button type="submit" disabled={saving}>
                 {saving ? "Enregistrement..." : "Créer le devis"}
               </Button>
@@ -505,44 +578,29 @@ export function QuotesPage() {
         </Card>
       )}
 
-      {error && !showForm && <ErrorMessage message={error} />}
+      {!showForm && (
+        <Card>
+          <div className="quotes-premium-page__filters">
+            <div className="quotes-premium-page__filters-intro">
+              <p className="quotes-premium-page__section-eyebrow">Liste</p>
+              <h2 className="quotes-premium-page__section-title">Tous les devis</h2>
+            </div>
 
-      {quotes.length === 0 ? (
-        <EmptyState
-          title="Aucun devis"
-          description="Crée ton premier devis avec le bouton ci-dessus."
-        />
-      ) : (
-        <DataTable
-          headers={
-            <tr>
-              <th>Numéro</th>
-              <th>Titre</th>
-              <th>Statut</th>
-              <th>Date</th>
-              <th style={{ textAlign: "right" }}>Total TTC</th>
-              <th style={{ textAlign: "right" }}>Actions</th>
-            </tr>
-          }
-        >
-          {quotes.map((quote) => (
-            <tr key={quote.id}>
-              <td>{quote.quote_number}</td>
-              <td>
-                <Link to={`/devis/${quote.id}`}>{quote.title}</Link>
-              </td>
-              <td>
+            <div className="quotes-premium-page__filters-grid">
+              <FormField label="Recherche">
+                <TextInput
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Numéro ou titre du devis"
+                />
+              </FormField>
+
+              <FormField label="Statut">
                 <Select
-                  value={quote.status}
-                  onChange={(e) =>
-                    handleStatusChange(quote.id, e.target.value as QuoteStatus)
-                  }
-                  disabled={
-                    updatingStatusQuoteId === quote.id ||
-                    duplicatingQuoteId === quote.id ||
-                    deletingQuoteId === quote.id
-                  }
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
                 >
+                  <option value="all">Tous les statuts</option>
                   <option value="draft">{getStatusLabel("draft")}</option>
                   <option value="sent">{getStatusLabel("sent")}</option>
                   <option value="accepted">{getStatusLabel("accepted")}</option>
@@ -550,49 +608,122 @@ export function QuotesPage() {
                   <option value="expired">{getStatusLabel("expired")}</option>
                   <option value="invoiced">{getStatusLabel("invoiced")}</option>
                 </Select>
-              </td>
-              <td>{quote.issue_date}</td>
-              <td style={{ textAlign: "right" }}>
-                {Number(quote.total_ttc).toFixed(2)} €
-              </td>
-              <td style={{ textAlign: "right" }}>
-                <div
-                  style={{
-                    display: "inline-flex",
-                    gap: "8px",
-                    justifyContent: "flex-end",
-                  }}
-                >
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => handleDuplicateQuote(quote.id)}
-                    disabled={
-                      duplicatingQuoteId === quote.id ||
-                      deletingQuoteId === quote.id ||
-                      updatingStatusQuoteId === quote.id
-                    }
-                  >
-                    {duplicatingQuoteId === quote.id ? "Duplication..." : "Dupliquer"}
-                  </Button>
+              </FormField>
+            </div>
+          </div>
+        </Card>
+      )}
 
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => handleDeleteQuote(quote.id)}
+      {error && !showForm && <ErrorMessage message={error} />}
+
+      {!showForm && filteredQuotes.length === 0 ? (
+        <EmptyState
+          title="Aucun devis"
+          description={
+            quotes.length === 0
+              ? "Crée ton premier devis pour démarrer ton activité commerciale."
+              : "Aucun devis ne correspond aux filtres actuellement sélectionnés."
+          }
+        />
+      ) : null}
+
+      {!showForm && filteredQuotes.length > 0 && (
+        <div className="quotes-premium-page__table-shell">
+          <DataTable
+            headers={
+              <tr>
+                <th>Numéro</th>
+                <th>Titre</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th style={{ textAlign: "right" }}>Total TTC</th>
+                <th style={{ textAlign: "right" }}>Actions</th>
+              </tr>
+            }
+          >
+            {filteredQuotes.map((quote) => (
+              <tr key={quote.id}>
+                <td>
+                  <span className="quotes-premium-page__quote-number">
+                    {quote.quote_number}
+                  </span>
+                </td>
+
+                <td>
+                  <Link
+                    to={`/devis/${quote.id}`}
+                    className="quotes-premium-page__quote-link"
+                  >
+                    {quote.title}
+                  </Link>
+                </td>
+
+                <td>
+                  <Select
+                    value={quote.status}
+                    onChange={(e) =>
+                      handleStatusChange(quote.id, e.target.value as QuoteStatus)
+                    }
                     disabled={
-                      deletingQuoteId === quote.id ||
+                      updatingStatusQuoteId === quote.id ||
                       duplicatingQuoteId === quote.id ||
-                      updatingStatusQuoteId === quote.id
+                      deletingQuoteId === quote.id
                     }
                   >
-                    {deletingQuoteId === quote.id ? "Suppression..." : "Supprimer"}
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </DataTable>
+                    <option value="draft">{getStatusLabel("draft")}</option>
+                    <option value="sent">{getStatusLabel("sent")}</option>
+                    <option value="accepted">{getStatusLabel("accepted")}</option>
+                    <option value="rejected">{getStatusLabel("rejected")}</option>
+                    <option value="expired">{getStatusLabel("expired")}</option>
+                    <option value="invoiced">{getStatusLabel("invoiced")}</option>
+                  </Select>
+                </td>
+
+                <td>{quote.issue_date}</td>
+
+                <td style={{ textAlign: "right" }}>
+                  <strong>{formatCurrency(quote.total_ttc)}</strong>
+                </td>
+
+                <td style={{ textAlign: "right" }}>
+                  <div className="quotes-premium-page__row-actions">
+                    <Link to={`/devis/${quote.id}`}>
+                      <Button type="button" variant="secondary">
+                        Ouvrir
+                      </Button>
+                    </Link>
+
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => handleDuplicateQuote(quote.id)}
+                      disabled={
+                        duplicatingQuoteId === quote.id ||
+                        deletingQuoteId === quote.id ||
+                        updatingStatusQuoteId === quote.id
+                      }
+                    >
+                      {duplicatingQuoteId === quote.id ? "Duplication..." : "Dupliquer"}
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="danger"
+                      onClick={() => handleDeleteQuote(quote.id)}
+                      disabled={
+                        deletingQuoteId === quote.id ||
+                        duplicatingQuoteId === quote.id ||
+                        updatingStatusQuoteId === quote.id
+                      }
+                    >
+                      {deletingQuoteId === quote.id ? "Suppression..." : "Supprimer"}
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </DataTable>
+        </div>
       )}
     </section>
   );

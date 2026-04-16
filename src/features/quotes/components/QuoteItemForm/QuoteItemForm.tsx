@@ -50,7 +50,19 @@ export function QuoteItemForm({
   onChange,
 }: QuoteItemFormProps) {
   return (
-    <form className="quote-item-form" onSubmit={onSubmit}>
+    <form className="quote-item-form-premium" onSubmit={onSubmit}>
+      <div className="quote-item-form-premium__intro">
+        <p className="quote-item-form-premium__eyebrow">
+          {editing ? "Modification" : "Nouvelle ligne"}
+        </p>
+        <h3 className="quote-item-form-premium__title">
+          {editing ? "Modifier la prestation" : "Ajouter une prestation au devis"}
+        </h3>
+        <p className="quote-item-form-premium__description">
+          Complète les informations de la ligne, puis ajuste la quantité, le prix et la TVA.
+        </p>
+      </div>
+
       <FormGrid columns="2">
         <FormField label="Pièce / zone">
           <Select
@@ -123,7 +135,7 @@ export function QuoteItemForm({
         />
       </FormField>
 
-      <FormGrid columns="2">
+      <FormGrid columns="3">
         <FormField label="Quantité">
           <TextInput
             type="number"
@@ -141,20 +153,20 @@ export function QuoteItemForm({
             onChange={(e) => onChange("unit_price_ht", e.target.value)}
           />
         </FormField>
-      </FormGrid>
 
-      <FormField label="TVA (%)">
-        <TextInput
-          type="number"
-          step="0.01"
-          value={form.tva_rate}
-          onChange={(e) => onChange("tva_rate", e.target.value)}
-        />
-      </FormField>
+        <FormField label="TVA (%)">
+          <TextInput
+            type="number"
+            step="0.01"
+            value={form.tva_rate}
+            onChange={(e) => onChange("tva_rate", e.target.value)}
+          />
+        </FormField>
+      </FormGrid>
 
       {error && <ErrorMessage message={error} />}
 
-      <div className="quote-item-form__actions">
+      <div className="quote-item-form-premium__actions">
         <Button type="submit" disabled={saving}>
           {saving
             ? editing

@@ -1,26 +1,36 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { supabase } from "../../../lib/supabase";
-import { PageHeader } from "../../../components/ui/PageHeader/PageHeader";
 import { LoadingBlock } from "../../../components/ui/LoadingBlock/LoadingBlock";
-import { ErrorMessage } from "../../../components/ui/ErrorMessage/ErrorMessage";
 import { EmptyState } from "../../../components/ui/EmptyState/EmptyState";
-import { SectionCard } from "../../../components/ui/SectionCard/SectionCard";
+import { ErrorMessage } from "../../../components/ui/ErrorMessage/ErrorMessage";
 import { Button } from "../../../components/ui/Button/Button";
+import { Card } from "../../../components/ui/Card/Card";
 import { DataTable } from "../../../components/ui/DataTable/DataTable";
 import { FormField } from "../../../components/ui/FormField/FormField";
 import { FormGrid } from "../../../components/ui/FormGrid/FormGrid";
-import { TextInput } from "../../../components/ui/TextInput/TextInput";
-import { TextArea } from "../../../components/ui/TextArea/TextArea";
 import { Select } from "../../../components/ui/Select/Select";
+import { TextArea } from "../../../components/ui/TextArea/TextArea";
+import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import {
   PAINT_CATEGORIES,
   PAINT_UNITS,
   getCategoryLabel,
   getUnitLabel,
 } from "../catalogOptions";
-import type { ServiceCatalogItem } from "../types";
 import "./ServiceCatalogPage.css";
+
+type ServiceCatalogItem = {
+  id: string;
+  name: string;
+  category: string | null;
+  default_unit: string;
+  default_unit_price_ht: number;
+  default_tva_rate: number;
+  default_description: string | null;
+  is_active: boolean;
+  created_at: string;
+};
 
 type ServiceCatalogFormState = {
   name: string;
@@ -29,67 +39,50 @@ type ServiceCatalogFormState = {
   default_unit_price_ht: string;
   default_tva_rate: string;
   default_description: string;
-  is_active: boolean;
 };
 
-function createInitialForm(): ServiceCatalogFormState {
-  return {
-    name: "",
-    category: "peinture_mur",
-    default_unit: "m2",
-    default_unit_price_ht: "0",
-    default_tva_rate: "21",
-    default_description: "",
-    is_active: true,
-  };
-}
+const initialForm: ServiceCatalogFormState = {
+  name: "",
+  category: "painting",
+  default_unit: "m2",
+  default_unit_price_ht: "0",
+  default_tva_rate: "21",
+  default_description: "",
+};
 
-function mapServiceToForm(service: ServiceCatalogItem): ServiceCatalogFormState {
-  return {
-    name: service.name,
-    category: service.category ?? "other",
-    default_unit: service.default_unit,
-    default_unit_price_ht: String(service.default_unit_price_ht),
-    default_tva_rate: String(service.default_tva_rate),
-    default_description: service.default_description ?? "",
-    is_active: service.is_active,
-  };
+function formatCurrency(value: number) {
+  return `${Number(value || 0).toFixed(2)} €`;
 }
 
 export function ServiceCatalogPage() {
   const [services, setServices] = useState<ServiceCatalogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [updatingServiceId, setUpdatingServiceId] = useState<string | null>(null);
+  const [deletingServiceId, setDeletingServiceId] = useState<string | null>(null);
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<ServiceCatalogFormState>(initialForm);
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const [form, setForm] = useState<ServiceCatalogFormState>(createInitialForm());
-
-  useEffect(() => {
-    void reloadServices();
-  }, []);
-
-  async function reloadServices() {
+  async function loadServices() {
     setLoading(true);
     setError(null);
 
-    const { data, error: fetchError } = await supabase
+    const { data, error } = await supabase
       .from("service_catalog")
       .select(
-        "id, name, category, default_unit, default_unit_price_ht, default_tva_rate, default_description, default_metadata, is_active"
+        "id, name, category, default_unit, default_unit_price_ht, default_tva_rate, default_description, is_active, created_at"
       )
-      .order("category", { ascending: true })
-      .order("name", { ascending: true });
+      .order("created_at", { ascending: false });
 
-    if (fetchError) {
-      setError(fetchError.message);
+    if (error) {
+      setError(error.message);
       setLoading(false);
       return;
     }
@@ -97,6 +90,10 @@ export function ServiceCatalogPage() {
     setServices((data ?? []) as ServiceCatalogItem[]);
     setLoading(false);
   }
+
+  useEffect(() => {
+    void loadServices();
+  }, []);
 
   const filteredServices = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -129,191 +126,227 @@ export function ServiceCatalogPage() {
     }));
   }
 
-  function openCreateForm() {
-    setForm(createInitialForm());
-    setEditingId(null);
-    setShowForm(true);
+  function resetForm() {
+    setForm(initialForm);
+    setEditingServiceId(null);
     setError(null);
+  }
+
+  function openCreateForm() {
+    resetForm();
+    setShowForm(true);
+  }
+
+  function closeCreateForm() {
+    setShowForm(false);
+    resetForm();
   }
 
   function openEditForm(service: ServiceCatalogItem) {
-    setForm(mapServiceToForm(service));
-    setEditingId(service.id);
+    setForm({
+      name: service.name,
+      category: service.category ?? "other",
+      default_unit: service.default_unit,
+      default_unit_price_ht: String(service.default_unit_price_ht),
+      default_tva_rate: String(service.default_tva_rate),
+      default_description: service.default_description ?? "",
+    });
+    setEditingServiceId(service.id);
     setShowForm(true);
-    setError(null);
-  }
-
-  function closeForm() {
-    setForm(createInitialForm());
-    setEditingId(null);
-    setShowForm(false);
     setError(null);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    if (!form.name.trim()) {
-      setError("Le nom de la prestation est obligatoire.");
-      return;
-    }
-
     setSaving(true);
     setError(null);
 
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      setError("Utilisateur non connecté.");
+      setSaving(false);
+      return;
+    }
+
     const payload = {
+      owner_user_id: user.id,
       name: form.name.trim(),
       category: form.category || null,
       default_unit: form.default_unit,
       default_unit_price_ht: Number(form.default_unit_price_ht || 0),
-      default_tva_rate: Number(form.default_tva_rate || 0),
+      default_tva_rate: Number(form.default_tva_rate || 21),
       default_description: form.default_description.trim() || null,
-      is_active: form.is_active,
+      default_metadata: {},
     };
 
-    if (editingId) {
-      const { error: updateError } = await supabase
+    if (!payload.name) {
+      setError("Le nom de la prestation est obligatoire.");
+      setSaving(false);
+      return;
+    }
+
+    if (editingServiceId) {
+      const { error } = await supabase
         .from("service_catalog")
         .update(payload)
-        .eq("id", editingId);
+        .eq("id", editingServiceId);
 
-      if (updateError) {
-        setError(updateError.message);
+      if (error) {
+        setError(error.message);
         setSaving(false);
         return;
       }
     } else {
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError || !user) {
-        setError("Utilisateur non connecté.");
-        setSaving(false);
-        return;
-      }
-
-      const { error: insertError } = await supabase.from("service_catalog").insert({
+      const { error } = await supabase.from("service_catalog").insert({
         ...payload,
-        owner_user_id: user.id,
-        default_metadata: {},
+        is_active: true,
       });
 
-      if (insertError) {
-        setError(insertError.message);
+      if (error) {
+        setError(error.message);
         setSaving(false);
         return;
       }
     }
 
     setSaving(false);
-    closeForm();
-    await reloadServices();
+    setShowForm(false);
+    resetForm();
+    await loadServices();
+  }
+
+  async function handleToggleActive(service: ServiceCatalogItem) {
+    setUpdatingServiceId(service.id);
+    setError(null);
+
+    const { error } = await supabase
+      .from("service_catalog")
+      .update({ is_active: !service.is_active })
+      .eq("id", service.id);
+
+    if (error) {
+      setError(error.message);
+      setUpdatingServiceId(null);
+      return;
+    }
+
+    setUpdatingServiceId(null);
+    await loadServices();
   }
 
   async function handleDelete(serviceId: string) {
     const confirmed = window.confirm("Supprimer cette prestation du catalogue ?");
     if (!confirmed) return;
 
-    setDeletingId(serviceId);
+    setDeletingServiceId(serviceId);
     setError(null);
 
-    const { error: deleteError } = await supabase
+    const { error } = await supabase
       .from("service_catalog")
       .delete()
       .eq("id", serviceId);
 
-    if (deleteError) {
-      setError(deleteError.message);
-      setDeletingId(null);
+    if (error) {
+      setError(error.message);
+      setDeletingServiceId(null);
       return;
     }
 
-    setDeletingId(null);
-    await reloadServices();
+    setDeletingServiceId(null);
+    await loadServices();
   }
 
-  async function handleToggleActive(service: ServiceCatalogItem) {
-    setError(null);
-
-    const { error: updateError } = await supabase
-      .from("service_catalog")
-      .update({ is_active: !service.is_active })
-      .eq("id", service.id);
-
-    if (updateError) {
-      setError(updateError.message);
-      return;
-    }
-
-    await reloadServices();
-  }
+  const totalServices = services.length;
+  const activeServices = services.filter((service) => service.is_active).length;
+  const inactiveServices = services.filter((service) => !service.is_active).length;
+  const averagePrice =
+    services.length > 0
+      ? services.reduce(
+          (sum, service) => sum + Number(service.default_unit_price_ht || 0),
+          0
+        ) / services.length
+      : 0;
 
   if (loading) {
     return <LoadingBlock message="Chargement du catalogue..." />;
   }
 
   return (
-    <section className="service-catalog-page">
-      <PageHeader
-        title="Catalogue de prestations"
-        description="Crée des prestations types réutilisables dans les devis."
-        actions={
-          <Button type="button" onClick={showForm ? closeForm : openCreateForm}>
-            {showForm ? "Fermer" : "Nouvelle prestation"}
-          </Button>
-        }
-      />
-
-      <SectionCard title="Filtres">
-        <div className="service-catalog-page__toolbar">
-          <FormField label="Recherche">
-            <TextInput
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Mur, plafond, enduit..."
-            />
-          </FormField>
-
-          <FormField label="Catégorie">
-            <Select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-            >
-              <option value="all">Toutes</option>
-              {PAINT_CATEGORIES.map((category) => (
-                <option key={category} value={category}>
-                  {getCategoryLabel(category)}
-                </option>
-              ))}
-            </Select>
-          </FormField>
-
-          <FormField label="Statut">
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="all">Tous</option>
-              <option value="active">Actives</option>
-              <option value="inactive">Inactives</option>
-            </Select>
-          </FormField>
+    <section className="catalog-premium-page">
+      <header className="catalog-premium-page__hero">
+        <div className="catalog-premium-page__hero-main">
+          <p className="catalog-premium-page__eyebrow">Bibliothèque métier</p>
+          <h1 className="catalog-premium-page__title">Catalogue de prestations</h1>
+          <p className="catalog-premium-page__description">
+            Structure tes prestations récurrentes pour accélérer la création des devis
+            et uniformiser tes intitulés, unités et prix par défaut.
+          </p>
         </div>
-      </SectionCard>
+
+        <div className="catalog-premium-page__hero-actions">
+          <Button
+            variant="primary"
+            onClick={showForm ? closeCreateForm : openCreateForm}
+          >
+            {showForm ? "Fermer le formulaire" : "Nouvelle prestation"}
+          </Button>
+        </div>
+      </header>
+
+      <div className="catalog-premium-page__stats">
+        <Card>
+          <p className="catalog-premium-page__stat-label">Total prestations</p>
+          <p className="catalog-premium-page__stat-value">{totalServices}</p>
+        </Card>
+
+        <Card>
+          <p className="catalog-premium-page__stat-label">Actives</p>
+          <p className="catalog-premium-page__stat-value">{activeServices}</p>
+        </Card>
+
+        <Card>
+          <p className="catalog-premium-page__stat-label">Inactives</p>
+          <p className="catalog-premium-page__stat-value">{inactiveServices}</p>
+        </Card>
+
+        <Card>
+          <p className="catalog-premium-page__stat-label">Prix moyen HT</p>
+          <p className="catalog-premium-page__stat-value">
+            {formatCurrency(averagePrice)}
+          </p>
+        </Card>
+      </div>
 
       {showForm && (
-        <SectionCard
-          title={editingId ? "Modifier la prestation" : "Créer une prestation type"}
-        >
-          <form className="service-catalog-page__form" onSubmit={handleSubmit}>
+        <Card>
+          <div className="catalog-premium-page__form-intro">
+            <div>
+              <p className="catalog-premium-page__section-eyebrow">
+                {editingServiceId ? "Modification" : "Création"}
+              </p>
+              <h2 className="catalog-premium-page__section-title">
+                {editingServiceId
+                  ? "Modifier la prestation"
+                  : "Créer une prestation type"}
+              </h2>
+              <p className="catalog-premium-page__section-description">
+                Enregistre une prestation métier standard pour la réutiliser ensuite
+                dans tes devis en un clic.
+              </p>
+            </div>
+          </div>
+
+          <form className="catalog-premium-page__form" onSubmit={handleSubmit}>
             <FormGrid columns="2">
               <FormField label="Nom">
                 <TextInput
                   value={form.name}
                   onChange={(e) => updateField("name", e.target.value)}
-                  placeholder="Peinture murs acrylique mat 2 couches"
+                  placeholder="Peinture murs acrylique 2 couches"
                 />
               </FormField>
 
@@ -331,16 +364,8 @@ export function ServiceCatalogPage() {
               </FormField>
             </FormGrid>
 
-            <FormField label="Description par défaut">
-              <TextArea
-                rows={4}
-                value={form.default_description}
-                onChange={(e) => updateField("default_description", e.target.value)}
-              />
-            </FormField>
-
-            <FormGrid columns="2">
-              <FormField label="Unité par défaut">
+            <FormGrid columns="3">
+              <FormField label="Unité">
                 <Select
                   value={form.default_unit}
                   onChange={(e) => updateField("default_unit", e.target.value)}
@@ -353,7 +378,7 @@ export function ServiceCatalogPage() {
                 </Select>
               </FormField>
 
-              <FormField label="Prix unitaire HT par défaut">
+              <FormField label="Prix unitaire HT">
                 <TextInput
                   type="number"
                   step="0.01"
@@ -364,7 +389,7 @@ export function ServiceCatalogPage() {
                 />
               </FormField>
 
-              <FormField label="TVA par défaut (%)">
+              <FormField label="TVA (%)">
                 <TextInput
                   type="number"
                   step="0.01"
@@ -374,46 +399,98 @@ export function ServiceCatalogPage() {
               </FormField>
             </FormGrid>
 
-            <FormField label="Disponibilité">
-              <Select
-                value={form.is_active ? "active" : "inactive"}
-                onChange={(e) => updateField("is_active", e.target.value === "active")}
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </Select>
+            <FormField label="Description">
+              <TextArea
+                rows={4}
+                value={form.default_description}
+                onChange={(e) =>
+                  updateField("default_description", e.target.value)
+                }
+              />
             </FormField>
 
             {error && <ErrorMessage message={error} />}
 
-            <div style={{ display: "flex", gap: 12 }}>
+            <div className="catalog-premium-page__form-actions">
               <Button type="submit" disabled={saving}>
                 {saving
-                  ? editingId
-                    ? "Enregistrement..."
-                    : "Création..."
-                  : editingId
-                  ? "Enregistrer"
+                  ? "Enregistrement..."
+                  : editingServiceId
+                  ? "Enregistrer la modification"
                   : "Créer la prestation"}
               </Button>
 
-              <Button type="button" variant="secondary" onClick={closeForm}>
+              <Button type="button" variant="secondary" onClick={closeCreateForm}>
                 Annuler
               </Button>
             </div>
           </form>
-        </SectionCard>
+        </Card>
+      )}
+
+      {!showForm && (
+        <Card>
+          <div className="catalog-premium-page__filters">
+            <div className="catalog-premium-page__filters-intro">
+              <p className="catalog-premium-page__section-eyebrow">Liste</p>
+              <h2 className="catalog-premium-page__section-title">
+                Prestations enregistrées
+              </h2>
+            </div>
+
+            <div className="catalog-premium-page__filters-grid">
+              <FormField label="Recherche">
+                <TextInput
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Nom ou description..."
+                />
+              </FormField>
+
+              <FormField label="Catégorie">
+                <Select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                >
+                  <option value="all">Toutes</option>
+                  {PAINT_CATEGORIES.map((category) => (
+                    <option key={category} value={category}>
+                      {getCategoryLabel(category)}
+                    </option>
+                  ))}
+                </Select>
+              </FormField>
+
+              <FormField label="Statut">
+                <Select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  <option value="all">Tous</option>
+                  <option value="active">Actives</option>
+                  <option value="inactive">Inactives</option>
+                </Select>
+              </FormField>
+            </div>
+          </div>
+        </Card>
       )}
 
       {error && !showForm && <ErrorMessage message={error} />}
 
-      {filteredServices.length === 0 ? (
+      {!showForm && filteredServices.length === 0 ? (
         <EmptyState
-          title="Aucune prestation"
-          description="Ajoute une première prestation type pour accélérer tes devis."
+          title={services.length === 0 ? "Aucune prestation" : "Aucun résultat"}
+          description={
+            services.length === 0
+              ? "Crée ta première prestation type pour alimenter ton catalogue métier."
+              : "Aucune prestation ne correspond aux filtres actuellement sélectionnés."
+          }
         />
-      ) : (
-        <SectionCard title={`Prestations (${filteredServices.length})`}>
+      ) : null}
+
+      {!showForm && filteredServices.length > 0 && (
+        <div className="catalog-premium-page__table-shell">
           <DataTable
             headers={
               <tr>
@@ -423,61 +500,78 @@ export function ServiceCatalogPage() {
                 <th>Prix HT</th>
                 <th>TVA</th>
                 <th>Statut</th>
-                <th />
+                <th style={{ textAlign: "right" }}>Actions</th>
               </tr>
             }
           >
             {filteredServices.map((service) => (
               <tr key={service.id}>
                 <td>
-                  <div>{service.name}</div>
-                  {service.default_description && (
-                    <div className="service-catalog-page__muted">
-                      {service.default_description}
-                    </div>
-                  )}
+                  <div className="catalog-premium-page__service-cell">
+                    <strong>{service.name}</strong>
+                    {service.default_description && (
+                      <div className="catalog-premium-page__service-description">
+                        {service.default_description}
+                      </div>
+                    )}
+                  </div>
                 </td>
+
                 <td>{getCategoryLabel(service.category)}</td>
                 <td>{getUnitLabel(service.default_unit)}</td>
-                <td>{Number(service.default_unit_price_ht).toFixed(2)} €</td>
+                <td>{formatCurrency(service.default_unit_price_ht)}</td>
                 <td>{Number(service.default_tva_rate).toFixed(2)} %</td>
                 <td>
                   <span
-                    className={`service-catalog-page__status ${
-                      service.is_active ? "" : "service-catalog-page__status--inactive"
-                    }`.trim()}
+                    className={`catalog-premium-page__status-badge ${
+                      service.is_active
+                        ? "catalog-premium-page__status-badge--active"
+                        : "catalog-premium-page__status-badge--inactive"
+                    }`}
                   >
                     {service.is_active ? "Active" : "Inactive"}
                   </span>
                 </td>
-                <td>
-                  <div className="service-catalog-page__row-actions">
-                    <Button size="sm" onClick={() => openEditForm(service)}>
+
+                <td style={{ textAlign: "right" }}>
+                  <div className="catalog-premium-page__row-actions">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => openEditForm(service)}
+                    >
                       Modifier
                     </Button>
 
                     <Button
-                      size="sm"
+                      type="button"
                       variant="secondary"
                       onClick={() => handleToggleActive(service)}
+                      disabled={updatingServiceId === service.id}
                     >
-                      {service.is_active ? "Désactiver" : "Activer"}
+                      {updatingServiceId === service.id
+                        ? "Mise à jour..."
+                        : service.is_active
+                        ? "Désactiver"
+                        : "Activer"}
                     </Button>
 
                     <Button
-                      size="sm"
+                      type="button"
                       variant="danger"
-                      disabled={deletingId === service.id}
                       onClick={() => handleDelete(service.id)}
+                      disabled={deletingServiceId === service.id}
                     >
-                      {deletingId === service.id ? "Suppression..." : "Supprimer"}
+                      {deletingServiceId === service.id
+                        ? "Suppression..."
+                        : "Supprimer"}
                     </Button>
                   </div>
                 </td>
               </tr>
             ))}
           </DataTable>
-        </SectionCard>
+        </div>
       )}
     </section>
   );

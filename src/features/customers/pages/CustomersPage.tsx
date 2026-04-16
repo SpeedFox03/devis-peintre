@@ -5,7 +5,6 @@ import { supabase } from "../../../lib/supabase";
 import { LoadingBlock } from "../../../components/ui/LoadingBlock/LoadingBlock";
 import { EmptyState } from "../../../components/ui/EmptyState/EmptyState";
 import { ErrorMessage } from "../../../components/ui/ErrorMessage/ErrorMessage";
-import { PageHeader } from "../../../components/ui/PageHeader/PageHeader";
 import { Button } from "../../../components/ui/Button/Button";
 import { Card } from "../../../components/ui/Card/Card";
 import { FormField } from "../../../components/ui/FormField/FormField";
@@ -122,7 +121,7 @@ export function CustomersPage() {
   }
 
   useEffect(() => {
-    loadCustomers();
+    void loadCustomers();
   }, []);
 
   const filteredCustomers = useMemo(() => {
@@ -156,7 +155,7 @@ export function CustomersPage() {
       return haystack.includes(normalizedSearch);
     });
 
-    const sorted = [...filtered].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       let comparison = 0;
 
       if (sortField === "name") {
@@ -174,8 +173,6 @@ export function CustomersPage() {
 
       return sortDirection === "asc" ? comparison : -comparison;
     });
-
-    return sorted;
   }, [customers, quoteCountByCustomerId, search, sortField, sortDirection, quotesFilter]);
 
   function updateField<K extends keyof CustomerFormState>(
@@ -259,35 +256,89 @@ export function CustomersPage() {
     await loadCustomers();
   }
 
+  const totalCustomers = customers.length;
+  const customersWithQuotes = customers.filter(
+    (customer) => (quoteCountByCustomerId[customer.id] ?? 0) > 0
+  ).length;
+  const customersWithoutQuotes = customers.filter(
+    (customer) => (quoteCountByCustomerId[customer.id] ?? 0) === 0
+  ).length;
+  const totalQuotesLinked = Object.values(quoteCountByCustomerId).reduce(
+    (sum, count) => sum + count,
+    0
+  );
+
   if (loading) {
     return <LoadingBlock message="Chargement des clients..." />;
   }
 
   return (
-    <section>
-      <PageHeader
-        title="Clients"
-        description="Liste des clients actifs."
-        actions={
-          <div className="customers-page__actions">
-            <Link to="/clients/archives">
-              <Button type="button" variant="secondary">
-                Clients archivés
-              </Button>
-            </Link>
+    <section className="customers-premium-page">
+      <header className="customers-premium-page__hero">
+        <div className="customers-premium-page__hero-main">
+          <p className="customers-premium-page__eyebrow">Relation client</p>
+          <h1 className="customers-premium-page__title">Clients</h1>
+          <p className="customers-premium-page__description">
+            Gère tes clients actifs, prépare rapidement un nouveau devis et garde
+            une base commerciale claire et bien structurée.
+          </p>
+        </div>
 
-            <Button variant="secondary" onClick={() => setShowForm((prev) => !prev)}>
-              {showForm ? "Fermer" : "Nouveau client"}
+        <div className="customers-premium-page__hero-actions">
+          <Link to="/clients/archives">
+            <Button type="button" variant="secondary">
+              Clients archivés
             </Button>
-          </div>
-        }
-      />
+          </Link>
+
+          <Button
+            variant="primary"
+            onClick={() => {
+              setShowForm((prev) => !prev);
+              setError(null);
+            }}
+          >
+            {showForm ? "Fermer le formulaire" : "Nouveau client"}
+          </Button>
+        </div>
+      </header>
+
+      <div className="customers-premium-page__stats">
+        <Card>
+          <p className="customers-premium-page__stat-label">Clients actifs</p>
+          <p className="customers-premium-page__stat-value">{totalCustomers}</p>
+        </Card>
+
+        <Card>
+          <p className="customers-premium-page__stat-label">Avec devis</p>
+          <p className="customers-premium-page__stat-value">{customersWithQuotes}</p>
+        </Card>
+
+        <Card>
+          <p className="customers-premium-page__stat-label">Sans devis</p>
+          <p className="customers-premium-page__stat-value">{customersWithoutQuotes}</p>
+        </Card>
+
+        <Card>
+          <p className="customers-premium-page__stat-label">Devis liés</p>
+          <p className="customers-premium-page__stat-value">{totalQuotesLinked}</p>
+        </Card>
+      </div>
 
       {showForm && (
         <Card>
-          <form className="customers-page__form" onSubmit={handleSubmit}>
-            <h2 className="customers-page__form-title">Créer un client</h2>
+          <div className="customers-premium-page__form-intro">
+            <div>
+              <p className="customers-premium-page__section-eyebrow">Création</p>
+              <h2 className="customers-premium-page__section-title">Créer un client</h2>
+              <p className="customers-premium-page__section-description">
+                Ajoute une nouvelle fiche client avec ses coordonnées principales
+                et une adresse de base pour la facturation et le chantier.
+              </p>
+            </div>
+          </div>
 
+          <form className="customers-premium-page__form" onSubmit={handleSubmit}>
             <FormGrid columns="2">
               <FormField label="Société">
                 <TextInput
@@ -305,7 +356,7 @@ export function CustomersPage() {
               </FormField>
             </FormGrid>
 
-            <div className="customers-page__grid customers-page__grid--2">
+            <FormGrid columns="2">
               <FormField label="Prénom">
                 <TextInput
                   value={form.first_name}
@@ -319,9 +370,9 @@ export function CustomersPage() {
                   onChange={(e) => updateField("last_name", e.target.value)}
                 />
               </FormField>
-            </div>
+            </FormGrid>
 
-            <div className="customers-page__grid customers-page__grid--2">
+            <FormGrid columns="2">
               <FormField label="Téléphone">
                 <TextInput
                   value={form.phone}
@@ -335,9 +386,9 @@ export function CustomersPage() {
                   onChange={(e) => updateField("billing_city", e.target.value)}
                 />
               </FormField>
-            </div>
+            </FormGrid>
 
-            <FormGrid columns="3-1">
+            <div className="customers-premium-page__address-grid">
               <FormField label="Adresse">
                 <TextInput
                   value={form.billing_address_line1}
@@ -353,7 +404,7 @@ export function CustomersPage() {
                   onChange={(e) => updateField("billing_postal_code", e.target.value)}
                 />
               </FormField>
-            </FormGrid>
+            </div>
 
             <FormField label="Notes">
               <TextArea
@@ -365,7 +416,7 @@ export function CustomersPage() {
 
             {error && <ErrorMessage message={error} />}
 
-            <div className="customers-page__actions">
+            <div className="customers-premium-page__form-actions">
               <Button type="submit" disabled={saving}>
                 {saving ? "Enregistrement..." : "Enregistrer le client"}
               </Button>
@@ -386,117 +437,135 @@ export function CustomersPage() {
         </Card>
       )}
 
-      <Card>
-        <div className="customers-page__toolbar">
-          <FormField label="Rechercher un client">
-            <TextInput
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Nom, société, email, téléphone, ville..."
-            />
-          </FormField>
+      {!showForm && (
+        <Card>
+          <div className="customers-premium-page__filters">
+            <div className="customers-premium-page__filters-intro">
+              <p className="customers-premium-page__section-eyebrow">Liste</p>
+              <h2 className="customers-premium-page__section-title">Tous les clients</h2>
+            </div>
 
-          <div className="customers-page__toolbar-grid customers-page__toolbar-grid--3">
-            <FormField label="Avec devis">
-              <Select
-                value={quotesFilter}
-                onChange={(e) => setQuotesFilter(e.target.value as QuotesFilter)}
-              >
-                <option value="all">Tous</option>
-                <option value="with_quotes">Avec devis</option>
-                <option value="without_quotes">Sans devis</option>
-              </Select>
-            </FormField>
+            <div className="customers-premium-page__filters-grid">
+              <FormField label="Recherche">
+                <TextInput
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Nom, société, email, téléphone, ville..."
+                />
+              </FormField>
 
-            <FormField label="Trier par">
-              <Select
-                value={sortField}
-                onChange={(e) => setSortField(e.target.value as CustomerSortField)}
-              >
-                <option value="created_at">Date de création</option>
-                <option value="name">Nom</option>
-                <option value="city">Ville</option>
-              </Select>
-            </FormField>
+              <FormField label="Avec devis">
+                <Select
+                  value={quotesFilter}
+                  onChange={(e) => setQuotesFilter(e.target.value as QuotesFilter)}
+                >
+                  <option value="all">Tous</option>
+                  <option value="with_quotes">Avec devis</option>
+                  <option value="without_quotes">Sans devis</option>
+                </Select>
+              </FormField>
 
-            <FormField label="Ordre">
-              <Select
-                value={sortDirection}
-                onChange={(e) => setSortDirection(e.target.value as SortDirection)}
-              >
-                <option value="asc">Croissant</option>
-                <option value="desc">Décroissant</option>
-              </Select>
-            </FormField>
+              <FormField label="Trier par">
+                <Select
+                  value={sortField}
+                  onChange={(e) => setSortField(e.target.value as CustomerSortField)}
+                >
+                  <option value="created_at">Date de création</option>
+                  <option value="name">Nom</option>
+                  <option value="city">Ville</option>
+                </Select>
+              </FormField>
+
+              <FormField label="Ordre">
+                <Select
+                  value={sortDirection}
+                  onChange={(e) => setSortDirection(e.target.value as SortDirection)}
+                >
+                  <option value="asc">Croissant</option>
+                  <option value="desc">Décroissant</option>
+                </Select>
+              </FormField>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      )}
 
       {error && !showForm && <ErrorMessage message={error} />}
 
-      {filteredCustomers.length === 0 ? (
+      {!showForm && filteredCustomers.length === 0 ? (
         <EmptyState
           title={customers.length === 0 ? "Aucun client" : "Aucun résultat"}
           description={
             customers.length === 0
-              ? "Crée ton premier client avec le bouton ci-dessus."
-              : "Aucun client ne correspond à tes filtres."
+              ? "Crée ton premier client pour démarrer ton suivi commercial."
+              : "Aucun client ne correspond aux filtres actuellement sélectionnés."
           }
         />
-      ) : (
-        <DataTable
-          headers={
-            <tr>
-              <th>Nom</th>
-              <th>Email</th>
-              <th>Téléphone</th>
-              <th>Ville</th>
-              <th>Devis</th>
-              <th style={{ textAlign: "right" }}>Actions</th>
-            </tr>
-          }
-        >
-          {filteredCustomers.map((customer) => {
-            const name = getCustomerName(customer);
-            const quoteCount = quoteCountByCustomerId[customer.id] ?? 0;
+      ) : null}
 
-            return (
-              <tr key={customer.id}>
-                <td>
-                  <Link to={`/clients/${customer.id}`}>{name}</Link>
-                </td>
-                <td>{customer.email || "-"}</td>
-                <td>{customer.phone || "-"}</td>
-                <td>{customer.billing_city || "-"}</td>
-                <td>{quoteCount}</td>
-                <td style={{ textAlign: "right" }}>
-                  <div
-                    style={{
-                      display: "inline-flex",
-                      gap: "8px",
-                      justifyContent: "flex-end",
-                    }}
-                  >
-                    <Link to={`/?new=1&customerId=${customer.id}`}>
-                      <Button type="button" variant="secondary">
-                        Nouveau devis
-                      </Button>
-                    </Link>
-
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => handleArchiveCustomer(customer)}
-                      disabled={archivingCustomerId === customer.id}
-                    >
-                      {archivingCustomerId === customer.id ? "Archivage..." : "Archiver"}
-                    </Button>
-                  </div>
-                </td>
+      {!showForm && filteredCustomers.length > 0 && (
+        <div className="customers-premium-page__table-shell">
+          <DataTable
+            headers={
+              <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Téléphone</th>
+                <th>Ville</th>
+                <th>Devis</th>
+                <th style={{ textAlign: "right" }}>Actions</th>
               </tr>
-            );
-          })}
-        </DataTable>
+            }
+          >
+            {filteredCustomers.map((customer) => {
+              const name = getCustomerName(customer);
+              const quoteCount = quoteCountByCustomerId[customer.id] ?? 0;
+
+              return (
+                <tr key={customer.id}>
+                  <td>
+                    <Link
+                      to={`/clients/${customer.id}`}
+                      className="customers-premium-page__customer-link"
+                    >
+                      {name}
+                    </Link>
+                  </td>
+
+                  <td>{customer.email || "-"}</td>
+                  <td>{customer.phone || "-"}</td>
+                  <td>{customer.billing_city || "-"}</td>
+                  <td>
+                    <span className="customers-premium-page__quote-count">
+                      {quoteCount}
+                    </span>
+                  </td>
+
+                  <td style={{ textAlign: "right" }}>
+                    <div className="customers-premium-page__row-actions">
+                      <Link to={`/?new=1&customerId=${customer.id}`}>
+                        <Button type="button" variant="secondary">
+                          Nouveau devis
+                        </Button>
+                      </Link>
+
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => handleArchiveCustomer(customer)}
+                        disabled={archivingCustomerId === customer.id}
+                      >
+                        {archivingCustomerId === customer.id
+                          ? "Archivage..."
+                          : "Archiver"}
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </DataTable>
+        </div>
       )}
     </section>
   );

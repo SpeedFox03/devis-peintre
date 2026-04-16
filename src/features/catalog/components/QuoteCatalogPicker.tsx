@@ -59,8 +59,21 @@ export function QuoteCatalogPicker({
   }, [search, selectedCategory, services]);
 
   return (
-    <div className="quote-catalog-picker">
-      <div className="quote-catalog-picker__toolbar">
+    <div className="quote-catalog-picker-premium">
+      <div className="quote-catalog-picker-premium__intro">
+        <div>
+          <p className="quote-catalog-picker-premium__eyebrow">Catalogue</p>
+          <h3 className="quote-catalog-picker-premium__title">
+            Insérer une prestation type
+          </h3>
+          <p className="quote-catalog-picker-premium__description">
+            Recherche une prestation récurrente, choisis une pièce cible puis ajoute-la
+            en un clic au devis.
+          </p>
+        </div>
+      </div>
+
+      <div className="quote-catalog-picker-premium__toolbar">
         <FormField label="Recherche">
           <TextInput
             value={search}
@@ -99,8 +112,8 @@ export function QuoteCatalogPicker({
       </div>
 
       {filteredServices.length === 0 ? (
-        <div className="quote-catalog-picker__empty">
-          Aucune prestation ne correspond aux filtres.
+        <div className="quote-catalog-picker-premium__empty">
+          Aucune prestation ne correspond aux filtres sélectionnés.
         </div>
       ) : (
         <DataTable
@@ -118,12 +131,14 @@ export function QuoteCatalogPicker({
           {filteredServices.map((service) => (
             <tr key={service.id}>
               <td>
-                <div>{service.name}</div>
-                {service.default_description && (
-                  <div className="quote-catalog-picker__description">
-                    {service.default_description}
-                  </div>
-                )}
+                <div className="quote-catalog-picker-premium__service-cell">
+                  <strong>{service.name}</strong>
+                  {service.default_description && (
+                    <div className="quote-catalog-picker-premium__service-description">
+                      {service.default_description}
+                    </div>
+                  )}
+                </div>
               </td>
               <td>{getCategoryLabel(service.category)}</td>
               <td>{getUnitLabel(service.default_unit)}</td>

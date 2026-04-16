@@ -1,5 +1,6 @@
 import { Button } from "../../../../components/ui/Button/Button";
 import { DataTable } from "../../../../components/ui/DataTable/DataTable";
+import "./QuoteItemsGroupedTables.css";
 
 type QuoteItem = {
   id: string;
@@ -42,12 +43,14 @@ function renderRows(
   return items.map((item) => (
     <tr key={item.id}>
       <td>
-        <div>{item.label}</div>
-        {item.description && (
-          <div style={{ marginTop: 4, color: "#6b7280", fontSize: "0.92rem" }}>
-            {item.description}
-          </div>
-        )}
+        <div className="quote-items-grouped-premium__label-cell">
+          <strong className="quote-items-grouped-premium__label">{item.label}</strong>
+          {item.description && (
+            <div className="quote-items-grouped-premium__description">
+              {item.description}
+            </div>
+          )}
+        </div>
       </td>
       <td>{item.unit}</td>
       <td>{Number(item.quantity).toFixed(2)}</td>
@@ -57,7 +60,7 @@ function renderRows(
         {(Number(item.quantity) * Number(item.unit_price_ht)).toFixed(2)} €
       </td>
       <td>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div className="quote-items-grouped-premium__actions">
           <Button size="sm" onClick={() => onEdit(item)}>
             Modifier
           </Button>
@@ -100,39 +103,23 @@ export function QuoteItemsGroupedTables({
   }));
 
   return (
-    <div style={{ display: "grid", gap: 16 }}>
-      {unassignedItems.length > 0 && (
-        <div>
-          <h3 style={{ marginBottom: 12 }}>Sans pièce</h3>
-          <DataTable
-            headers={
-              <tr>
-                <th>Libellé</th>
-                <th>Unité</th>
-                <th>Qté</th>
-                <th>PU HT</th>
-                <th>TVA</th>
-                <th style={{ textAlign: "right" }}>Total HT</th>
-                <th />
-              </tr>
-            }
-          >
-            {renderRows(
-              unassignedItems,
-              onEdit,
-              onDuplicate,
-              onOpenMove,
-              onDelete,
-              deletingItemId
-            )}
-          </DataTable>
-        </div>
-      )}
-
+    <div className="quote-items-grouped-premium">
       {roomSections.map(({ room, items: roomItems }) =>
         roomItems.length > 0 ? (
-          <div key={room.id}>
-            <h3 style={{ marginBottom: 12 }}>{room.name}</h3>
+          <section key={room.id} className="quote-items-grouped-premium__section">
+            <div className="quote-items-grouped-premium__section-header">
+              <div>
+                <p className="quote-items-grouped-premium__eyebrow">Pièce</p>
+                <h3 className="quote-items-grouped-premium__section-title">
+                  {room.name}
+                </h3>
+              </div>
+
+              <div className="quote-items-grouped-premium__count">
+                {roomItems.length} ligne{roomItems.length > 1 ? "s" : ""}
+              </div>
+            </div>
+
             <DataTable
               headers={
                 <tr>
@@ -155,8 +142,46 @@ export function QuoteItemsGroupedTables({
                 deletingItemId
               )}
             </DataTable>
-          </div>
+          </section>
         ) : null
+      )}
+
+      {unassignedItems.length > 0 && (
+        <section className="quote-items-grouped-premium__section">
+          <div className="quote-items-grouped-premium__section-header">
+            <div>
+              <p className="quote-items-grouped-premium__eyebrow">Pièce</p>
+              <h3 className="quote-items-grouped-premium__section-title">Sans pièce</h3>
+            </div>
+
+            <div className="quote-items-grouped-premium__count">
+              {unassignedItems.length} ligne{unassignedItems.length > 1 ? "s" : ""}
+            </div>
+          </div>
+
+          <DataTable
+            headers={
+              <tr>
+                <th>Libellé</th>
+                <th>Unité</th>
+                <th>Qté</th>
+                <th>PU HT</th>
+                <th>TVA</th>
+                <th style={{ textAlign: "right" }}>Total HT</th>
+                <th />
+              </tr>
+            }
+          >
+            {renderRows(
+              unassignedItems,
+              onEdit,
+              onDuplicate,
+              onOpenMove,
+              onDelete,
+              deletingItemId
+            )}
+          </DataTable>
+        </section>
       )}
     </div>
   );

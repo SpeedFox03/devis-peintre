@@ -1,0 +1,50 @@
+.quote-items-premium {
+  display: grid;
+  gap: 18px;
+}
+
+.quote-items-premium__header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.quote-items-premium__catalog-shell,
+.quote-items-premium__form-shell,
+.quote-items-premium__move-box {
+  padding: 16px;
+  border-radius: 22px;
+  border: 1px solid rgba(120, 92, 68, 0.12);
+  background: rgba(255, 250, 244, 0.82);
+}
+
+.quote-items-premium__move-box {
+  display: grid;
+  gap: 14px;
+}
+
+.quote-items-premium__move-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.quote-items-premium__eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9e8672;
+}
+
+.quote-items-premium__title {
+  margin: 0;
+  font-size: 1.08rem;
+  color: #34251b;
+}
+
+.quote-items-premium__move-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
