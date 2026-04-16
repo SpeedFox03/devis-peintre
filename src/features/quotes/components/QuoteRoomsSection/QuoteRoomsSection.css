@@ -1,0 +1,15 @@
+.quote-rooms-section__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.quote-rooms-section__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+}

@@ -1,0 +1,20 @@
+.login-page {
+  max-width: 420px;
+  margin: 80px auto;
+}
+
+.login-page__title {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.login-page__subtitle {
+  margin-top: 0;
+  color: #4b5563;
+}
+
+.login-page__form {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}

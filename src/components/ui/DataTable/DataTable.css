@@ -1,0 +1,15 @@
+.ui-data-table {
+  width: 100%;
+  margin-top: 16px;
+  border-collapse: collapse;
+}
+
+.ui-data-table th,
+.ui-data-table td {
+  padding: 12px 0;
+  text-align: left;
+}
+
+.ui-data-table tbody tr {
+  border-top: 1px solid #e5e7eb;
+}

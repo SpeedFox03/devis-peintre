@@ -1,0 +1,10 @@
+.quote-item-form {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.quote-item-form__actions {
+  display: flex;
+  gap: 12px;
+}

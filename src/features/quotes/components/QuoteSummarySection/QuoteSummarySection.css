@@ -1,0 +1,16 @@
+.quote-summary-section {
+  display: grid;
+  gap: 20px;
+}
+
+.quote-summary-section__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .quote-summary-section__stats {
+    grid-template-columns: 1fr;
+  }
+}

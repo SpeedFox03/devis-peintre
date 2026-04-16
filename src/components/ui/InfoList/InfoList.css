@@ -1,0 +1,25 @@
+.ui-info-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.ui-info-list__item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ui-info-list__label {
+  color: #111827;
+}
+
+.ui-info-list__value {
+  color: #374151;
+}
+
+@media (max-width: 768px) {
+  .ui-info-list {
+    grid-template-columns: 1fr;
+  }
+}

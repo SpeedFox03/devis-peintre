@@ -1,0 +1,19 @@
+.ui-stat-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ui-stat-card__label {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.ui-stat-card__value {
+  font-size: 24px;
+  color: #111827;
+}

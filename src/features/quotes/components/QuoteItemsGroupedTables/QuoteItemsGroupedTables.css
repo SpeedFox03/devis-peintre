@@ -1,0 +1,4 @@
+.quote-items-grouped {
+  display: grid;
+  gap: 20px;
+}

@@ -1,0 +1,15 @@
+.quote-details-page {
+  display: grid;
+  gap: 20px;
+}
+
+.quote-details-page__layout {
+  display: grid;
+  gap: 20px;
+}
+
+.quote-details-page__header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}

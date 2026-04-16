@@ -1,0 +1,16 @@
+.ui-form-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.ui-form-grid--1 {
+  grid-template-columns: 1fr;
+}
+
+.ui-form-grid--2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.ui-form-grid--3-1 {
+  grid-template-columns: 2fr 1fr;
+}

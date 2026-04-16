@@ -1,0 +1,13 @@
+.quotes-page__form {
+  display: grid;
+  gap: 16px;
+}
+
+.quotes-page__form-title {
+  margin: 0;
+}
+
+.quotes-page__actions {
+  display: flex;
+  gap: 12px;
+}

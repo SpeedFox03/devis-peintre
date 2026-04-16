@@ -1,0 +1,28 @@
+.ui-section-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+  padding: 16px;
+}
+
+.ui-section-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.ui-section-card__title {
+  margin: 0;
+  font-size: 18px;
+}
+
+.ui-section-card__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.ui-section-card__content {
+  display: block;
+}

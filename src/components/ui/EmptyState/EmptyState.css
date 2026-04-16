@@ -1,0 +1,16 @@
+.ui-empty-state {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 16px;
+  background: white;
+}
+
+.ui-empty-state__title {
+  margin: 0 0 8px 0;
+}
+
+.ui-empty-state__description {
+  margin: 0;
+  color: #4b5563;
+}

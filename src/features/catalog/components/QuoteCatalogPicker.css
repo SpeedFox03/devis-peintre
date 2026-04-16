@@ -1,0 +1,24 @@
+.quote-catalog-picker {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.quote-catalog-picker__toolbar {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.quote-catalog-picker__description {
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 0.92rem;
+}
+
+.quote-catalog-picker__empty {
+  padding: 16px;
+  border: 1px dashed #d1d5db;
+  border-radius: 12px;
+  color: #6b7280;
+}

@@ -1,0 +1,22 @@
+.ui-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.ui-page-header__title {
+  margin: 0 0 8px 0;
+}
+
+.ui-page-header__description {
+  margin: 0;
+  color: #4b5563;
+}
+
+.ui-page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
