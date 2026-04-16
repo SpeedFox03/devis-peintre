@@ -1,4 +1,28 @@
 .ui-error-message {
-  color: #dc2626;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(143, 74, 59, 0.18);
+  background: linear-gradient(180deg, rgba(255, 245, 242, 0.96) 0%, rgba(255, 239, 235, 0.94) 100%);
+  color: #6e3228;
+  box-shadow: 0 10px 24px rgba(143, 74, 59, 0.08);
+}
+
+.ui-error-message__icon {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(143, 74, 59, 0.12);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.ui-error-message__text {
   margin: 0;
+  line-height: 1.45;
 }

@@ -1,21 +1,19 @@
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
+import "./AppLayout.css";
 
 export function AppLayout() {
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "240px 1fr",
-        minHeight: "100vh",
-      }}
-    >
+    <div className="app-shell">
       <Sidebar />
 
-      <div style={{ padding: 24 }}>
+      <div className="app-shell__main">
         <Topbar />
-        <Outlet />
+
+        <main className="app-shell__content">
+          <Outlet />
+        </main>
       </div>
     </div>
   );

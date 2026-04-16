@@ -1,6 +1,10 @@
 .ui-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
-  background: white;
+  border: 1px solid rgba(120, 92, 68, 0.14);
+  border-radius: 22px;
+  padding: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 252, 247, 0.96) 0%, rgba(255, 248, 241, 0.94) 100%);
+  box-shadow:
+    0 12px 34px rgba(90, 63, 44, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }

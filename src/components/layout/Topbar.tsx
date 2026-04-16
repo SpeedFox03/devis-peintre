@@ -1,6 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../features/auth/hooks/useAuth";
+import "./Topbar.css";
+
+function getInitials(email?: string | null) {
+  if (!email) return "U";
+  return email.slice(0, 2).toUpperCase();
+}
 
 export function Topbar() {
   const { user } = useAuth();
@@ -12,23 +18,27 @@ export function Topbar() {
   }
 
   return (
-    <header
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingBottom: 16,
-        borderBottom: "1px solid #e5e7eb",
-        marginBottom: 24,
-      }}
-    >
-      <div>
-        <strong>Application de devis</strong>
+    <header className="app-topbar">
+      <div className="app-topbar__intro">
+        <p className="app-topbar__eyebrow">Espace de travail</p>
+        <h2 className="app-topbar__title">Tableau de production</h2>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <span>{user?.email ?? "Utilisateur"}</span>
-        <button onClick={handleLogout}>Déconnexion</button>
+      <div className="app-topbar__actions">
+        <div className="app-topbar__user-card">
+          <div className="app-topbar__avatar">{getInitials(user?.email)}</div>
+
+          <div className="app-topbar__user-meta">
+            <span className="app-topbar__user-label">Connecté en tant que</span>
+            <strong className="app-topbar__user-email">
+              {user?.email ?? "Utilisateur"}
+            </strong>
+          </div>
+        </div>
+
+        <button className="app-topbar__logout" onClick={handleLogout}>
+          Déconnexion
+        </button>
       </div>
     </header>
   );

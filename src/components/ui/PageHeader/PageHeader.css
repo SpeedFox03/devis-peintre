@@ -1,22 +1,39 @@
 .ui-page-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 18px;
+  margin-bottom: 22px;
 }
 
 .ui-page-header__title {
   margin: 0 0 8px 0;
+  font-size: 2rem;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  color: #2f2118;
 }
 
 .ui-page-header__description {
   margin: 0;
-  color: #4b5563;
+  color: #7d6654;
+  max-width: 720px;
 }
 
 .ui-page-header__actions {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+  .ui-page-header {
+    flex-direction: column;
+  }
+
+  .ui-page-header__actions {
+    justify-content: flex-start;
+  }
 }
