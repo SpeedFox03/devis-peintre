@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
 import { ErrorMessage } from "../../../components/ui/ErrorMessage/ErrorMessage";
 import { EmptyState } from "../../../components/ui/EmptyState/EmptyState";
 import { LoadingBlock } from "../../../components/ui/LoadingBlock/LoadingBlock";
@@ -17,7 +16,6 @@ import { useQuoteDetailsPage } from "../hooks/useQuoteDetailsPage";
 import { getQuoteStatusLabel, type QuoteStatus } from "../types";
 import {
   DownloadIcon,
-  AttachmentIcon,
 } from "../../../components/ui/Icons/AppIcons";
 import "./QuoteDetailsPage.css";
 
@@ -210,7 +208,7 @@ export function QuoteDetailsPage() {
               aria-label="Transformer en facture"
               title="Transformer en facture"
             >
-              <AttachmentIcon />
+              Transformer en facture
             </Button>
 
             <Button
