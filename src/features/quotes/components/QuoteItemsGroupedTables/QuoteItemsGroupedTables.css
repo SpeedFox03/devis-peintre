@@ -73,3 +73,12 @@
     min-width: 180px;
   }
 }
+.quote-items-grouped-premium__actions .ui-button {
+  color: inherit;
+}
+
+.quote-items-grouped-premium__actions .ui-button svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}

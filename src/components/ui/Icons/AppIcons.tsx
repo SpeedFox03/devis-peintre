@@ -117,3 +117,35 @@ export function EyeOffIcon() {
     </svg>
   );
 }
+
+export function PlusIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true">
+      <path d="M224,120H136V32a8,8,0,0,0-16,0v88H32a8,8,0,0,0,0,16h88v88a8,8,0,0,0,16,0V136h88a8,8,0,0,0,0-16Z" />
+    </svg>
+  );
+}
+
+export function PencilIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true">
+      <path d="M227.31,73.37,182.63,28.69a16,16,0,0,0-22.63,0L36.69,152a15.86,15.86,0,0,0-4.35,7.4L16.11,227.3a8,8,0,0,0,9.59,9.59l67.9-16.23a15.94,15.94,0,0,0,7.4-4.35L227.31,96A16,16,0,0,0,227.31,73.37ZM88,208l-40,9.57L57.56,176,80,198.43Zm11.31-20.69L68.69,156.69,136,89.37,166.63,120ZM178,108.69,147.31,78,171.31,54l30.68,30.68Z" />
+    </svg>
+  );
+}
+
+export function CopyIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true">
+      <path d="M168,32H88A24,24,0,0,0,64,56V72H56A24,24,0,0,0,32,96v80a24,24,0,0,0,24,24h8v16a24,24,0,0,0,24,24h80a24,24,0,0,0,24-24V200h8a24,24,0,0,0,24-24V96A24,24,0,0,0,200,72h-8V56A24,24,0,0,0,168,32ZM56,184a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8h96a8,8,0,0,1,8,8v8H88a24,24,0,0,0-24,24v56Zm120,32a8,8,0,0,1-8,8H88a8,8,0,0,1-8-8V128a8,8,0,0,1,8-8h80a8,8,0,0,1,8,8Zm32-40a8,8,0,0,1-8,8h-8V128a24,24,0,0,0-24-24H176V88h24a8,8,0,0,1,8,8Z" />
+    </svg>
+  );
+}
+
+export function ArrowsLeftRightIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true">
+      <path d="M213.66,130.34l-32,32a8,8,0,0,1-11.32-11.32L188.69,132H67.31l18.35,18.34a8,8,0,0,1-11.32,11.32l-32-32a8,8,0,0,1,0-11.32l32-32A8,8,0,0,1,85.66,97.66L67.31,116H188.69L170.34,97.66a8,8,0,0,1,11.32-11.32l32,32A8,8,0,0,1,213.66,130.34Z" />
+    </svg>
+  );
+}

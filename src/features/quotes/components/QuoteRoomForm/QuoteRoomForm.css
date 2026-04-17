@@ -8,3 +8,13 @@
   gap: 12px;
   flex-wrap: wrap;
 }
+
+.quote-room-form-premium__actions .ui-button {
+  color: inherit;
+}
+
+.quote-room-form-premium__actions .ui-button svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}

@@ -5,6 +5,11 @@ import { EmptyState } from "../../../../components/ui/EmptyState/EmptyState";
 import { ErrorMessage } from "../../../../components/ui/ErrorMessage/ErrorMessage";
 import { QuoteRoomForm } from "../QuoteRoomForm/QuoteRoomForm";
 import type { QuoteItem, Room, RoomFormState } from "../../types";
+import {
+  PlusIcon,
+  CloseIcon,
+  TrashIcon,
+} from "../../../../components/ui/Icons/AppIcons";
 import "./QuoteRoomsSection.css";
 
 type QuoteRoomsSectionProps = {
@@ -50,12 +55,23 @@ export function QuoteRoomsSection({
 
           <div className="quote-rooms-premium__header-actions">
             {!showForm ? (
-              <Button type="button" onClick={onOpenForm}>
-                Ajouter une pièce
+              <Button
+                type="button"
+                onClick={onOpenForm}
+                aria-label="Ajouter une pièce"
+                title="Ajouter une pièce"
+              >
+                <PlusIcon />
               </Button>
             ) : (
-              <Button type="button" variant="secondary" onClick={onCloseForm}>
-                Fermer
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={onCloseForm}
+                aria-label="Fermer"
+                title="Fermer"
+              >
+                <CloseIcon />
               </Button>
             )}
           </div>
@@ -96,7 +112,7 @@ export function QuoteRoomsSection({
                     </div>
 
                     <span className="quote-rooms-premium__badge">
-                      {count} ligne{count > 1 ? "s" : ""}
+                      {count === 0 ? "Vide" : `${count} ligne${count > 1 ? "s" : ""}`}
                     </span>
                   </div>
 
@@ -107,8 +123,10 @@ export function QuoteRoomsSection({
                       size="sm"
                       disabled={deletingRoomId === room.id}
                       onClick={() => onDelete(room.id)}
+                      aria-label="Supprimer"
+                      title="Supprimer"
                     >
-                      {deletingRoomId === room.id ? "Suppression..." : "Supprimer"}
+                      <TrashIcon />
                     </Button>
                   </div>
                 </article>

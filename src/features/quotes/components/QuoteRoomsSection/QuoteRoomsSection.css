@@ -37,7 +37,7 @@
 .quote-rooms-premium__grid {
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .quote-rooms-premium__card {
@@ -111,4 +111,16 @@
   .quote-rooms-premium__grid {
     grid-template-columns: 1fr;
   }
+}
+
+.quote-rooms-premium__header-actions .ui-button,
+.quote-rooms-premium__card-actions .ui-button {
+  color: inherit;
+}
+
+.quote-rooms-premium__header-actions .ui-button svg,
+.quote-rooms-premium__card-actions .ui-button svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
 }

@@ -4,6 +4,7 @@ import { FormField } from "../../../../components/ui/FormField/FormField";
 import { TextInput } from "../../../../components/ui/TextInput/TextInput";
 import { Button } from "../../../../components/ui/Button/Button";
 import { ErrorMessage } from "../../../../components/ui/ErrorMessage/ErrorMessage";
+import { CloseIcon } from "../../../../components/ui/Icons/AppIcons";
 import "./QuoteRoomForm.css";
 
 type RoomFormState = {
@@ -58,8 +59,14 @@ export function QuoteRoomForm({
           {saving ? "Ajout..." : "Créer la pièce"}
         </Button>
 
-        <Button type="button" variant="secondary" onClick={onCancel}>
-          Annuler
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onCancel}
+          aria-label="Annuler"
+          title="Annuler"
+        >
+          <CloseIcon />
         </Button>
       </div>
     </form>

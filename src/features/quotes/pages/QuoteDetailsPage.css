@@ -5,7 +5,8 @@
 }
 
 .quote-premium-page__hero {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
@@ -136,168 +137,94 @@
   gap: 10px;
   flex-wrap: wrap;
   justify-content: flex-end;
-}
-
-.quote-premium-page__stats {
-  display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.quote-premium-page__stat-card {
-  padding: 18px 20px;
-}
-
-.quote-premium-page__stat-card--strong {
-  border-color: rgba(228, 156, 33, 0.42);
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.05),
-    0 0 0 3px rgba(228, 156, 33, 0.08);
-}
-
-.quote-premium-page__stat-label {
-  margin: 0 0 6px;
-  color: #6b7280;
-  font-size: 0.76rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.quote-premium-page__stat-value {
-  margin: 0;
-  color: #111827;
-  font-size: clamp(1.12rem, 1.8vw, 1.44rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  overflow-wrap: anywhere;
-}
-
-.quote-premium-page__page-nav-shell {
-  position: sticky;
-  top: 76px;
-  z-index: 20;
-  display: grid;
-  gap: 10px;
-  padding: 12px;
-  border: 1px solid rgba(229, 231, 235, 0.82);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
-}
-
-.quote-premium-page__page-nav-mobile-bar {
-  display: none;
-}
-
-.quote-premium-page__nav-mobile-label {
-  margin: 0 0 4px;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #6b7280;
-}
-
-.quote-premium-page__nav-mobile-current {
-  color: #111827;
-  font-size: 0.98rem;
-}
-
-.quote-premium-page__nav-toggle {
-  width: 44px;
-  height: 44px;
-  border-radius: 16px;
-  border: 1px solid rgba(229, 231, 235, 0.9);
-  background: rgba(255, 255, 255, 0.92);
-  position: relative;
-  cursor: pointer;
-}
-
-.quote-premium-page__nav-toggle span {
-  position: absolute;
-  left: 50%;
-  width: 18px;
-  height: 2px;
-  border-radius: 999px;
-  background: #111827;
-  transform: translateX(-50%);
-  transition:
-    transform 0.18s ease,
-    opacity 0.18s ease,
-    width 0.18s ease;
-}
-
-.quote-premium-page__nav-toggle span:nth-child(1) {
-  top: 14px;
-}
-
-.quote-premium-page__nav-toggle span:nth-child(2) {
-  top: 21px;
-}
-
-.quote-premium-page__nav-toggle span:nth-child(3) {
-  top: 28px;
-}
-
-.quote-premium-page__nav-toggle.is-open span:nth-child(1) {
-  top: 21px;
-  transform: translateX(-50%) rotate(45deg);
-}
-
-.quote-premium-page__nav-toggle.is-open span:nth-child(2) {
-  opacity: 0;
-  width: 0;
-}
-
-.quote-premium-page__nav-toggle.is-open span:nth-child(3) {
-  top: 21px;
-  transform: translateX(-50%) rotate(-45deg);
-}
-
-.quote-premium-page__page-nav {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.quote-premium-page__page-tab {
-  display: grid;
   align-items: center;
-  text-align: left;
-  min-height: 56px;
-  padding: 14px 18px;
-  border-radius: 18px;
+  margin-left: auto;
+}
+
+/* ─── Tab nav injected into Topbar via portal ─────────────────────────────── */
+
+/*
+  When this page is active, the Topbar gets the class
+  `app-topbar--with-quote-nav` which lets us tweak its layout
+  without touching Topbar.tsx.
+*/
+.app-topbar--with-quote-nav {
+  flex-wrap: wrap;
+  row-gap: 10px;
+}
+
+/* The nav sits between the intro and the actions on wide screens,
+   and drops to a full-width second row on narrow screens. */
+.quote-topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  order: 2; /* intro = 0 (default), nav = 2, actions = 3 */
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+.app-topbar__intro  { order: 0; }
+.app-topbar__actions { order: 3; }
+
+.quote-topbar-nav__tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 18px;
+  border-radius: 14px;
   border: 1px solid rgba(229, 231, 235, 0.95);
   background: rgba(255, 255, 255, 0.7);
-  color: #111827;
+  color: #374151;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
   transition:
     background 0.15s ease,
     border-color 0.15s ease,
-    box-shadow 0.15s ease,
-    transform 0.06s ease;
+    color 0.15s ease;
 }
 
-.quote-premium-page__page-tab:hover {
+.quote-topbar-nav__tab:hover {
   background: rgba(255, 255, 255, 0.95);
   border-color: rgba(209, 213, 219, 1);
+  color: #111827;
 }
 
-.quote-premium-page__page-tab--active {
-  background: rgba(228, 156, 33, 0.08);
-  border-color: rgba(228, 156, 33, 0.38);
-  box-shadow: 0 0 0 4px rgba(228, 156, 33, 0.08);
+.quote-topbar-nav__tab--active {
+  background: rgba(228, 156, 33, 0.1);
+  border-color: rgba(228, 156, 33, 0.4);
+  color: #92400e;
+  box-shadow: 0 0 0 3px rgba(228, 156, 33, 0.08);
 }
 
-.quote-premium-page__page-tab-label {
-  font-size: 0.96rem;
-  font-weight: 800;
+/* On narrow screens the nav fills its own row */
+@media (max-width: 900px) {
+  .quote-topbar-nav {
+    order: 10;
+    flex: 0 0 100%;
+    justify-content: flex-start;
+  }
 }
+
+@media (max-width: 540px) {
+  .quote-topbar-nav {
+    gap: 8px;
+  }
+
+  .quote-topbar-nav__tab {
+    flex: 1 1 0;
+    justify-content: center;
+    padding: 8px 12px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
 
 .quote-premium-page__builder-columns {
   display: grid;
-  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.3fr);
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
   gap: 18px;
   align-items: start;
 }
@@ -418,14 +345,6 @@
 }
 
 @media (max-width: 1024px) {
-  .quote-premium-page__stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .quote-premium-page__page-nav-shell {
-    top: 68px;
-  }
-
   .quote-premium-page__compact-grid--triple {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -464,8 +383,6 @@
     min-width: min(240px, calc(100vw - 48px));
   }
 
-  .quote-premium-page__stats,
-  .quote-premium-page__page-nav,
   .quote-premium-page__compact-grid,
   .quote-premium-page__compact-grid--hero,
   .quote-premium-page__compact-grid--triple,
@@ -473,32 +390,19 @@
   .quote-premium-page__compact-grid--single-compact {
     grid-template-columns: 1fr;
   }
-}
 
-@media (max-width: 720px) {
-  .quote-premium-page__page-nav-shell {
-    padding: 10px;
+  .quote-premium-page__hero-right {
+    align-items: flex-end;
+    width: 100%;
   }
 
-  .quote-premium-page__page-nav-mobile-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+  .quote-premium-page__hero-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 
-  .quote-premium-page__page-nav {
-    display: none;
-    grid-template-columns: 1fr;
-    padding-top: 10px;
-  }
-
-  .quote-premium-page__page-nav--open {
-    display: grid;
-  }
-
-  .quote-premium-page__page-tab {
-    min-height: auto;
+  .quote-premium-page__hero-actions > * {
+    flex: 0 0 auto;
   }
 }
 
@@ -512,4 +416,28 @@
     padding: 16px;
     border-radius: 20px;
   }
+}
+
+.quote-premium-page__hero-actions .ui-button,
+.quote-premium-page__form-footer .ui-button {
+  color: inherit;
+}
+
+.quote-premium-page__hero-actions .ui-button svg,
+.quote-premium-page__form-footer .ui-button svg {
+  width: 27px;
+  height: 27px;
+  flex: 0 0 auto;
+}
+
+.quote-premium-page__hero-actions .ui-button {
+  min-width: 42px;
+  padding-inline: 12px;
+}
+
+.quote-premium-page__hero-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
 }

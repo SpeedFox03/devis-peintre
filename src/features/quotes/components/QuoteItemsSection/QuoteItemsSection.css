@@ -181,3 +181,19 @@
     min-width: 140px;
   }
 }
+
+.quote-items-premium__header-actions .ui-button,
+.quote-items-premium__move-actions .ui-button,
+.quote-items-premium__table-actions .ui-button,
+.quote-items-premium__catalog-actions .ui-button {
+  color: inherit;
+}
+
+.quote-items-premium__header-actions .ui-button svg,
+.quote-items-premium__move-actions .ui-button svg,
+.quote-items-premium__table-actions .ui-button svg,
+.quote-items-premium__catalog-actions .ui-button svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}

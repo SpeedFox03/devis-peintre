@@ -1,5 +1,11 @@
 import { Button } from "../../../../components/ui/Button/Button";
 import { DataTable } from "../../../../components/ui/DataTable/DataTable";
+import {
+  PencilIcon,
+  CopyIcon,
+  ArrowsLeftRightIcon,
+  TrashIcon,
+} from "../../../../components/ui/Icons/AppIcons";
 import "./QuoteItemsGroupedTables.css";
 
 type QuoteItem = {
@@ -61,16 +67,33 @@ function renderRows(
       </td>
       <td>
         <div className="quote-items-grouped-premium__actions">
-          <Button size="sm" onClick={() => onEdit(item)}>
-            Modifier
+          <Button
+            size="sm"
+            onClick={() => onEdit(item)}
+            aria-label="Modifier"
+            title="Modifier"
+          >
+            <PencilIcon />
           </Button>
 
-          <Button size="sm" variant="secondary" onClick={() => onDuplicate(item)}>
-            Dupliquer
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => onDuplicate(item)}
+            aria-label="Dupliquer"
+            title="Dupliquer"
+          >
+            <CopyIcon />
           </Button>
 
-          <Button size="sm" variant="secondary" onClick={() => onOpenMove(item)}>
-            Déplacer
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => onOpenMove(item)}
+            aria-label="Déplacer"
+            title="Déplacer"
+          >
+            <ArrowsLeftRightIcon />
           </Button>
 
           <Button
@@ -78,8 +101,10 @@ function renderRows(
             variant="danger"
             disabled={deletingItemId === item.id}
             onClick={() => onDelete(item.id)}
+            aria-label="Supprimer"
+            title="Supprimer"
           >
-            {deletingItemId === item.id ? "Suppression..." : "Supprimer"}
+            <TrashIcon />
           </Button>
         </div>
       </td>

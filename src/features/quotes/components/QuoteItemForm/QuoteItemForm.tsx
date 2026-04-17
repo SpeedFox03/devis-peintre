@@ -6,6 +6,7 @@ import { Select } from "../../../../components/ui/Select/Select";
 import { FormGrid } from "../../../../components/ui/FormGrid/FormGrid";
 import { Button } from "../../../../components/ui/Button/Button";
 import { ErrorMessage } from "../../../../components/ui/ErrorMessage/ErrorMessage";
+import { CloseIcon } from "../../../../components/ui/Icons/AppIcons";
 import "./QuoteItemForm.css";
 
 type Room = {
@@ -165,8 +166,14 @@ export function QuoteItemForm({
             : "Ajouter la ligne"}
         </Button>
 
-        <Button type="button" variant="secondary" onClick={onCancel}>
-          Annuler
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onCancel}
+          aria-label="Annuler"
+          title="Annuler"
+        >
+          <CloseIcon />
         </Button>
       </div>
     </form>

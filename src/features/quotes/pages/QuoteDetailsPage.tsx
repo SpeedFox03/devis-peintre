@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { ErrorMessage } from "../../../components/ui/ErrorMessage/ErrorMessage";
 import { EmptyState } from "../../../components/ui/EmptyState/EmptyState";
@@ -14,11 +15,12 @@ import { QuoteRoomsSection } from "../components/QuoteRoomsSection/QuoteRoomsSec
 import { QuoteSummarySection } from "../components/QuoteSummarySection/QuoteSummarySection";
 import { useQuoteDetailsPage } from "../hooks/useQuoteDetailsPage";
 import { getQuoteStatusLabel, type QuoteStatus } from "../types";
+import {
+  DownloadIcon,
+  AttachmentIcon,
+} from "../../../components/ui/Icons/AppIcons";
 import "./QuoteDetailsPage.css";
 
-function formatCurrency(value: number) {
-  return `${Number(value || 0).toFixed(2)} €`;
-}
 
 const quotePages = [
   {
@@ -35,9 +37,23 @@ type QuotePageId = (typeof quotePages)[number]["id"];
 
 export function QuoteDetailsPage() {
   const [showGeneralMenu, setShowGeneralMenu] = useState(false);
-  const [showMobileNav, setShowMobileNav] = useState(false);
   const [activePage, setActivePage] = useState<QuotePageId>("builder");
   const generalMenuRef = useRef<HTMLDivElement | null>(null);
+
+  // Portal target: the .app-topbar element
+  const [topbarPortalTarget, setTopbarPortalTarget] = useState<Element | null>(null);
+
+  useEffect(() => {
+    const topbar = document.querySelector(".app-topbar");
+    setTopbarPortalTarget(topbar);
+
+    // Mark topbar so CSS can adjust its layout
+    topbar?.classList.add("app-topbar--with-quote-nav");
+
+    return () => {
+      topbar?.classList.remove("app-topbar--with-quote-nav");
+    };
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -49,7 +65,6 @@ export function QuoteDetailsPage() {
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setShowGeneralMenu(false);
-        setShowMobileNav(false);
       }
     }
 
@@ -151,122 +166,66 @@ export function QuoteDetailsPage() {
     );
   }
 
-  const activePageData = quotePages.find((page) => page.id === activePage) ?? quotePages[0];
+  // The tab nav injected into the Topbar
+  const tabNav = (
+    <nav className="quote-topbar-nav" aria-label="Pages du devis">
+      {quotePages.map((page) => (
+        <button
+          key={page.id}
+          type="button"
+          className={`quote-topbar-nav__tab ${
+            activePage === page.id ? "quote-topbar-nav__tab--active" : ""
+          }`}
+          onClick={() => setActivePage(page.id)}
+        >
+          {page.label}
+        </button>
+      ))}
+    </nav>
+  );
 
   return (
     <section className="quote-premium-page">
+      {/* Inject nav into Topbar via portal */}
+      {topbarPortalTarget ? createPortal(tabNav, topbarPortalTarget) : null}
+
       <header className="quote-premium-page__hero">
-        <div className="quote-premium-page__hero-main">
-          <div className="quote-premium-page__hero-topline">
-            <Link to="/" className="quote-premium-page__backlink">
-              ← Retour aux devis
-            </Link>
-            <span className="quote-premium-page__separator">•</span>
-            <span className="quote-premium-page__quote-number">{quote.quote_number}</span>
-          </div>
+        <div className="quote-premium-page__hero-title-row">
+          <div className="quote-premium-page__hero-copy">
+            <h1 className="quote-premium-page__hero-title">{quote.title}</h1>
 
-          <div className="quote-premium-page__hero-title-row">
-            <div className="quote-premium-page__hero-copy">
-              <h1 className="quote-premium-page__hero-title">{quote.title}</h1>
-            </div>
-
-            <div
+            <span
               className={`quote-premium-page__status-chip quote-premium-page__status-chip--${quote.status}`}
             >
               {getQuoteStatusLabel(quote.status)}
-            </div>
+            </span>
           </div>
-        </div>
 
-        <div className="quote-premium-page__hero-actions">
-          <Button
-            variant="primary"
-            type="button"
-            onClick={handleCreateInvoiceFromQuote}
-            disabled={creatingInvoice}
-          >
-            {creatingInvoice ? "Transformation..." : "Transformer en facture"}
-          </Button>
+          <div className="quote-premium-page__hero-actions">
+            <Button
+              variant="primary"
+              type="button"
+              onClick={handleCreateInvoiceFromQuote}
+              disabled={creatingInvoice}
+              aria-label="Transformer en facture"
+              title="Transformer en facture"
+            >
+              <AttachmentIcon />
+            </Button>
 
-          <Button
-            variant="secondary"
-            type="button"
-            onClick={handleDownloadPdf}
-            disabled={downloadingPdf}
-          >
-            {downloadingPdf ? "Génération..." : "Télécharger le PDF"}
-          </Button>
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={handleDownloadPdf}
+              disabled={downloadingPdf}
+              aria-label="Télécharger le PDF"
+              title="Télécharger le PDF"
+            >
+              <DownloadIcon />
+            </Button>
+          </div>
         </div>
       </header>
-
-      <div className="quote-premium-page__stats">
-        <Card className="quote-premium-page__stat-card">
-          <p className="quote-premium-page__stat-label">Total HT</p>
-          <p className="quote-premium-page__stat-value">{formatCurrency(quote.subtotal_ht)}</p>
-        </Card>
-
-        <Card className="quote-premium-page__stat-card">
-          <p className="quote-premium-page__stat-label">TVA</p>
-          <p className="quote-premium-page__stat-value">{formatCurrency(quote.total_tva)}</p>
-        </Card>
-
-        <Card className="quote-premium-page__stat-card quote-premium-page__stat-card--strong">
-          <p className="quote-premium-page__stat-label">Total TTC</p>
-          <p className="quote-premium-page__stat-value">{formatCurrency(quote.total_ttc)}</p>
-        </Card>
-
-        <Card className="quote-premium-page__stat-card">
-          <p className="quote-premium-page__stat-label">Validité</p>
-          <p className="quote-premium-page__stat-value">{quote.valid_until || "-"}</p>
-        </Card>
-      </div>
-
-      <div className="quote-premium-page__page-nav-shell">
-        <div className="quote-premium-page__page-nav-mobile-bar">
-          <div>
-            <p className="quote-premium-page__nav-mobile-label">Page active</p>
-            <strong className="quote-premium-page__nav-mobile-current">
-              {activePageData.label}
-            </strong>
-          </div>
-
-          <button
-            type="button"
-            className={`quote-premium-page__nav-toggle ${showMobileNav ? "is-open" : ""}`}
-            aria-expanded={showMobileNav}
-            aria-controls="quote-page-tabs"
-            onClick={() => setShowMobileNav((current) => !current)}
-          >
-            <span />
-            <span />
-            <span />
-          </button>
-        </div>
-
-        <nav
-          id="quote-page-tabs"
-          className={`quote-premium-page__page-nav ${
-            showMobileNav ? "quote-premium-page__page-nav--open" : ""
-          }`}
-          aria-label="Pages du devis"
-        >
-          {quotePages.map((page) => (
-            <button
-              key={page.id}
-              type="button"
-              className={`quote-premium-page__page-tab ${
-                activePage === page.id ? "quote-premium-page__page-tab--active" : ""
-              }`}
-              onClick={() => {
-                setActivePage(page.id);
-                setShowMobileNav(false);
-              }}
-            >
-              <span className="quote-premium-page__page-tab-label">{page.label}</span>
-            </button>
-          ))}
-        </nav>
-      </div>
 
       <div className="quote-premium-page__page-content">
         {activePage === "builder" ? (
@@ -349,7 +308,7 @@ export function QuoteDetailsPage() {
                       className="quote-premium-page__more-btn"
                       aria-haspopup="menu"
                       aria-expanded={showGeneralMenu}
-                      aria-label="Plus d’actions"
+                      aria-label="Plus d'actions"
                       onClick={() => setShowGeneralMenu((current) => !current)}
                     >
                       ⋯

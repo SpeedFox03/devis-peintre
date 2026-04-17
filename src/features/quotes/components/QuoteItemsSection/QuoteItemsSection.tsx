@@ -11,6 +11,14 @@ import { QuoteItemForm } from "../QuoteItemForm/QuoteItemForm";
 import type { ServiceCatalogItem } from "../../../catalog/types";
 import type { QuoteItem, QuoteItemFormState, Room } from "../../types";
 import "./QuoteItemsSection.css";
+import {
+  PlusIcon,
+  CloseIcon,
+  PencilIcon,
+  CopyIcon,
+  ArrowsLeftRightIcon,
+  TrashIcon,
+} from "../../../../components/ui/Icons/AppIcons";
 
 type QuoteItemsSectionProps = {
   services: ServiceCatalogItem[];
@@ -127,22 +135,34 @@ export function QuoteItemsSection({
 
           <div className="quote-items-premium__header-actions">
             {!showForm ? (
-              <Button type="button" onClick={onOpenCreateForm}>
-                Ajouter une ligne
+              <Button type="button" onClick={onOpenCreateForm} aria-label="Ajouter une ligne" title="Ajouter une ligne">
+                <PlusIcon />
               </Button>
             ) : (
-              <Button type="button" variant="secondary" onClick={onCloseForm}>
-                Fermer la saisie
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={onCloseForm}
+                aria-label="Fermer la saisie"
+                title="Fermer la saisie" 
+              >
+                <CloseIcon />
               </Button>
             )}
 
             {!showCatalogPicker ? (
               <Button type="button" variant="secondary" onClick={onOpenCatalogPicker}>
-                Depuis le catalogue
+                Catalogue
               </Button>
             ) : (
-              <Button type="button" variant="secondary" onClick={onCloseCatalogPicker}>
-                Fermer le catalogue
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={onCloseCatalogPicker}
+                aria-label="Fermer le catalogue"
+                title="Fermer le catalogue"
+              >
+                <CloseIcon />
               </Button>
             )}
           </div>
@@ -279,9 +299,14 @@ export function QuoteItemsSection({
                 <Button type="button" disabled={movingItemLoading} onClick={onConfirmMove}>
                   {movingItemLoading ? "Déplacement..." : "Confirmer"}
                 </Button>
-
-                <Button type="button" variant="secondary" onClick={onCloseMove}>
-                  Annuler
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={onCloseMove}
+                  aria-label="Annuler"
+                  title="Annuler"
+                >
+                  <CloseIcon />
                 </Button>
               </div>
             </div>
@@ -334,23 +359,49 @@ export function QuoteItemsSection({
                     <td>{formatCurrency(totalHt)}</td>
                     <td>
                       <div className="quote-items-premium__table-actions">
-                        <Button type="button" size="sm" variant="secondary" onClick={() => onEdit(item)}>
-                          Modifier
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => onEdit(item)}
+                          aria-label="Modifier"
+                          title="Modifier"
+                        >
+                          <PencilIcon />
                         </Button>
-                        <Button type="button" size="sm" variant="secondary" onClick={() => onDuplicate(item)}>
-                          Dupliquer
+
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => onDuplicate(item)}
+                          aria-label="Dupliquer"
+                          title="Dupliquer"
+                        >
+                          <CopyIcon />
                         </Button>
-                        <Button type="button" size="sm" variant="secondary" onClick={() => onOpenMove(item)}>
-                          Déplacer
+
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => onOpenMove(item)}
+                          aria-label="Déplacer"
+                          title="Déplacer"
+                        >
+                          <ArrowsLeftRightIcon />
                         </Button>
+
                         <Button
                           type="button"
                           size="sm"
                           variant="danger"
                           disabled={deletingItemId === item.id}
                           onClick={() => onDelete(item.id)}
+                          aria-label="Supprimer"
+                          title="Supprimer"
                         >
-                          {deletingItemId === item.id ? "Suppression..." : "Supprimer"}
+                          <TrashIcon />
                         </Button>
                       </div>
                     </td>
