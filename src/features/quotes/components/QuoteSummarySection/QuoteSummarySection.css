@@ -1,84 +1,65 @@
 .quote-summary-premium {
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
 .quote-summary-premium__header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 14px;
-}
-
-.quote-summary-premium__eyebrow {
-  margin: 0 0 6px;
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #9e8672;
+  gap: 12px;
 }
 
 .quote-summary-premium__title {
   margin: 0;
-  color: #34251b;
-  font-size: 1.28rem;
+  color: #111827;
+  font-size: 1.16rem;
 }
 
 .quote-summary-premium__tax-chip {
   flex: 0 0 auto;
-  min-height: 34px;
+  min-height: 32px;
   padding: 0 12px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
-  background: rgba(111, 82, 60, 0.1);
-  color: #6f523c;
-  font-size: 0.84rem;
+  background: rgba(228, 156, 33, 0.08);
+  color: #8a5a00;
+  font-size: 0.8rem;
   font-weight: 700;
-  border: 1px solid rgba(111, 82, 60, 0.12);
+  border: 1px solid rgba(228, 156, 33, 0.18);
 }
 
 .quote-summary-premium__grid {
   display: grid;
-  gap: 16px;
+  gap: 14px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .quote-summary-premium__stat {
   display: grid;
-  gap: 8px;
-}
-
-.quote-summary-premium__stat--highlight {
-  position: relative;
+  gap: 6px;
 }
 
 .quote-summary-premium__label {
   margin: 0;
-  color: #907966;
-  font-size: 0.82rem;
+  color: #6b7280;
+  font-size: 0.76rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .quote-summary-premium__value {
   margin: 0;
-  color: #2f2118;
-  font-size: 1.55rem;
-  font-weight: 700;
-  letter-spacing: -0.04em;
+  color: #111827;
+  font-size: clamp(1.2rem, 2vw, 1.45rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
 }
 
 .quote-summary-premium__value--strong {
-  font-size: 1.8rem;
-  color: #4f3929;
-}
-
-.quote-summary-premium__hint {
-  margin: 0;
-  color: #7d6654;
-  line-height: 1.45;
-  font-size: 0.92rem;
+  font-size: clamp(1.3rem, 2.2vw, 1.7rem);
+  color: #8a5a00;
 }
 
 @media (max-width: 900px) {

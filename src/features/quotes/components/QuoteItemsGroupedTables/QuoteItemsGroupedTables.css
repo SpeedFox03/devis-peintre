@@ -1,11 +1,13 @@
 .quote-items-grouped-premium {
   display: grid;
   gap: 20px;
+  min-width: 0;
 }
 
 .quote-items-grouped-premium__section {
   display: grid;
   gap: 12px;
+  min-width: 0;
 }
 
 .quote-items-grouped-premium__section-header {
@@ -15,18 +17,11 @@
   gap: 12px;
 }
 
-.quote-items-grouped-premium__eyebrow {
-  margin: 0 0 6px;
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #9e8672;
-}
-
 .quote-items-grouped-premium__section-title {
   margin: 0;
-  color: #34251b;
+  color: #111827;
   font-size: 1.08rem;
+  line-height: 1.3;
 }
 
 .quote-items-grouped-premium__count {
@@ -36,8 +31,9 @@
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
-  background: rgba(111, 82, 60, 0.1);
-  color: #6f523c;
+  background: rgba(228, 156, 33, 0.1);
+  color: #8a5a00;
+  border: 1px solid rgba(228, 156, 33, 0.18);
   font-size: 0.82rem;
   font-weight: 700;
 }
@@ -45,20 +41,35 @@
 .quote-items-grouped-premium__label-cell {
   display: grid;
   gap: 4px;
+  min-width: 180px;
 }
 
 .quote-items-grouped-premium__label {
-  color: #34251b;
+  color: #111827;
 }
 
 .quote-items-grouped-premium__description {
-  color: #7d6654;
+  color: #6b7280;
   font-size: 0.92rem;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .quote-items-grouped-premium__actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+@media (max-width: 720px) {
+  .quote-items-grouped-premium__section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .quote-items-grouped-premium__actions {
+    justify-content: flex-start;
+    min-width: 180px;
+  }
 }

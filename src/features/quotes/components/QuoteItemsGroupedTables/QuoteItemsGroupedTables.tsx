@@ -108,12 +108,9 @@ export function QuoteItemsGroupedTables({
         roomItems.length > 0 ? (
           <section key={room.id} className="quote-items-grouped-premium__section">
             <div className="quote-items-grouped-premium__section-header">
-              <div>
-                <p className="quote-items-grouped-premium__eyebrow">Pièce</p>
-                <h3 className="quote-items-grouped-premium__section-title">
-                  {room.name}
-                </h3>
-              </div>
+              <h3 className="quote-items-grouped-premium__section-title">
+                {room.name}
+              </h3>
 
               <div className="quote-items-grouped-premium__count">
                 {roomItems.length} ligne{roomItems.length > 1 ? "s" : ""}
@@ -149,10 +146,7 @@ export function QuoteItemsGroupedTables({
       {unassignedItems.length > 0 && (
         <section className="quote-items-grouped-premium__section">
           <div className="quote-items-grouped-premium__section-header">
-            <div>
-              <p className="quote-items-grouped-premium__eyebrow">Pièce</p>
-              <h3 className="quote-items-grouped-premium__section-title">Sans pièce</h3>
-            </div>
+            <h3 className="quote-items-grouped-premium__section-title">Sans pièce</h3>
 
             <div className="quote-items-grouped-premium__count">
               {unassignedItems.length} ligne{unassignedItems.length > 1 ? "s" : ""}

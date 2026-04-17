@@ -1,48 +1,16 @@
 import type { FormEvent } from "react";
-import { SectionCard } from "../../../../components/ui/SectionCard/SectionCard";
 import { Button } from "../../../../components/ui/Button/Button";
+import { Card } from "../../../../components/ui/Card/Card";
+import { DataTable } from "../../../../components/ui/DataTable/DataTable";
 import { EmptyState } from "../../../../components/ui/EmptyState/EmptyState";
 import { ErrorMessage } from "../../../../components/ui/ErrorMessage/ErrorMessage";
-import { DataTable } from "../../../../components/ui/DataTable/DataTable";
 import { FormField } from "../../../../components/ui/FormField/FormField";
 import { Select } from "../../../../components/ui/Select/Select";
+import { TextInput } from "../../../../components/ui/TextInput/TextInput";
 import { QuoteItemForm } from "../QuoteItemForm/QuoteItemForm";
-import { QuoteItemsGroupedTables } from "../QuoteItemsGroupedTables/QuoteItemsGroupedTables";
-import { QuoteCatalogPicker } from "../../../catalog/components/QuoteCatalogPicker";
 import type { ServiceCatalogItem } from "../../../catalog/types";
+import type { QuoteItem, QuoteItemFormState, Room } from "../../types";
 import "./QuoteItemsSection.css";
-
-type QuoteItem = {
-  id: string;
-  quote_id: string;
-  room_id: string | null;
-  item_type: string;
-  category: string | null;
-  label: string;
-  description: string | null;
-  unit: string;
-  quantity: number;
-  unit_price_ht: number;
-  tva_rate: number;
-  sort_order: number;
-};
-
-type Room = {
-  id: string;
-  name: string;
-};
-
-type QuoteItemFormState = {
-  room_id: string;
-  item_type: string;
-  category: string;
-  label: string;
-  description: string;
-  unit: string;
-  quantity: string;
-  unit_price_ht: string;
-  tva_rate: string;
-};
 
 type QuoteItemsSectionProps = {
   services: ServiceCatalogItem[];
@@ -51,37 +19,28 @@ type QuoteItemsSectionProps = {
   catalogCategory: string;
   catalogRoomId: string;
   addingCatalogServiceId: string | null;
-
   items: QuoteItem[];
   rooms: Room[];
   roomMap: Map<string, string>;
-
   showForm: boolean;
   form: QuoteItemFormState;
   saving: boolean;
   editingItemId: string | null;
   deletingItemId: string | null;
   error: string | null;
-
   movingItem: QuoteItem | null;
   moveRoomId: string;
   movingItemLoading: boolean;
-
   onOpenCreateForm: () => void;
   onCloseForm: () => void;
-
   onOpenCatalogPicker: () => void;
   onCloseCatalogPicker: () => void;
   onCatalogSearchChange: (value: string) => void;
   onCatalogCategoryChange: (value: string) => void;
   onCatalogRoomChange: (value: string) => void;
   onAddFromCatalog: (service: ServiceCatalogItem) => void;
-
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  onChange: <K extends keyof QuoteItemFormState>(
-    field: K,
-    value: QuoteItemFormState[K]
-  ) => void;
+  onChange: <K extends keyof QuoteItemFormState>(field: K, value: QuoteItemFormState[K]) => void;
   onEdit: (item: QuoteItem) => void;
   onDuplicate: (item: QuoteItem) => void;
   onOpenMove: (item: QuoteItem) => void;
@@ -90,6 +49,21 @@ type QuoteItemsSectionProps = {
   onConfirmMove: () => void;
   onDelete: (itemId: string) => void;
 };
+
+function formatCurrency(value: number | string) {
+  return `${Number(value || 0).toFixed(2)} €`;
+}
+
+function formatQuantity(value: number) {
+  const parsed = Number(value || 0);
+  return Number.isInteger(parsed) ? String(parsed) : parsed.toFixed(2);
+}
+
+function getCategories(services: ServiceCatalogItem[]) {
+  return Array.from(new Set(services.map((service) => service.category).filter(Boolean))).sort(
+    (a, b) => String(a).localeCompare(String(b), "fr")
+  ) as string[];
+}
 
 export function QuoteItemsSection({
   services,
@@ -128,64 +102,170 @@ export function QuoteItemsSection({
   onConfirmMove,
   onDelete,
 }: QuoteItemsSectionProps) {
+  const categories = getCategories(services);
+
+  const filteredServices = services.filter((service) => {
+    const normalizedSearch = catalogSearch.trim().toLowerCase();
+    const matchesSearch =
+      !normalizedSearch ||
+      service.name.toLowerCase().includes(normalizedSearch) ||
+      (service.default_description ?? "").toLowerCase().includes(normalizedSearch);
+
+    const matchesCategory =
+      catalogCategory === "all" || !catalogCategory || service.category === catalogCategory;
+
+    return matchesSearch && matchesCategory;
+  });
+
   return (
-    <>
-      <SectionCard
-        title="Lignes du devis"
-        actions={
-          <div className="quote-items-premium__header-actions">
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={showCatalogPicker ? onCloseCatalogPicker : onOpenCatalogPicker}
-            >
-              {showCatalogPicker ? "Fermer le catalogue" : "Ajouter depuis le catalogue"}
-            </Button>
-
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={showForm ? onCloseForm : onOpenCreateForm}
-            >
-              {showForm ? "Fermer" : "Ajouter une ligne"}
-            </Button>
+    <section className="quote-items-premium">
+      <Card className="quote-items-premium__shell">
+        <div className="quote-items-premium__header">
+          <div>
+            <h2 className="quote-items-premium__title">Lignes</h2>
           </div>
-        }
-      >
-        <div className="quote-items-premium">
-          {showCatalogPicker && (
-            <div className="quote-items-premium__catalog-shell">
-              <QuoteCatalogPicker
-                services={services}
-                rooms={rooms}
-                search={catalogSearch}
-                selectedCategory={catalogCategory}
-                selectedRoomId={catalogRoomId}
-                addingServiceId={addingCatalogServiceId}
-                onSearchChange={onCatalogSearchChange}
-                onCategoryChange={onCatalogCategoryChange}
-                onRoomChange={onCatalogRoomChange}
-                onAdd={onAddFromCatalog}
-              />
-            </div>
-          )}
 
-          {movingItem && (
-            <div className="quote-items-premium__move-box">
-              <div className="quote-items-premium__move-header">
-                <div>
-                  <p className="quote-items-premium__eyebrow">Déplacement</p>
-                  <h3 className="quote-items-premium__title">
-                    Déplacer la ligne “{movingItem.label}”
-                  </h3>
-                </div>
+          <div className="quote-items-premium__header-actions">
+            {!showForm ? (
+              <Button type="button" onClick={onOpenCreateForm}>
+                Ajouter une ligne
+              </Button>
+            ) : (
+              <Button type="button" variant="secondary" onClick={onCloseForm}>
+                Fermer la saisie
+              </Button>
+            )}
+
+            {!showCatalogPicker ? (
+              <Button type="button" variant="secondary" onClick={onOpenCatalogPicker}>
+                Depuis le catalogue
+              </Button>
+            ) : (
+              <Button type="button" variant="secondary" onClick={onCloseCatalogPicker}>
+                Fermer le catalogue
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {showCatalogPicker ? (
+          <div className="quote-items-premium__catalog-box">
+            <div className="quote-items-premium__subheader">
+              <div>
+                <h3 className="quote-items-premium__sub-title">Catalogue</h3>
               </div>
+            </div>
+
+            <div className="quote-items-premium__filters">
+              <FormField label="Recherche">
+                <TextInput
+                  value={catalogSearch}
+                  onChange={(event) => onCatalogSearchChange(event.target.value)}
+                  placeholder="Peinture, plafond, préparation..."
+                />
+              </FormField>
+
+              <FormField label="Catégorie">
+                <Select
+                  value={catalogCategory}
+                  onChange={(event) => onCatalogCategoryChange(event.target.value)}
+                >
+                  <option value="all">Toutes les catégories</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </Select>
+              </FormField>
+
+              <FormField label="Pièce de destination">
+                <Select
+                  value={catalogRoomId}
+                  onChange={(event) => onCatalogRoomChange(event.target.value)}
+                >
+                  <option value="">Sans pièce</option>
+                  {rooms.map((room) => (
+                    <option key={room.id} value={room.id}>
+                      {room.name}
+                    </option>
+                  ))}
+                </Select>
+              </FormField>
+            </div>
+
+            {filteredServices.length === 0 ? (
+              <EmptyState
+                title="Aucune prestation trouvée"
+                description=""
+              />
+            ) : (
+              <div className="quote-items-premium__catalog-grid">
+                {filteredServices.map((service) => (
+                  <article key={service.id} className="quote-items-premium__catalog-card">
+                    <div className="quote-items-premium__catalog-card-top">
+                      <div className="quote-items-premium__catalog-card-main">
+                        <h3 className="quote-items-premium__catalog-title">{service.name}</h3>
+                      </div>
+
+                      <span className="quote-items-premium__catalog-badge">
+                        {formatCurrency(service.default_unit_price_ht)}
+                      </span>
+                    </div>
+
+                    <p className="quote-items-premium__catalog-text">
+                      {service.default_description?.trim()
+                        ? service.default_description
+                        : ""}
+                    </p>
+
+                    <div className="quote-items-premium__catalog-actions">
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={addingCatalogServiceId === service.id}
+                        onClick={() => onAddFromCatalog(service)}
+                      >
+                        {addingCatalogServiceId === service.id ? "Ajout..." : "Ajouter"}
+                      </Button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        {showForm ? (
+          <div className="quote-items-premium__form-box">
+            <QuoteItemForm
+              form={form}
+              rooms={rooms}
+              error={error}
+              saving={saving}
+              editing={Boolean(editingItemId)}
+              onSubmit={onSubmit}
+              onCancel={onCloseForm}
+              onChange={onChange}
+            />
+          </div>
+        ) : null}
+
+        {movingItem ? (
+          <div className="quote-items-premium__move-box">
+            <div className="quote-items-premium__subheader">
+              <div>
+                <h3 className="quote-items-premium__sub-title">Déplacer la ligne</h3>
+              </div>
+            </div>
+
+            <div className="quote-items-premium__move-content">
+              <p className="quote-items-premium__move-label">
+                <strong>{movingItem.label}</strong>
+              </p>
 
               <FormField label="Nouvelle pièce">
-                <Select
-                  value={moveRoomId}
-                  onChange={(e) => onMoveRoomChange(e.target.value)}
-                >
+                <Select value={moveRoomId} onChange={(event) => onMoveRoomChange(event.target.value)}>
                   <option value="">Sans pièce</option>
                   {rooms.map((room) => (
                     <option key={room.id} value={room.id}>
@@ -196,93 +276,91 @@ export function QuoteItemsSection({
               </FormField>
 
               <div className="quote-items-premium__move-actions">
-                <Button
-                  type="button"
-                  onClick={onConfirmMove}
-                  disabled={movingItemLoading}
-                >
-                  {movingItemLoading ? "Déplacement..." : "Confirmer le déplacement"}
+                <Button type="button" disabled={movingItemLoading} onClick={onConfirmMove}>
+                  {movingItemLoading ? "Déplacement..." : "Confirmer"}
                 </Button>
 
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={onCloseMove}
-                  disabled={movingItemLoading}
-                >
+                <Button type="button" variant="secondary" onClick={onCloseMove}>
                   Annuler
                 </Button>
               </div>
             </div>
-          )}
+          </div>
+        ) : null}
 
-          {showForm && (
-            <div className="quote-items-premium__form-shell">
-              <QuoteItemForm
-                form={form}
-                rooms={rooms}
-                error={error}
-                saving={saving}
-                editing={!!editingItemId}
-                onSubmit={onSubmit}
-                onCancel={onCloseForm}
-                onChange={onChange}
-              />
-            </div>
-          )}
+        {!showForm && !showCatalogPicker && error ? <ErrorMessage message={error} /> : null}
 
-          {items.length === 0 ? (
-            <EmptyState
-              title="Aucune ligne"
-              description="Ajoute une première prestation, ou insère directement une prestation type depuis le catalogue."
-            />
-          ) : (
-            <QuoteItemsGroupedTables
-              rooms={rooms}
-              items={items}
-              onEdit={onEdit}
-              onDuplicate={onDuplicate}
-              onOpenMove={onOpenMove}
-              onDelete={onDelete}
-              deletingItemId={deletingItemId}
-            />
-          )}
-        </div>
-      </SectionCard>
+        {items.length === 0 ? (
+          <EmptyState
+            title="Aucune ligne dans le devis"
+            description=""
+            actionLabel="Ajouter une ligne"
+            onAction={onOpenCreateForm}
+          />
+        ) : (
+          <div className="quote-items-premium__table-wrap">
+            <DataTable
+              headers={
+                <tr>
+                  <th>Désignation</th>
+                  <th>Pièce</th>
+                  <th>Qté</th>
+                  <th>Unité</th>
+                  <th>PU HT</th>
+                  <th>TVA</th>
+                  <th>Total HT</th>
+                  <th>Actions</th>
+                </tr>
+              }
+            >
+              {items.map((item) => {
+                const totalHt = Number(item.quantity || 0) * Number(item.unit_price_ht || 0);
 
-      {error && !showForm && !showCatalogPicker && !movingItem && (
-        <ErrorMessage message={error} />
-      )}
-
-      {items.length > 0 && (
-        <SectionCard title="Vue rapide de toutes les lignes">
-          <DataTable
-            headers={
-              <tr>
-                <th>Pièce</th>
-                <th>Libellé</th>
-                <th>Unité</th>
-                <th>Qté</th>
-                <th>PU HT</th>
-                <th style={{ textAlign: "right" }}>Total HT</th>
-              </tr>
-            }
-          >
-            {items.map((item) => (
-              <tr key={item.id}>
-                <td>{item.room_id ? roomMap.get(item.room_id) || "-" : "-"}</td>
-                <td>{item.label}</td>
-                <td>{item.unit}</td>
-                <td>{Number(item.quantity).toFixed(2)}</td>
-                <td>{Number(item.unit_price_ht).toFixed(2)} €</td>
-                <td style={{ textAlign: "right" }}>
-                  {(Number(item.quantity) * Number(item.unit_price_ht)).toFixed(2)} €
-                </td>
-              </tr>
-            ))}
-          </DataTable>
-        </SectionCard>
-      )}
-    </>
+                return (
+                  <tr key={item.id}>
+                    <td>
+                      <div className="quote-items-premium__cell-main">
+                        <strong>{item.label}</strong>
+                        {item.description?.trim() ? (
+                          <p className="quote-items-premium__cell-subtext">{item.description}</p>
+                        ) : null}
+                      </div>
+                    </td>
+                    <td>{item.room_id ? roomMap.get(item.room_id) || "—" : "—"}</td>
+                    <td>{formatQuantity(item.quantity)}</td>
+                    <td>{item.unit || "—"}</td>
+                    <td>{formatCurrency(item.unit_price_ht)}</td>
+                    <td>{Number(item.tva_rate || 0).toFixed(2)} %</td>
+                    <td>{formatCurrency(totalHt)}</td>
+                    <td>
+                      <div className="quote-items-premium__table-actions">
+                        <Button type="button" size="sm" variant="secondary" onClick={() => onEdit(item)}>
+                          Modifier
+                        </Button>
+                        <Button type="button" size="sm" variant="secondary" onClick={() => onDuplicate(item)}>
+                          Dupliquer
+                        </Button>
+                        <Button type="button" size="sm" variant="secondary" onClick={() => onOpenMove(item)}>
+                          Déplacer
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="danger"
+                          disabled={deletingItemId === item.id}
+                          onClick={() => onDelete(item.id)}
+                        >
+                          {deletingItemId === item.id ? "Suppression..." : "Supprimer"}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </DataTable>
+          </div>
+        )}
+      </Card>
+    </section>
   );
 }

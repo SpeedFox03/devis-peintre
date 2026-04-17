@@ -3,31 +3,6 @@
   gap: 16px;
 }
 
-.quote-room-form-premium__intro {
-  display: grid;
-  gap: 6px;
-}
-
-.quote-room-form-premium__eyebrow {
-  margin: 0;
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #9e8672;
-}
-
-.quote-room-form-premium__title {
-  margin: 0;
-  color: #34251b;
-  font-size: 1.2rem;
-}
-
-.quote-room-form-premium__description {
-  margin: 0;
-  color: #7d6654;
-  line-height: 1.5;
-}
-
 .quote-room-form-premium__actions {
   display: flex;
   gap: 12px;

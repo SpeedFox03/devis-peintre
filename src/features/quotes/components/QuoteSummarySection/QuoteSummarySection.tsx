@@ -26,12 +26,11 @@ export function QuoteSummarySection({ quote }: QuoteSummarySectionProps) {
     <section className="quote-summary-premium">
       <div className="quote-summary-premium__header">
         <div>
-          <p className="quote-summary-premium__eyebrow">Synthèse financière</p>
-          <h2 className="quote-summary-premium__title">Résumé du devis</h2>
+          <h2 className="quote-summary-premium__title">Résumé</h2>
         </div>
 
         <div className="quote-summary-premium__tax-chip">
-          TVA par défaut : {tvaRate.toFixed(2)} %
+          TVA : {tvaRate.toFixed(2)} %
         </div>
       </div>
 
@@ -42,9 +41,6 @@ export function QuoteSummarySection({ quote }: QuoteSummarySectionProps) {
             <p className="quote-summary-premium__value">
               {formatCurrency(totalHt)}
             </p>
-            <p className="quote-summary-premium__hint">
-              Montant hors taxes du devis avant totalisation finale.
-            </p>
           </div>
         </Card>
 
@@ -54,9 +50,6 @@ export function QuoteSummarySection({ quote }: QuoteSummarySectionProps) {
             <p className="quote-summary-premium__value">
               {formatCurrency(totalTva)}
             </p>
-            <p className="quote-summary-premium__hint">
-              Total de taxe calculé sur l’ensemble des lignes du devis.
-            </p>
           </div>
         </Card>
 
@@ -65,9 +58,6 @@ export function QuoteSummarySection({ quote }: QuoteSummarySectionProps) {
             <p className="quote-summary-premium__label">Total TTC</p>
             <p className="quote-summary-premium__value quote-summary-premium__value--strong">
               {formatCurrency(totalTtc)}
-            </p>
-            <p className="quote-summary-premium__hint">
-              Montant final communiqué au client.
             </p>
           </div>
         </Card>

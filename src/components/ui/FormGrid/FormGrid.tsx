@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import "./FormGrid.css";
 
-type FormGridVariant = "2" | "3-1" | "1";
+type FormGridVariant = "1" | "2" | "3" | "3-1" | "4";
 
 type FormGridProps = {
   children: ReactNode;

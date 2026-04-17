@@ -1,32 +1,30 @@
 import type { FormEvent } from "react";
-import { SectionCard } from "../../../../components/ui/SectionCard/SectionCard";
 import { Button } from "../../../../components/ui/Button/Button";
+import { Card } from "../../../../components/ui/Card/Card";
 import { EmptyState } from "../../../../components/ui/EmptyState/EmptyState";
+import { ErrorMessage } from "../../../../components/ui/ErrorMessage/ErrorMessage";
 import { QuoteRoomForm } from "../QuoteRoomForm/QuoteRoomForm";
+import type { QuoteItem, Room, RoomFormState } from "../../types";
 import "./QuoteRoomsSection.css";
-
-type Room = {
-  id: string;
-  name: string;
-};
 
 type QuoteRoomsSectionProps = {
   rooms: Room[];
-  items: { room_id: string | null }[];
+  items: QuoteItem[];
   showForm: boolean;
-  form: { name: string; notes: string };
+  form: RoomFormState;
   saving: boolean;
   error: string | null;
   deletingRoomId: string | null;
   onOpenForm: () => void;
   onCloseForm: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  onChange: <K extends keyof { name: string; notes: string }>(
-    field: K,
-    value: { name: string; notes: string }[K]
-  ) => void;
+  onChange: <K extends keyof RoomFormState>(field: K, value: RoomFormState[K]) => void;
   onDelete: (roomId: string) => void;
 };
+
+function getRoomItemsCount(roomId: string, items: QuoteItem[]) {
+  return items.filter((item) => item.room_id === roomId).length;
+}
 
 export function QuoteRoomsSection({
   rooms,
@@ -43,17 +41,28 @@ export function QuoteRoomsSection({
   onDelete,
 }: QuoteRoomsSectionProps) {
   return (
-    <SectionCard
-      title="Pièces / zones"
-      actions={
-        <Button variant="secondary" type="button" onClick={showForm ? onCloseForm : onOpenForm}>
-          {showForm ? "Fermer" : "Ajouter une pièce"}
-        </Button>
-      }
-    >
-      <div className="quote-rooms-premium">
-        {showForm && (
-          <div className="quote-rooms-premium__form-shell">
+    <section className="quote-rooms-premium">
+      <Card className="quote-rooms-premium__shell">
+        <div className="quote-rooms-premium__header">
+          <div>
+            <h2 className="quote-rooms-premium__title">Pièces</h2>
+          </div>
+
+          <div className="quote-rooms-premium__header-actions">
+            {!showForm ? (
+              <Button type="button" onClick={onOpenForm}>
+                Ajouter une pièce
+              </Button>
+            ) : (
+              <Button type="button" variant="secondary" onClick={onCloseForm}>
+                Fermer
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {showForm ? (
+          <div className="quote-rooms-premium__form-box">
             <QuoteRoomForm
               form={form}
               error={error}
@@ -63,60 +72,51 @@ export function QuoteRoomsSection({
               onChange={onChange}
             />
           </div>
-        )}
+        ) : null}
+
+        {!showForm && error ? <ErrorMessage message={error} /> : null}
 
         {rooms.length === 0 ? (
           <EmptyState
-            title="Aucune pièce"
-            description="Ajoute une première pièce pour organiser ton devis par zone de travail."
+            title="Aucune pièce ajoutée"
+            description=""
+            actionLabel="Ajouter une pièce"
+            onAction={onOpenForm}
           />
         ) : (
           <div className="quote-rooms-premium__grid">
             {rooms.map((room) => {
-              const itemCount = items.filter((i) => i.room_id === room.id).length;
-              const hasItems = itemCount > 0;
+              const count = getRoomItemsCount(room.id, items);
 
               return (
                 <article key={room.id} className="quote-rooms-premium__card">
                   <div className="quote-rooms-premium__card-top">
-                    <div>
-                      <p className="quote-rooms-premium__card-eyebrow">Pièce</p>
+                    <div className="quote-rooms-premium__card-main">
                       <h3 className="quote-rooms-premium__card-title">{room.name}</h3>
                     </div>
 
-                    <div className="quote-rooms-premium__badge">
-                      {itemCount} ligne{itemCount > 1 ? "s" : ""}
-                    </div>
+                    <span className="quote-rooms-premium__badge">
+                      {count} ligne{count > 1 ? "s" : ""}
+                    </span>
                   </div>
-
-                  <p className="quote-rooms-premium__card-description">
-                    {hasItems
-                      ? "Cette pièce contient déjà des prestations liées au devis."
-                      : "Cette pièce est prête à recevoir des lignes ou des prestations du catalogue."}
-                  </p>
 
                   <div className="quote-rooms-premium__card-actions">
                     <Button
-                      size="sm"
+                      type="button"
                       variant="danger"
-                      disabled={hasItems || deletingRoomId === room.id}
+                      size="sm"
+                      disabled={deletingRoomId === room.id}
                       onClick={() => onDelete(room.id)}
                     >
                       {deletingRoomId === room.id ? "Suppression..." : "Supprimer"}
                     </Button>
                   </div>
-
-                  {hasItems && (
-                    <p className="quote-rooms-premium__hint">
-                      Suppression désactivée tant que la pièce contient des lignes.
-                    </p>
-                  )}
                 </article>
               );
             })}
           </div>
         )}
-      </div>
-    </SectionCard>
+      </Card>
+    </section>
   );
 }

@@ -407,8 +407,8 @@ export function QuotesPage() {
           <p className="quotes-premium-page__eyebrow">Pilotage commercial</p>
           <h1 className="quotes-premium-page__title">Devis</h1>
           <p className="quotes-premium-page__description">
-            Crée, duplique et pilote tes devis dans une interface plus claire,
-            plus rapide et plus premium.
+            Crée, filtre et pilote tes devis dans une interface plus claire,
+            plus rapide et plus agréable sur desktop comme sur mobile.
           </p>
         </div>
 
@@ -423,31 +423,31 @@ export function QuotesPage() {
       </header>
 
       <div className="quotes-premium-page__stats">
-        <Card>
+        <Card className="quotes-premium-page__stat-card">
           <p className="quotes-premium-page__stat-label">Nombre de devis</p>
           <p className="quotes-premium-page__stat-value">{totalQuotes}</p>
         </Card>
 
-        <Card>
+        <Card className="quotes-premium-page__stat-card">
           <p className="quotes-premium-page__stat-label">Brouillons</p>
           <p className="quotes-premium-page__stat-value">{draftCount}</p>
         </Card>
 
-        <Card>
+        <Card className="quotes-premium-page__stat-card">
           <p className="quotes-premium-page__stat-label">Acceptés</p>
           <p className="quotes-premium-page__stat-value">{acceptedCount}</p>
         </Card>
 
-        <Card>
+        <Card className="quotes-premium-page__stat-card">
           <p className="quotes-premium-page__stat-label">Montant cumulé TTC</p>
-          <p className="quotes-premium-page__stat-value">
+          <p className="quotes-premium-page__stat-value quotes-premium-page__stat-value--highlight">
             {formatCurrency(totalPortfolio)}
           </p>
         </Card>
       </div>
 
-      {showForm && (
-        <Card>
+      {showForm ? (
+        <Card className="quotes-premium-page__form-card">
           <div className="quotes-premium-page__form-intro">
             <div>
               <p className="quotes-premium-page__section-eyebrow">Création</p>
@@ -563,7 +563,7 @@ export function QuotesPage() {
               />
             </FormField>
 
-            {error && <ErrorMessage message={error} />}
+            {error ? <ErrorMessage message={error} /> : null}
 
             <div className="quotes-premium-page__form-actions">
               <Button type="submit" disabled={saving}>
@@ -576,14 +576,15 @@ export function QuotesPage() {
             </div>
           </form>
         </Card>
-      )}
-
-      {!showForm && (
-        <Card>
+      ) : (
+        <Card className="quotes-premium-page__filters-card">
           <div className="quotes-premium-page__filters">
             <div className="quotes-premium-page__filters-intro">
               <p className="quotes-premium-page__section-eyebrow">Liste</p>
               <h2 className="quotes-premium-page__section-title">Tous les devis</h2>
+              <p className="quotes-premium-page__section-description">
+                Recherche rapidement un devis par numéro ou titre et filtre son statut.
+              </p>
             </div>
 
             <div className="quotes-premium-page__filters-grid">
@@ -614,7 +615,7 @@ export function QuotesPage() {
         </Card>
       )}
 
-      {error && !showForm && <ErrorMessage message={error} />}
+      {error && !showForm ? <ErrorMessage message={error} /> : null}
 
       {!showForm && filteredQuotes.length === 0 ? (
         <EmptyState
@@ -627,7 +628,7 @@ export function QuotesPage() {
         />
       ) : null}
 
-      {!showForm && filteredQuotes.length > 0 && (
+      {!showForm && filteredQuotes.length > 0 ? (
         <div className="quotes-premium-page__table-shell">
           <DataTable
             headers={
@@ -687,7 +688,7 @@ export function QuotesPage() {
 
                 <td style={{ textAlign: "right" }}>
                   <div className="quotes-premium-page__row-actions">
-                    <Link to={`/devis/${quote.id}`}>
+                    <Link to={`/devis/${quote.id}`} className="quotes-premium-page__row-link">
                       <Button type="button" variant="secondary">
                         Ouvrir
                       </Button>
@@ -724,7 +725,7 @@ export function QuotesPage() {
             ))}
           </DataTable>
         </div>
-      )}
+      ) : null}
     </section>
   );
 }

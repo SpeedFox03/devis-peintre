@@ -51,18 +51,6 @@ export function QuoteItemForm({
 }: QuoteItemFormProps) {
   return (
     <form className="quote-item-form-premium" onSubmit={onSubmit}>
-      <div className="quote-item-form-premium__intro">
-        <p className="quote-item-form-premium__eyebrow">
-          {editing ? "Modification" : "Nouvelle ligne"}
-        </p>
-        <h3 className="quote-item-form-premium__title">
-          {editing ? "Modifier la prestation" : "Ajouter une prestation au devis"}
-        </h3>
-        <p className="quote-item-form-premium__description">
-          Complète les informations de la ligne, puis ajuste la quantité, le prix et la TVA.
-        </p>
-      </div>
-
       <FormGrid columns="2">
         <FormField label="Pièce / zone">
           <Select

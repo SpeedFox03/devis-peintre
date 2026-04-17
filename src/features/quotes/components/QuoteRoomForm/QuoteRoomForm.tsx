@@ -33,14 +33,6 @@ export function QuoteRoomForm({
 }: QuoteRoomFormProps) {
   return (
     <form className="quote-room-form-premium" onSubmit={onSubmit}>
-      <div className="quote-room-form-premium__intro">
-        <p className="quote-room-form-premium__eyebrow">Nouvelle pièce</p>
-        <h3 className="quote-room-form-premium__title">Créer une zone de travail</h3>
-        <p className="quote-room-form-premium__description">
-          Ajoute une pièce pour structurer le devis et mieux répartir les prestations.
-        </p>
-      </div>
-
       <FormGrid columns="2">
         <FormField label="Nom de la pièce">
           <TextInput

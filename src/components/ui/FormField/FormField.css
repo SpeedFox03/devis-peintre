@@ -1,22 +1,28 @@
 .ui-form-field {
   display: grid;
-  gap: 8px;
+  gap: 7px;
+  min-width: 0;
 }
 
 .ui-form-field__label {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #5a4535;
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #374151;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
 }
 
 .ui-form-field__hint {
-  font-size: 0.8rem;
-  color: #9a816d;
+  font-size: 0.78rem;
+  color: #6b7280;
+  line-height: 1.4;
 }
 
 .ui-form-field__content {
   display: block;
+  min-width: 0;
 }

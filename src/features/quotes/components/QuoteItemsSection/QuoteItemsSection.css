@@ -1,50 +1,183 @@
 .quote-items-premium {
   display: grid;
-  gap: 18px;
 }
 
-.quote-items-premium__header-actions {
+.quote-items-premium__shell {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  min-width: 0;
+}
+
+.quote-items-premium__header,
+.quote-items-premium__subheader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.quote-items-premium__title,
+.quote-items-premium__sub-title {
+  margin: 0;
+  color: #111827;
+}
+
+.quote-items-premium__title {
+  font-size: 1.1rem;
+}
+
+.quote-items-premium__sub-title {
+  font-size: 1rem;
+}
+
+.quote-items-premium__header-actions,
+.quote-items-premium__move-actions,
+.quote-items-premium__table-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.quote-items-premium__catalog-shell,
-.quote-items-premium__form-shell,
-.quote-items-premium__move-box {
-  padding: 16px;
-  border-radius: 22px;
-  border: 1px solid rgba(120, 92, 68, 0.12);
-  background: rgba(255, 250, 244, 0.82);
-}
-
+.quote-items-premium__catalog-box,
+.quote-items-premium__form-box,
 .quote-items-premium__move-box {
   display: grid;
   gap: 14px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(229, 231, 235, 0.95);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 250, 251, 0.96));
+  min-width: 0;
 }
 
-.quote-items-premium__move-header {
+.quote-items-premium__filters {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.quote-items-premium__catalog-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.quote-items-premium__catalog-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(229, 231, 235, 0.95);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  min-width: 0;
+}
+
+.quote-items-premium__catalog-card-top {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
 }
 
-.quote-items-premium__eyebrow {
-  margin: 0 0 6px;
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #9e8672;
+.quote-items-premium__catalog-card-main {
+  min-width: 0;
 }
 
-.quote-items-premium__title {
+.quote-items-premium__catalog-title {
   margin: 0;
-  font-size: 1.08rem;
-  color: #34251b;
+  color: #111827;
+  font-size: 1rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
-.quote-items-premium__move-actions {
+.quote-items-premium__catalog-badge {
+  flex: 0 0 auto;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  background: rgba(228, 156, 33, 0.1);
+  color: #8a5a00;
+  border: 1px solid rgba(228, 156, 33, 0.18);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.quote-items-premium__catalog-text,
+.quote-items-premium__move-label,
+.quote-items-premium__cell-subtext {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.45;
+  font-size: 0.9rem;
+}
+
+.quote-items-premium__catalog-actions {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.quote-items-premium__move-content {
+  display: grid;
+  gap: 14px;
+}
+
+.quote-items-premium__table-wrap {
+  min-width: 0;
+  overflow-x: auto;
+  border: 1px solid rgba(229, 231, 235, 0.95);
+  border-radius: 18px;
+}
+
+.quote-items-premium__cell-main {
+  display: grid;
+  gap: 4px;
+  min-width: 180px;
+}
+
+.quote-items-premium__cell-main strong {
+  color: #111827;
+}
+
+@media (max-width: 960px) {
+  .quote-items-premium__filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .quote-items-premium__shell {
+    padding: 16px;
+  }
+
+  .quote-items-premium__header,
+  .quote-items-premium__subheader,
+  .quote-items-premium__catalog-card-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .quote-items-premium__header-actions,
+  .quote-items-premium__move-actions,
+  .quote-items-premium__table-actions {
+    width: 100%;
+  }
+
+  .quote-items-premium__header-actions > *,
+  .quote-items-premium__move-actions > *,
+  .quote-items-premium__table-actions > * {
+    flex: 1 1 100%;
+  }
+
+  .quote-items-premium__catalog-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quote-items-premium__cell-main {
+    min-width: 140px;
+  }
 }
