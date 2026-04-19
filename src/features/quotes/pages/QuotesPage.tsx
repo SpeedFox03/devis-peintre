@@ -629,102 +629,189 @@ export function QuotesPage() {
       ) : null}
 
       {!showForm && filteredQuotes.length > 0 ? (
-        <div className="quotes-premium-page__table-shell">
-          <DataTable
-            headers={
-              <tr>
-                <th>Numéro</th>
-                <th>Titre</th>
-                <th>Statut</th>
-                <th>Date</th>
-                <th style={{ textAlign: "right" }}>Total TTC</th>
-                <th style={{ textAlign: "right" }}>Actions</th>
-              </tr>
-            }
-          >
-            {filteredQuotes.map((quote) => (
-              <tr key={quote.id}>
-                <td>
-                  <span className="quotes-premium-page__quote-number">
-                    {quote.quote_number}
-                  </span>
-                </td>
+        <>
+          {/* ── Tableau desktop ── */}
+          <div className="quotes-premium-page__table-shell">
+            <DataTable
+              headers={
+                <tr>
+                  <th>Numéro</th>
+                  <th>Titre</th>
+                  <th>Statut</th>
+                  <th>Date</th>
+                  <th style={{ textAlign: "right" }}>Total TTC</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
+                </tr>
+              }
+            >
+              {filteredQuotes.map((quote) => (
+                <tr key={quote.id}>
+                  <td>
+                    <span className="quotes-premium-page__quote-number">
+                      {quote.quote_number}
+                    </span>
+                  </td>
 
-                <td>
-                  <Link
-                    to={`/devis/${quote.id}`}
-                    className="quotes-premium-page__quote-link"
-                  >
-                    {quote.title}
-                  </Link>
-                </td>
-
-                <td>
-                  <Select
-                    value={quote.status}
-                    onChange={(e) =>
-                      handleStatusChange(quote.id, e.target.value as QuoteStatus)
-                    }
-                    disabled={
-                      updatingStatusQuoteId === quote.id ||
-                      duplicatingQuoteId === quote.id ||
-                      deletingQuoteId === quote.id
-                    }
-                  >
-                    <option value="draft">{getStatusLabel("draft")}</option>
-                    <option value="sent">{getStatusLabel("sent")}</option>
-                    <option value="accepted">{getStatusLabel("accepted")}</option>
-                    <option value="rejected">{getStatusLabel("rejected")}</option>
-                    <option value="expired">{getStatusLabel("expired")}</option>
-                    <option value="invoiced">{getStatusLabel("invoiced")}</option>
-                  </Select>
-                </td>
-
-                <td>{quote.issue_date}</td>
-
-                <td style={{ textAlign: "right" }}>
-                  <strong>{formatCurrency(quote.total_ttc)}</strong>
-                </td>
-
-                <td style={{ textAlign: "right" }}>
-                  <div className="quotes-premium-page__row-actions">
-                    <Link to={`/devis/${quote.id}`} className="quotes-premium-page__row-link">
-                      <Button type="button" variant="secondary">
-                        Ouvrir
-                      </Button>
+                  <td>
+                    <Link
+                      to={`/devis/${quote.id}`}
+                      className="quotes-premium-page__quote-link"
+                    >
+                      {quote.title}
                     </Link>
+                  </td>
 
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => handleDuplicateQuote(quote.id)}
+                  <td>
+                    <Select
+                      value={quote.status}
+                      onChange={(e) =>
+                        handleStatusChange(quote.id, e.target.value as QuoteStatus)
+                      }
                       disabled={
+                        updatingStatusQuoteId === quote.id ||
                         duplicatingQuoteId === quote.id ||
-                        deletingQuoteId === quote.id ||
-                        updatingStatusQuoteId === quote.id
+                        deletingQuoteId === quote.id
                       }
                     >
-                      {duplicatingQuoteId === quote.id ? "Duplication..." : "Dupliquer"}
-                    </Button>
+                      <option value="draft">{getStatusLabel("draft")}</option>
+                      <option value="sent">{getStatusLabel("sent")}</option>
+                      <option value="accepted">{getStatusLabel("accepted")}</option>
+                      <option value="rejected">{getStatusLabel("rejected")}</option>
+                      <option value="expired">{getStatusLabel("expired")}</option>
+                      <option value="invoiced">{getStatusLabel("invoiced")}</option>
+                    </Select>
+                  </td>
 
-                    <Button
-                      type="button"
-                      variant="danger"
-                      onClick={() => handleDeleteQuote(quote.id)}
-                      disabled={
-                        deletingQuoteId === quote.id ||
-                        duplicatingQuoteId === quote.id ||
-                        updatingStatusQuoteId === quote.id
-                      }
+                  <td>{quote.issue_date}</td>
+
+                  <td style={{ textAlign: "right" }}>
+                    <strong>{formatCurrency(quote.total_ttc)}</strong>
+                  </td>
+
+                  <td style={{ textAlign: "right" }}>
+                    <div className="quotes-premium-page__row-actions">
+                      <Link to={`/devis/${quote.id}`} className="quotes-premium-page__row-link">
+                        <Button type="button" variant="secondary">
+                          Ouvrir
+                        </Button>
+                      </Link>
+
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => handleDuplicateQuote(quote.id)}
+                        disabled={
+                          duplicatingQuoteId === quote.id ||
+                          deletingQuoteId === quote.id ||
+                          updatingStatusQuoteId === quote.id
+                        }
+                      >
+                        {duplicatingQuoteId === quote.id ? "Duplication..." : "Dupliquer"}
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="danger"
+                        onClick={() => handleDeleteQuote(quote.id)}
+                        disabled={
+                          deletingQuoteId === quote.id ||
+                          duplicatingQuoteId === quote.id ||
+                          updatingStatusQuoteId === quote.id
+                        }
+                      >
+                        {deletingQuoteId === quote.id ? "Suppression..." : "Supprimer"}
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </DataTable>
+          </div>
+
+          {/* ── Vue cartes mobile ── */}
+          <div className="quotes-premium-page__card-list">
+            {filteredQuotes.map((quote) => (
+              <article key={quote.id} className="quotes-premium-page__quote-card">
+                <div className="quotes-premium-page__quote-card-header">
+                  <div className="quotes-premium-page__quote-card-main">
+                    <span className="quotes-premium-page__quote-number">
+                      {quote.quote_number}
+                    </span>
+                    <Link
+                      to={`/devis/${quote.id}`}
+                      className="quotes-premium-page__quote-card-title"
                     >
-                      {deletingQuoteId === quote.id ? "Suppression..." : "Supprimer"}
-                    </Button>
+                      {quote.title}
+                    </Link>
                   </div>
-                </td>
-              </tr>
+                  <span className="quotes-premium-page__quote-card-total">
+                    {formatCurrency(quote.total_ttc)}
+                  </span>
+                </div>
+
+                <div className="quotes-premium-page__quote-card-meta">
+                  <span className="quotes-premium-page__quote-card-date">
+                    {quote.issue_date}
+                  </span>
+                  <div className="quotes-premium-page__quote-card-status">
+                    <Select
+                      value={quote.status}
+                      onChange={(e) =>
+                        handleStatusChange(quote.id, e.target.value as QuoteStatus)
+                      }
+                      disabled={
+                        updatingStatusQuoteId === quote.id ||
+                        duplicatingQuoteId === quote.id ||
+                        deletingQuoteId === quote.id
+                      }
+                    >
+                      <option value="draft">{getStatusLabel("draft")}</option>
+                      <option value="sent">{getStatusLabel("sent")}</option>
+                      <option value="accepted">{getStatusLabel("accepted")}</option>
+                      <option value="rejected">{getStatusLabel("rejected")}</option>
+                      <option value="expired">{getStatusLabel("expired")}</option>
+                      <option value="invoiced">{getStatusLabel("invoiced")}</option>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="quotes-premium-page__quote-card-actions">
+                  <Link to={`/devis/${quote.id}`} className="quotes-premium-page__row-link" style={{ flex: "1 1 auto" }}>
+                    <Button type="button" variant="secondary" style={{ width: "100%", justifyContent: "center" }}>
+                      Ouvrir
+                    </Button>
+                  </Link>
+
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => handleDuplicateQuote(quote.id)}
+                    disabled={
+                      duplicatingQuoteId === quote.id ||
+                      deletingQuoteId === quote.id ||
+                      updatingStatusQuoteId === quote.id
+                    }
+                  >
+                    {duplicatingQuoteId === quote.id ? "Duplication..." : "Dupliquer"}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="danger"
+                    onClick={() => handleDeleteQuote(quote.id)}
+                    disabled={
+                      deletingQuoteId === quote.id ||
+                      duplicatingQuoteId === quote.id ||
+                      updatingStatusQuoteId === quote.id
+                    }
+                  >
+                    {deletingQuoteId === quote.id ? "Suppression..." : "Supprimer"}
+                  </Button>
+                </div>
+              </article>
             ))}
-          </DataTable>
-        </div>
+          </div>
+        </>
       ) : null}
     </section>
   );

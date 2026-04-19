@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../features/auth/hooks/useAuth";
 import { Button } from "../../components/ui/Button/Button";
 import "./Sidebar.css";
 
@@ -7,8 +9,20 @@ function getNavLinkClassName({ isActive }: { isActive: boolean }) {
   return `app-sidebar__link ${isActive ? "app-sidebar__link--active" : ""}`.trim();
 }
 
+function getInitials(email?: string | null) {
+  if (!email) return "U";
+  return email.slice(0, 2).toUpperCase();
+}
+
 export function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    navigate("/login");
+  }
 
   return (
     <>
@@ -85,12 +99,25 @@ export function Sidebar() {
         </nav>
 
         <div className="app-sidebar__footer">
-          <div className="app-sidebar__footer-card">
-            <p className="app-sidebar__footer-label">Ambiance visuelle</p>
-            <p className="app-sidebar__footer-text">
-              Palette sable, noisette et espresso pour un rendu plus premium et plus doux.
-            </p>
+          {/* Carte utilisateur + déconnexion — visible uniquement sur mobile */}
+          <div className="app-sidebar__user-block">
+            <div className="app-sidebar__user-info">
+              <div className="app-sidebar__user-avatar">
+                {getInitials(user?.email)}
+              </div>
+              <div className="app-sidebar__user-meta">
+                <span className="app-sidebar__user-label">Connecté en tant que</span>
+                <strong className="app-sidebar__user-email">
+                  {user?.email ?? "Utilisateur"}
+                </strong>
+              </div>
+            </div>
+            <button className="app-sidebar__logout" onClick={handleLogout}>
+              Déconnexion
+            </button>
           </div>
+
+
         </div>
       </aside>
     </>

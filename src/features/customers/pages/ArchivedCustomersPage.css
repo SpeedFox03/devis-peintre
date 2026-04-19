@@ -75,8 +75,39 @@
 }
 
 .archived-customers-premium-page__table-shell {
-  display: grid;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(120, 92, 68, 0.12);
+  border-radius: 18px;
 }
+
+.archived-customers-premium-page__table-shell table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.archived-customers-premium-page__table-shell th:nth-child(1),
+.archived-customers-premium-page__table-shell td:nth-child(1) { width: 22%; }
+.archived-customers-premium-page__table-shell th:nth-child(2),
+.archived-customers-premium-page__table-shell td:nth-child(2) { width: 20%; }
+.archived-customers-premium-page__table-shell th:nth-child(3),
+.archived-customers-premium-page__table-shell td:nth-child(3) { width: 14%; }
+.archived-customers-premium-page__table-shell th:nth-child(4),
+.archived-customers-premium-page__table-shell td:nth-child(4) { width: 14%; }
+.archived-customers-premium-page__table-shell th:nth-child(5),
+.archived-customers-premium-page__table-shell td:nth-child(5) { width: 16%; }
+.archived-customers-premium-page__table-shell th:nth-child(6),
+.archived-customers-premium-page__table-shell td:nth-child(6) { width: 14%; }
+
+/* ══════════════════════════════════════════
+   Couleurs boutons
+══════════════════════════════════════════ */
+.archived-customers-premium-page__hero-actions .ui-button--primary   { color: #fff8f2; }
+
+.archived-customers-premium-page__hero-actions .ui-button--secondary,
+.archived-customers-premium-page__hero-actions .ui-button--danger     { color: inherit; }
+
+.archived-customers-premium-page__hero-actions .ui-button svg         { width: 18px; height: 18px; flex: 0 0 auto; }
 
 @media (max-width: 900px) {
   .archived-customers-premium-page__hero {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import type { FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
@@ -137,9 +138,19 @@ function buildAddress(parts: Array<string | null | undefined>) {
   return parts.filter(Boolean).join(", ");
 }
 
+const customerPages = [
+  { id: "quotes", label: "Devis" },
+  { id: "info",   label: "Informations" },
+] as const;
+
+type CustomerPageId = (typeof customerPages)[number]["id"];
+
 export function CustomerDetailsPage() {
   const { customerId } = useParams();
   const navigate = useNavigate();
+
+  const [activePage, setActivePage] = useState<CustomerPageId>("quotes");
+  const [topbarPortalTarget, setTopbarPortalTarget] = useState<Element | null>(null);
 
   const [customer, setCustomer] = useState<CustomerDetails | null>(null);
   const [quotes, setQuotes] = useState<CustomerQuote[]>([]);
@@ -148,6 +159,13 @@ export function CustomerDetailsPage() {
   const [archiving, setArchiving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<CustomerFormState>(createInitialForm(null));
+
+  useEffect(() => {
+    const topbar = document.querySelector(".app-topbar");
+    setTopbarPortalTarget(topbar);
+    topbar?.classList.add("app-topbar--with-quote-nav");
+    return () => { topbar?.classList.remove("app-topbar--with-quote-nav"); };
+  }, []);
 
   async function loadCustomerPage() {
     if (!customerId) {
@@ -348,8 +366,40 @@ export function CustomerDetailsPage() {
     customer.jobsite_country,
   ]);
 
+  const tabNav = (
+    <nav className="quote-topbar-nav" aria-label="Pages du client">
+      {customerPages.map((page) => (
+        <button
+          key={page.id}
+          type="button"
+          className={`quote-topbar-nav__tab${activePage === page.id ? " quote-topbar-nav__tab--active" : ""}`}
+          onClick={() => setActivePage(page.id)}
+        >
+          {page.label}
+        </button>
+      ))}
+    </nav>
+  );
+
+  const tabNavMobile = (
+    <div className="quote-page-tabs-mobile" aria-label="Pages du client">
+      {customerPages.map((page) => (
+        <button
+          key={page.id}
+          type="button"
+          className={`quote-topbar-nav__tab${activePage === page.id ? " quote-topbar-nav__tab--active" : ""}`}
+          onClick={() => setActivePage(page.id)}
+        >
+          {page.label}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <section className="customer-details-premium-page">
+      {topbarPortalTarget ? createPortal(tabNav, topbarPortalTarget) : null}
+
       <header className="customer-details-premium-page__hero">
         <div className="customer-details-premium-page__hero-main">
           <div className="customer-details-premium-page__topline">
@@ -364,7 +414,7 @@ export function CustomerDetailsPage() {
           </h1>
           <p className="customer-details-premium-page__description">
             Consulte les coordonnées, mets à jour les informations principales
-            et retrouve rapidement l’historique des devis associés.
+            et retrouve rapidement l'historique des devis associés.
           </p>
         </div>
 
@@ -383,6 +433,8 @@ export function CustomerDetailsPage() {
           </Button>
         </div>
       </header>
+
+      {tabNavMobile}
 
       <div className="customer-details-premium-page__stats">
         <Card>
@@ -414,286 +466,344 @@ export function CustomerDetailsPage() {
         </Card>
       </div>
 
-      <div className="customer-details-premium-page__layout">
-        <aside className="customer-details-premium-page__left">
-          <Card>
-            <div className="customer-details-premium-page__side-card">
-              <p className="customer-details-premium-page__side-label">Résumé</p>
-
-              <ul className="customer-details-premium-page__meta-list">
-                <li>
-                  <span>Email</span>
-                  <strong>{customer.email || "-"}</strong>
-                </li>
-                <li>
-                  <span>Téléphone</span>
-                  <strong>{customer.phone || "-"}</strong>
-                </li>
-                <li>
-                  <span>Adresse facturation</span>
-                  <strong>{billingAddress || "-"}</strong>
-                </li>
-                <li>
-                  <span>Adresse chantier</span>
-                  <strong>{jobsiteAddress || "-"}</strong>
-                </li>
-              </ul>
+      {/* ── Onglet Devis ── */}
+      {activePage === "quotes" && (
+        <Card>
+          <div className="customer-details-premium-page__section-header">
+            <div>
+              <p className="customer-details-premium-page__section-eyebrow">
+                Historique
+              </p>
+              <h2 className="customer-details-premium-page__section-title">
+                Devis liés
+              </h2>
             </div>
-          </Card>
-        </aside>
+          </div>
 
-        <div className="customer-details-premium-page__center">
-          <Card>
-            <div className="customer-details-premium-page__section-header">
-              <div>
-                <p className="customer-details-premium-page__section-eyebrow">
-                  Informations
-                </p>
-                <h2 className="customer-details-premium-page__section-title">
-                  Modifier la fiche client
-                </h2>
-              </div>
-            </div>
-
-            <form
-              className="customer-details-premium-page__form"
-              onSubmit={handleSubmit}
-            >
-              <FormGrid columns="2">
-                <FormField label="Société">
-                  <TextInput
-                    value={form.company_name}
-                    onChange={(e) => updateField("company_name", e.target.value)}
-                  />
-                </FormField>
-
-                <FormField label="Email">
-                  <TextInput
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => updateField("email", e.target.value)}
-                  />
-                </FormField>
-              </FormGrid>
-
-              <FormGrid columns="2">
-                <FormField label="Prénom">
-                  <TextInput
-                    value={form.first_name}
-                    onChange={(e) => updateField("first_name", e.target.value)}
-                  />
-                </FormField>
-
-                <FormField label="Nom">
-                  <TextInput
-                    value={form.last_name}
-                    onChange={(e) => updateField("last_name", e.target.value)}
-                  />
-                </FormField>
-              </FormGrid>
-
-              <FormGrid columns="2">
-                <FormField label="Téléphone">
-                  <TextInput
-                    value={form.phone}
-                    onChange={(e) => updateField("phone", e.target.value)}
-                  />
-                </FormField>
-
-                <FormField label="Pays facturation">
-                  <TextInput
-                    value={form.billing_country}
-                    onChange={(e) => updateField("billing_country", e.target.value)}
-                  />
-                </FormField>
-              </FormGrid>
-
-              <div className="customer-details-premium-page__address-block">
-                <h3 className="customer-details-premium-page__subsection-title">
-                  Adresse de facturation
-                </h3>
-
-                <FormGrid columns="2">
-                  <FormField label="Adresse ligne 1">
-                    <TextInput
-                      value={form.billing_address_line1}
-                      onChange={(e) =>
-                        updateField("billing_address_line1", e.target.value)
-                      }
-                    />
-                  </FormField>
-
-                  <FormField label="Adresse ligne 2">
-                    <TextInput
-                      value={form.billing_address_line2}
-                      onChange={(e) =>
-                        updateField("billing_address_line2", e.target.value)
-                      }
-                    />
-                  </FormField>
-                </FormGrid>
-
-                <FormGrid columns="3">
-                  <FormField label="Code postal">
-                    <TextInput
-                      value={form.billing_postal_code}
-                      onChange={(e) =>
-                        updateField("billing_postal_code", e.target.value)
-                      }
-                    />
-                  </FormField>
-
-                  <FormField label="Ville">
-                    <TextInput
-                      value={form.billing_city}
-                      onChange={(e) => updateField("billing_city", e.target.value)}
-                    />
-                  </FormField>
-
-                  <FormField label="Pays">
-                    <TextInput
-                      value={form.billing_country}
-                      onChange={(e) =>
-                        updateField("billing_country", e.target.value)
-                      }
-                    />
-                  </FormField>
-                </FormGrid>
+          {quotes.length === 0 ? (
+            <EmptyState
+              title="Aucun devis lié"
+              description="Ce client ne possède encore aucun devis. Crée-en un pour démarrer son historique commercial."
+            />
+          ) : (
+            <>
+              {/* ── Tableau desktop ── */}
+              <div className="customer-details-premium-page__table-shell">
+                <DataTable
+                  headers={
+                    <tr>
+                      <th>Numéro</th>
+                      <th>Titre</th>
+                      <th>Statut</th>
+                      <th>Date</th>
+                      <th style={{ textAlign: "right" }}>Total TTC</th>
+                      <th style={{ textAlign: "right" }}>Action</th>
+                    </tr>
+                  }
+                >
+                  {quotes.map((quote) => (
+                    <tr key={quote.id}>
+                      <td>
+                        <span className="customer-details-premium-page__quote-number">
+                          {quote.quote_number}
+                        </span>
+                      </td>
+                      <td>{quote.title}</td>
+                      <td>{getStatusLabel(quote.status)}</td>
+                      <td>{quote.issue_date}</td>
+                      <td style={{ textAlign: "right" }}>
+                        <strong>{formatCurrency(quote.total_ttc)}</strong>
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <Link to={`/devis/${quote.id}`}>
+                          <Button type="button" variant="secondary">
+                            Ouvrir
+                          </Button>
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </DataTable>
               </div>
 
-              <div className="customer-details-premium-page__address-block">
-                <h3 className="customer-details-premium-page__subsection-title">
-                  Adresse chantier
-                </h3>
-
-                <FormGrid columns="2">
-                  <FormField label="Adresse ligne 1">
-                    <TextInput
-                      value={form.jobsite_address_line1}
-                      onChange={(e) =>
-                        updateField("jobsite_address_line1", e.target.value)
-                      }
-                    />
-                  </FormField>
-
-                  <FormField label="Adresse ligne 2">
-                    <TextInput
-                      value={form.jobsite_address_line2}
-                      onChange={(e) =>
-                        updateField("jobsite_address_line2", e.target.value)
-                      }
-                    />
-                  </FormField>
-                </FormGrid>
-
-                <FormGrid columns="3">
-                  <FormField label="Code postal">
-                    <TextInput
-                      value={form.jobsite_postal_code}
-                      onChange={(e) =>
-                        updateField("jobsite_postal_code", e.target.value)
-                      }
-                    />
-                  </FormField>
-
-                  <FormField label="Ville">
-                    <TextInput
-                      value={form.jobsite_city}
-                      onChange={(e) => updateField("jobsite_city", e.target.value)}
-                    />
-                  </FormField>
-
-                  <FormField label="Pays">
-                    <TextInput
-                      value={form.jobsite_country}
-                      onChange={(e) =>
-                        updateField("jobsite_country", e.target.value)
-                      }
-                    />
-                  </FormField>
-                </FormGrid>
-              </div>
-
-              <FormField label="Notes">
-                <TextArea
-                  rows={5}
-                  value={form.notes}
-                  onChange={(e) => updateField("notes", e.target.value)}
-                />
-              </FormField>
-
-              {error && <ErrorMessage message={error} />}
-
-              <div className="customer-details-premium-page__form-actions">
-                <Button type="submit" disabled={saving}>
-                  {saving ? "Enregistrement..." : "Enregistrer"}
-                </Button>
-
-                <Button type="button" variant="secondary" onClick={resetForm}>
-                  Réinitialiser
-                </Button>
-              </div>
-            </form>
-          </Card>
-
-          <Card>
-            <div className="customer-details-premium-page__section-header">
-              <div>
-                <p className="customer-details-premium-page__section-eyebrow">
-                  Historique
-                </p>
-                <h2 className="customer-details-premium-page__section-title">
-                  Devis liés
-                </h2>
-              </div>
-            </div>
-
-            {quotes.length === 0 ? (
-              <EmptyState
-                title="Aucun devis lié"
-                description="Ce client ne possède encore aucun devis. Crée-en un pour démarrer son historique commercial."
-              />
-            ) : (
-              <DataTable
-                headers={
-                  <tr>
-                    <th>Numéro</th>
-                    <th>Titre</th>
-                    <th>Statut</th>
-                    <th>Date</th>
-                    <th style={{ textAlign: "right" }}>Total TTC</th>
-                    <th style={{ textAlign: "right" }}>Action</th>
-                  </tr>
-                }
-              >
+              {/* ── Vue cartes mobile ── */}
+              <div className="customer-details-premium-page__quote-card-list">
                 {quotes.map((quote) => (
-                  <tr key={quote.id}>
-                    <td>
-                      <span className="customer-details-premium-page__quote-number">
-                        {quote.quote_number}
+                  <article
+                    key={quote.id}
+                    className="customer-details-premium-page__quote-card"
+                  >
+                    <div className="customer-details-premium-page__quote-card-header">
+                      <div className="customer-details-premium-page__quote-card-main">
+                        <span className="customer-details-premium-page__quote-number">
+                          {quote.quote_number}
+                        </span>
+                        <Link
+                          to={`/devis/${quote.id}`}
+                          className="customer-details-premium-page__quote-card-title"
+                        >
+                          {quote.title}
+                        </Link>
+                      </div>
+                      <span className="customer-details-premium-page__quote-card-total">
+                        {formatCurrency(quote.total_ttc)}
                       </span>
-                    </td>
+                    </div>
 
-                    <td>{quote.title}</td>
-                    <td>{getStatusLabel(quote.status)}</td>
-                    <td>{quote.issue_date}</td>
-                    <td style={{ textAlign: "right" }}>
-                      <strong>{formatCurrency(quote.total_ttc)}</strong>
-                    </td>
-                    <td style={{ textAlign: "right" }}>
-                      <Link to={`/devis/${quote.id}`}>
-                        <Button type="button" variant="secondary">
+                    <div className="customer-details-premium-page__quote-card-meta">
+                      <span className="customer-details-premium-page__quote-card-date">
+                        {quote.issue_date}
+                      </span>
+                      <span className="customer-details-premium-page__quote-card-status">
+                        {getStatusLabel(quote.status)}
+                      </span>
+                    </div>
+
+                    <div className="customer-details-premium-page__quote-card-actions">
+                      <Link to={`/devis/${quote.id}`} style={{ flex: "1 1 auto" }}>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          style={{ width: "100%", justifyContent: "center" }}
+                        >
                           Ouvrir
                         </Button>
                       </Link>
-                    </td>
-                  </tr>
+                    </div>
+                  </article>
                 ))}
-              </DataTable>
-            )}
-          </Card>
+              </div>
+            </>
+          )}
+        </Card>
+      )}
+
+      {/* ── Onglet Informations ── */}
+      {activePage === "info" && (
+        <div className="customer-details-premium-page__layout">
+          <aside className="customer-details-premium-page__left">
+            <Card>
+              <div className="customer-details-premium-page__side-card">
+                <p className="customer-details-premium-page__side-label">Résumé</p>
+
+                <ul className="customer-details-premium-page__meta-list">
+                  <li>
+                    <span>Email</span>
+                    <strong>{customer.email || "-"}</strong>
+                  </li>
+                  <li>
+                    <span>Téléphone</span>
+                    <strong>{customer.phone || "-"}</strong>
+                  </li>
+                  <li>
+                    <span>Adresse facturation</span>
+                    <strong>{billingAddress || "-"}</strong>
+                  </li>
+                  <li>
+                    <span>Adresse chantier</span>
+                    <strong>{jobsiteAddress || "-"}</strong>
+                  </li>
+                </ul>
+              </div>
+            </Card>
+          </aside>
+
+          <div className="customer-details-premium-page__center">
+            <Card>
+              <div className="customer-details-premium-page__section-header">
+                <div>
+                  <p className="customer-details-premium-page__section-eyebrow">
+                    Informations
+                  </p>
+                  <h2 className="customer-details-premium-page__section-title">
+                    Modifier la fiche client
+                  </h2>
+                </div>
+              </div>
+
+              <form
+                className="customer-details-premium-page__form"
+                onSubmit={handleSubmit}
+              >
+                <FormGrid columns="2">
+                  <FormField label="Société">
+                    <TextInput
+                      value={form.company_name}
+                      onChange={(e) => updateField("company_name", e.target.value)}
+                    />
+                  </FormField>
+
+                  <FormField label="Email">
+                    <TextInput
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => updateField("email", e.target.value)}
+                    />
+                  </FormField>
+                </FormGrid>
+
+                <FormGrid columns="2">
+                  <FormField label="Prénom">
+                    <TextInput
+                      value={form.first_name}
+                      onChange={(e) => updateField("first_name", e.target.value)}
+                    />
+                  </FormField>
+
+                  <FormField label="Nom">
+                    <TextInput
+                      value={form.last_name}
+                      onChange={(e) => updateField("last_name", e.target.value)}
+                    />
+                  </FormField>
+                </FormGrid>
+
+                <FormGrid columns="2">
+                  <FormField label="Téléphone">
+                    <TextInput
+                      value={form.phone}
+                      onChange={(e) => updateField("phone", e.target.value)}
+                    />
+                  </FormField>
+
+                  <FormField label="Pays facturation">
+                    <TextInput
+                      value={form.billing_country}
+                      onChange={(e) => updateField("billing_country", e.target.value)}
+                    />
+                  </FormField>
+                </FormGrid>
+
+                <div className="customer-details-premium-page__address-block">
+                  <h3 className="customer-details-premium-page__subsection-title">
+                    Adresse de facturation
+                  </h3>
+
+                  <FormGrid columns="2">
+                    <FormField label="Adresse ligne 1">
+                      <TextInput
+                        value={form.billing_address_line1}
+                        onChange={(e) =>
+                          updateField("billing_address_line1", e.target.value)
+                        }
+                      />
+                    </FormField>
+
+                    <FormField label="Adresse ligne 2">
+                      <TextInput
+                        value={form.billing_address_line2}
+                        onChange={(e) =>
+                          updateField("billing_address_line2", e.target.value)
+                        }
+                      />
+                    </FormField>
+                  </FormGrid>
+
+                  <FormGrid columns="3">
+                    <FormField label="Code postal">
+                      <TextInput
+                        value={form.billing_postal_code}
+                        onChange={(e) =>
+                          updateField("billing_postal_code", e.target.value)
+                        }
+                      />
+                    </FormField>
+
+                    <FormField label="Ville">
+                      <TextInput
+                        value={form.billing_city}
+                        onChange={(e) => updateField("billing_city", e.target.value)}
+                      />
+                    </FormField>
+
+                    <FormField label="Pays">
+                      <TextInput
+                        value={form.billing_country}
+                        onChange={(e) =>
+                          updateField("billing_country", e.target.value)
+                        }
+                      />
+                    </FormField>
+                  </FormGrid>
+                </div>
+
+                <div className="customer-details-premium-page__address-block">
+                  <h3 className="customer-details-premium-page__subsection-title">
+                    Adresse chantier
+                  </h3>
+
+                  <FormGrid columns="2">
+                    <FormField label="Adresse ligne 1">
+                      <TextInput
+                        value={form.jobsite_address_line1}
+                        onChange={(e) =>
+                          updateField("jobsite_address_line1", e.target.value)
+                        }
+                      />
+                    </FormField>
+
+                    <FormField label="Adresse ligne 2">
+                      <TextInput
+                        value={form.jobsite_address_line2}
+                        onChange={(e) =>
+                          updateField("jobsite_address_line2", e.target.value)
+                        }
+                      />
+                    </FormField>
+                  </FormGrid>
+
+                  <FormGrid columns="3">
+                    <FormField label="Code postal">
+                      <TextInput
+                        value={form.jobsite_postal_code}
+                        onChange={(e) =>
+                          updateField("jobsite_postal_code", e.target.value)
+                        }
+                      />
+                    </FormField>
+
+                    <FormField label="Ville">
+                      <TextInput
+                        value={form.jobsite_city}
+                        onChange={(e) => updateField("jobsite_city", e.target.value)}
+                      />
+                    </FormField>
+
+                    <FormField label="Pays">
+                      <TextInput
+                        value={form.jobsite_country}
+                        onChange={(e) =>
+                          updateField("jobsite_country", e.target.value)
+                        }
+                      />
+                    </FormField>
+                  </FormGrid>
+                </div>
+
+                <FormField label="Notes">
+                  <TextArea
+                    rows={5}
+                    value={form.notes}
+                    onChange={(e) => updateField("notes", e.target.value)}
+                  />
+                </FormField>
+
+                {error && <ErrorMessage message={error} />}
+
+                <div className="customer-details-premium-page__form-actions">
+                  <Button type="submit" disabled={saving}>
+                    {saving ? "Enregistrement..." : "Enregistrer"}
+                  </Button>
+
+                  <Button type="button" variant="secondary" onClick={resetForm}>
+                    Réinitialiser
+                  </Button>
+                </div>
+              </form>
+            </Card>
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }

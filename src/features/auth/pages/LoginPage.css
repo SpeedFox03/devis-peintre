@@ -190,3 +190,67 @@
     border-radius: 24px;
   }
 }
+/* ══════════════════════════════════════════
+   Mobile : panel brand masqué, form seul
+══════════════════════════════════════════ */
+@media (max-width: 700px) {
+  .auth-premium-page {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    min-height: 100vh;
+  }
+
+  /* Masquer le panel brand complet */
+  .auth-premium-page__panel--brand {
+    display: none;
+  }
+
+  /* Panel form prend toute la page */
+  .auth-premium-page__panel--form {
+    padding: 24px 16px;
+    place-items: start center;
+    padding-top: 40px;
+  }
+
+  .auth-premium-page__form-card {
+    padding: 24px 20px;
+    border-radius: 24px;
+    max-width: 100%;
+  }
+
+  /* Mini logo + titre au-dessus du formulaire */
+  .auth-premium-page__form-card::before {
+    content: "";
+    display: block;
+  }
+
+  .auth-premium-page__form-mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .auth-premium-page__form-mobile-brand-mark {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(145deg, #6f523c 0%, #4f3929 100%);
+    color: #fff8f2;
+    font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: 0.06em;
+    flex: 0 0 auto;
+    box-shadow: 0 8px 20px rgba(76, 53, 36, 0.2);
+  }
+
+  .auth-premium-page__form-mobile-brand-name {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #2f2118;
+    letter-spacing: -0.02em;
+  }
+}

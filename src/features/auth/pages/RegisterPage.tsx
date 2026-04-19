@@ -94,6 +94,10 @@ export function RegisterPage() {
 
       <div className="auth-premium-page__panel auth-premium-page__panel--form">
         <div className="auth-premium-page__form-card">
+          <div className="auth-premium-page__form-mobile-brand">
+            <div className="auth-premium-page__form-mobile-brand-mark">DP</div>
+            <p className="auth-premium-page__form-mobile-brand-name">Devis Peintre</p>
+          </div>
           <div className="auth-premium-page__form-header">
             <p className="auth-premium-page__form-eyebrow">Inscription</p>
             <h2 className="auth-premium-page__form-title">Créer un compte</h2>

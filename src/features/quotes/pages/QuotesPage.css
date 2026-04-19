@@ -138,12 +138,33 @@
   align-items: end;
 }
 
+/* ══════════════════════════════════════════
+   Tableau desktop — sans scroll horizontal
+══════════════════════════════════════════ */
 .quotes-premium-page__table-shell {
   min-width: 0;
-  overflow-x: auto;
+  overflow: hidden;
   border: 1px solid rgba(229, 231, 235, 0.95);
   border-radius: 18px;
 }
+
+.quotes-premium-page__table-shell table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.quotes-premium-page__table-shell th:nth-child(1),
+.quotes-premium-page__table-shell td:nth-child(1) { width: 12%; }
+.quotes-premium-page__table-shell th:nth-child(2),
+.quotes-premium-page__table-shell td:nth-child(2) { width: 28%; }
+.quotes-premium-page__table-shell th:nth-child(3),
+.quotes-premium-page__table-shell td:nth-child(3) { width: 18%; }
+.quotes-premium-page__table-shell th:nth-child(4),
+.quotes-premium-page__table-shell td:nth-child(4) { width: 12%; }
+.quotes-premium-page__table-shell th:nth-child(5),
+.quotes-premium-page__table-shell td:nth-child(5) { width: 12%; }
+.quotes-premium-page__table-shell th:nth-child(6),
+.quotes-premium-page__table-shell td:nth-child(6) { width: 18%; }
 
 .quotes-premium-page__quote-number {
   display: inline-flex;
@@ -156,17 +177,20 @@
   font-size: 0.78rem;
   font-weight: 700;
   white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .quotes-premium-page__quote-link {
   color: #111827;
   font-weight: 700;
   text-decoration: none;
+  overflow-wrap: anywhere;
 }
 
 .quotes-premium-page__quote-link:hover {
   color: #8a5a00;
-  text-decoration: none;
 }
 
 .quotes-premium-page__row-link {
@@ -175,10 +199,112 @@
 
 .quotes-premium-page__row-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
+
+/* ══════════════════════════════════════════
+   Vue cartes mobile
+══════════════════════════════════════════ */
+.quotes-premium-page__card-list {
+  display: none;
+}
+
+.quotes-premium-page__quote-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(229, 231, 235, 0.95);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.quotes-premium-page__quote-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.quotes-premium-page__quote-card-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.quotes-premium-page__quote-card-title {
+  margin: 0;
+  color: #111827;
+  font-size: 0.95rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+  display: block;
+}
+
+.quotes-premium-page__quote-card-title:hover {
+  color: #8a5a00;
+}
+
+.quotes-premium-page__quote-card-total {
+  font-weight: 800;
+  color: #503c2e;
+  font-size: 1rem;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.quotes-premium-page__quote-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.quotes-premium-page__quote-card-date {
+  color: #6b7280;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.quotes-premium-page__quote-card-status {
+  flex: 1 1 auto;
+  min-width: 120px;
+}
+
+.quotes-premium-page__quote-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quotes-premium-page__quote-card-actions > * {
+  flex: 1 1 auto;
+}
+
+/* ══════════════════════════════════════════
+   Couleurs boutons
+══════════════════════════════════════════ */
+.quotes-premium-page__hero-actions .ui-button--primary,
+.quotes-premium-page__quote-card-actions .ui-button--primary,
+.quotes-premium-page__row-actions .ui-button--primary   { color: #fff8f2; }
+
+.quotes-premium-page__hero-actions .ui-button--secondary,
+.quotes-premium-page__hero-actions .ui-button--danger,
+.quotes-premium-page__quote-card-actions .ui-button--secondary,
+.quotes-premium-page__quote-card-actions .ui-button--danger,
+.quotes-premium-page__row-actions .ui-button--secondary,
+.quotes-premium-page__row-actions .ui-button--danger    { color: inherit; }
+
+.quotes-premium-page__hero-actions .ui-button svg,
+.quotes-premium-page__quote-card-actions .ui-button svg,
+.quotes-premium-page__row-actions .ui-button svg        { width: 18px; height: 18px; flex: 0 0 auto; }
+
+/* ══════════════════════════════════════════
+   Breakpoints
+══════════════════════════════════════════ */
 
 @media (max-width: 1100px) {
   .quotes-premium-page__stats {
@@ -224,11 +350,10 @@
   }
 
   .quotes-premium-page__stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 
-  .quotes-premium-page__row-actions {
-    justify-content: flex-start;
-    min-width: 180px;
-  }
+  /* Masquer le tableau, afficher les cartes */
+  .quotes-premium-page__table-shell { display: none; }
+  .quotes-premium-page__card-list   { display: grid; gap: 10px; }
 }

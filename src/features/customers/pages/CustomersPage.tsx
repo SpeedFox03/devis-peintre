@@ -504,68 +504,153 @@ export function CustomersPage() {
       ) : null}
 
       {!showForm && filteredCustomers.length > 0 && (
-        <div className="customers-premium-page__table-shell">
-          <DataTable
-            headers={
-              <tr>
-                <th>Nom</th>
-                <th>Email</th>
-                <th>Téléphone</th>
-                <th>Ville</th>
-                <th>Devis</th>
-                <th style={{ textAlign: "right" }}>Actions</th>
-              </tr>
-            }
-          >
+        <>
+          {/* ── Tableau desktop ── */}
+          <div className="customers-premium-page__table-shell">
+            <DataTable
+              headers={
+                <tr>
+                  <th>Nom</th>
+                  <th>Email</th>
+                  <th>Téléphone</th>
+                  <th>Ville</th>
+                  <th>Devis</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
+                </tr>
+              }
+            >
+              {filteredCustomers.map((customer) => {
+                const name = getCustomerName(customer);
+                const quoteCount = quoteCountByCustomerId[customer.id] ?? 0;
+
+                return (
+                  <tr key={customer.id}>
+                    <td>
+                      <Link
+                        to={`/clients/${customer.id}`}
+                        className="customers-premium-page__customer-link"
+                      >
+                        {name}
+                      </Link>
+                    </td>
+
+                    <td>{customer.email || "-"}</td>
+                    <td>{customer.phone || "-"}</td>
+                    <td>{customer.billing_city || "-"}</td>
+                    <td>
+                      <span className="customers-premium-page__quote-count">
+                        {quoteCount}
+                      </span>
+                    </td>
+
+                    <td style={{ textAlign: "right" }}>
+                      <div className="customers-premium-page__row-actions">
+                        <Link to={`/?new=1&customerId=${customer.id}`}>
+                          <Button type="button" variant="secondary">
+                            Nouveau devis
+                          </Button>
+                        </Link>
+
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => handleArchiveCustomer(customer)}
+                          disabled={archivingCustomerId === customer.id}
+                        >
+                          {archivingCustomerId === customer.id
+                            ? "Archivage..."
+                            : "Archiver"}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </DataTable>
+          </div>
+
+          {/* ── Vue cartes mobile ── */}
+          <div className="customers-premium-page__card-list">
             {filteredCustomers.map((customer) => {
               const name = getCustomerName(customer);
               const quoteCount = quoteCountByCustomerId[customer.id] ?? 0;
 
               return (
-                <tr key={customer.id}>
-                  <td>
-                    <Link
-                      to={`/clients/${customer.id}`}
-                      className="customers-premium-page__customer-link"
-                    >
-                      {name}
-                    </Link>
-                  </td>
-
-                  <td>{customer.email || "-"}</td>
-                  <td>{customer.phone || "-"}</td>
-                  <td>{customer.billing_city || "-"}</td>
-                  <td>
-                    <span className="customers-premium-page__quote-count">
-                      {quoteCount}
-                    </span>
-                  </td>
-
-                  <td style={{ textAlign: "right" }}>
-                    <div className="customers-premium-page__row-actions">
-                      <Link to={`/?new=1&customerId=${customer.id}`}>
-                        <Button type="button" variant="secondary">
-                          Nouveau devis
-                        </Button>
+                <article key={customer.id} className="customers-premium-page__customer-card">
+                  <div className="customers-premium-page__customer-card-header">
+                    <div className="customers-premium-page__customer-card-main">
+                      <Link
+                        to={`/clients/${customer.id}`}
+                        className="customers-premium-page__customer-card-name"
+                      >
+                        {name}
                       </Link>
 
+                      <div className="customers-premium-page__customer-card-meta">
+                        {customer.email && (
+                          <span className="customers-premium-page__customer-card-detail">
+                            {customer.email}
+                          </span>
+                        )}
+                        {customer.phone && (
+                          <span className="customers-premium-page__customer-card-detail">
+                            {customer.phone}
+                          </span>
+                        )}
+                        {customer.billing_city && (
+                          <span className="customers-premium-page__customer-card-detail">
+                            {customer.billing_city}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <span className="customers-premium-page__quote-count">
+                      {quoteCount} devis
+                    </span>
+                  </div>
+
+                  <div className="customers-premium-page__customer-card-actions">
+                    <Link
+                      to={`/clients/${customer.id}`}
+                      style={{ flex: "1 1 auto" }}
+                    >
                       <Button
                         type="button"
                         variant="secondary"
-                        onClick={() => handleArchiveCustomer(customer)}
-                        disabled={archivingCustomerId === customer.id}
+                        style={{ width: "100%", justifyContent: "center" }}
                       >
-                        {archivingCustomerId === customer.id
-                          ? "Archivage..."
-                          : "Archiver"}
+                        Voir la fiche
                       </Button>
-                    </div>
-                  </td>
-                </tr>
+                    </Link>
+
+                    <Link
+                      to={`/?new=1&customerId=${customer.id}`}
+                      style={{ flex: "1 1 auto" }}
+                    >
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        style={{ width: "100%", justifyContent: "center" }}
+                      >
+                        Nouveau devis
+                      </Button>
+                    </Link>
+
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => handleArchiveCustomer(customer)}
+                      disabled={archivingCustomerId === customer.id}
+                    >
+                      {archivingCustomerId === customer.id ? "Archivage..." : "Archiver"}
+                    </Button>
+                  </div>
+                </article>
               );
             })}
-          </DataTable>
-        </div>
+          </div>
+        </>
       )}
     </section>
   );

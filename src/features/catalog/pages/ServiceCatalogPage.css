@@ -183,3 +183,160 @@
     grid-template-columns: 1fr;
   }
 }
+/* ══════════════════════════════════════════
+   Tableau desktop — sans scroll horizontal
+══════════════════════════════════════════ */
+.catalog-premium-page__table-shell {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(229, 231, 235, 0.95);
+  border-radius: 18px;
+}
+
+.catalog-premium-page__table-shell table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.catalog-premium-page__table-shell th:nth-child(1),
+.catalog-premium-page__table-shell td:nth-child(1) { width: 28%; }
+.catalog-premium-page__table-shell th:nth-child(2),
+.catalog-premium-page__table-shell td:nth-child(2) { width: 18%; }
+.catalog-premium-page__table-shell th:nth-child(3),
+.catalog-premium-page__table-shell td:nth-child(3) { width: 10%; }
+.catalog-premium-page__table-shell th:nth-child(4),
+.catalog-premium-page__table-shell td:nth-child(4) { width: 10%; }
+.catalog-premium-page__table-shell th:nth-child(5),
+.catalog-premium-page__table-shell td:nth-child(5) { width: 8%; }
+.catalog-premium-page__table-shell th:nth-child(6),
+.catalog-premium-page__table-shell td:nth-child(6) { width: 10%; }
+.catalog-premium-page__table-shell th:nth-child(7),
+.catalog-premium-page__table-shell td:nth-child(7) { width: 16%; }
+
+/* ══════════════════════════════════════════
+   Vue cartes mobile
+══════════════════════════════════════════ */
+.catalog-premium-page__card-list {
+  display: none;
+}
+
+.catalog-premium-page__service-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(229, 231, 235, 0.95);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.catalog-premium-page__service-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.catalog-premium-page__service-card-main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.catalog-premium-page__service-card-name {
+  margin: 0;
+  color: #111827;
+  font-size: 0.95rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.catalog-premium-page__service-card-desc {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.catalog-premium-page__service-card-price {
+  font-weight: 800;
+  color: #503c2e;
+  font-size: 1rem;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.catalog-premium-page__service-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.catalog-premium-page__service-card-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(111, 82, 60, 0.07);
+  border: 1px solid rgba(111, 82, 60, 0.14);
+  color: #503c2e;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.catalog-premium-page__service-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.catalog-premium-page__service-card-actions > * {
+  flex: 1 1 auto;
+}
+
+/* Couleurs boutons */
+.catalog-premium-page__hero-actions .ui-button--primary,
+.catalog-premium-page__form-actions .ui-button--primary,
+.catalog-premium-page__row-actions .ui-button--primary,
+.catalog-premium-page__service-card-actions .ui-button--primary   { color: #fff8f2; }
+
+.catalog-premium-page__hero-actions .ui-button--secondary,
+.catalog-premium-page__hero-actions .ui-button--danger,
+.catalog-premium-page__form-actions .ui-button--secondary,
+.catalog-premium-page__form-actions .ui-button--danger,
+.catalog-premium-page__row-actions .ui-button--secondary,
+.catalog-premium-page__row-actions .ui-button--danger,
+.catalog-premium-page__service-card-actions .ui-button--secondary,
+.catalog-premium-page__service-card-actions .ui-button--danger    { color: inherit; }
+
+/* ══════════════════════════════════════════
+   Breakpoints supplémentaires
+══════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .catalog-premium-page {
+    gap: 14px;
+  }
+
+  .catalog-premium-page__hero {
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .catalog-premium-page__hero-actions {
+    width: 100%;
+  }
+
+  .catalog-premium-page__hero-actions > * {
+    flex: 1 1 100%;
+  }
+
+  .catalog-premium-page__stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Masquer tableau, afficher cartes */
+  .catalog-premium-page__table-shell { display: none; }
+  .catalog-premium-page__card-list   { display: grid; gap: 10px; }
+}

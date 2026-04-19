@@ -209,9 +209,122 @@
 }
 
 .customer-details-premium-page__quote-number {
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(111, 82, 60, 0.1);
   color: #5a4332;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
+
+/* ══════════════════════════════════════════
+   Vue cartes mobile — devis liés
+══════════════════════════════════════════ */
+.customer-details-premium-page__table-shell {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.customer-details-premium-page__quote-card-list {
+  display: none;
+}
+
+.customer-details-premium-page__quote-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(120, 92, 68, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 252, 247, 0.8);
+  box-shadow: 0 1px 3px rgba(90, 63, 44, 0.05);
+}
+
+.customer-details-premium-page__quote-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.customer-details-premium-page__quote-card-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.customer-details-premium-page__quote-card-title {
+  margin: 0;
+  color: #34251b;
+  font-size: 0.95rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+  display: block;
+}
+
+.customer-details-premium-page__quote-card-title:hover {
+  color: #6f523c;
+}
+
+.customer-details-premium-page__quote-card-total {
+  font-weight: 800;
+  color: #503c2e;
+  font-size: 1rem;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.customer-details-premium-page__quote-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.customer-details-premium-page__quote-card-date {
+  color: #9c846f;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.customer-details-premium-page__quote-card-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(111, 82, 60, 0.08);
+  color: #6f523c;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.customer-details-premium-page__quote-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ══════════════════════════════════════════
+   Couleurs boutons
+══════════════════════════════════════════ */
+.customer-details-premium-page__hero-actions .ui-button--primary,
+.customer-details-premium-page__quote-card-actions .ui-button--primary,
+.customer-details-premium-page__form-actions .ui-button--primary   { color: #fff8f2; }
+
+.customer-details-premium-page__hero-actions .ui-button--secondary,
+.customer-details-premium-page__hero-actions .ui-button--danger,
+.customer-details-premium-page__quote-card-actions .ui-button--secondary,
+.customer-details-premium-page__quote-card-actions .ui-button--danger,
+.customer-details-premium-page__form-actions .ui-button--secondary,
+.customer-details-premium-page__form-actions .ui-button--danger    { color: inherit; }
+
+.customer-details-premium-page__hero-actions .ui-button svg,
+.customer-details-premium-page__quote-card-actions .ui-button svg,
+.customer-details-premium-page__form-actions .ui-button svg        { width: 18px; height: 18px; flex: 0 0 auto; }
 
 @media (max-width: 1200px) {
   .customer-details-premium-page__stats {
@@ -235,9 +348,46 @@
 
   .customer-details-premium-page__hero-actions {
     justify-content: flex-start;
+    width: 100%;
+  }
+
+  .customer-details-premium-page__hero-actions > * {
+    flex: 1 1 auto;
   }
 
   .customer-details-premium-page__stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+@media (max-width: 640px) {
+  .customer-details-premium-page {
+    gap: 14px;
+  }
+
+  .customer-details-premium-page__hero {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .customer-details-premium-page__title {
+    font-size: 1.7rem;
+  }
+
+  .customer-details-premium-page__stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .customer-details-premium-page__form-actions {
+    flex-direction: column;
+  }
+
+  .customer-details-premium-page__form-actions > * {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Basculer tableau → cartes pour les devis liés */
+  .customer-details-premium-page__table-shell { display: none; }
+  .customer-details-premium-page__quote-card-list { display: grid; gap: 10px; }
 }

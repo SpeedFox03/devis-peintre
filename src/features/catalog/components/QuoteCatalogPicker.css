@@ -52,3 +52,102 @@
   background: rgba(255, 250, 244, 0.74);
   color: #7d6654;
 }
+/* ══════════════════════════════════════════
+   Tableau desktop — sans scroll horizontal
+══════════════════════════════════════════ */
+.quote-catalog-picker-premium__table-shell {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(229, 231, 235, 0.95);
+  border-radius: 18px;
+}
+
+.quote-catalog-picker-premium__table-shell table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.quote-catalog-picker-premium__table-shell th:nth-child(1),
+.quote-catalog-picker-premium__table-shell td:nth-child(1) { width: 32%; }
+.quote-catalog-picker-premium__table-shell th:nth-child(2),
+.quote-catalog-picker-premium__table-shell td:nth-child(2) { width: 20%; }
+.quote-catalog-picker-premium__table-shell th:nth-child(3),
+.quote-catalog-picker-premium__table-shell td:nth-child(3) { width: 12%; }
+.quote-catalog-picker-premium__table-shell th:nth-child(4),
+.quote-catalog-picker-premium__table-shell td:nth-child(4) { width: 12%; }
+.quote-catalog-picker-premium__table-shell th:nth-child(5),
+.quote-catalog-picker-premium__table-shell td:nth-child(5) { width: 10%; }
+.quote-catalog-picker-premium__table-shell th:nth-child(6),
+.quote-catalog-picker-premium__table-shell td:nth-child(6) { width: 14%; }
+
+/* ══════════════════════════════════════════
+   Vue cartes mobile
+══════════════════════════════════════════ */
+.quote-catalog-picker-premium__card-list {
+  display: none;
+}
+
+.quote-catalog-picker-premium__card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(229, 231, 235, 0.95);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.quote-catalog-picker-premium__card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.quote-catalog-picker-premium__card-name {
+  margin: 0;
+  color: #111827;
+  font-size: 0.92rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.quote-catalog-picker-premium__card-price {
+  font-weight: 800;
+  color: #503c2e;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.quote-catalog-picker-premium__card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.quote-catalog-picker-premium__card-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(111, 82, 60, 0.07);
+  border: 1px solid rgba(111, 82, 60, 0.14);
+  color: #503c2e;
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.quote-catalog-picker-premium__card-actions .ui-button--primary { color: #fff8f2; }
+.quote-catalog-picker-premium__card-actions .ui-button svg { width: 16px; height: 16px; }
+
+@media (max-width: 640px) {
+  .quote-catalog-picker-premium__toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  /* Masquer tableau, afficher cartes */
+  .quote-catalog-picker-premium__table-shell { display: none; }
+  .quote-catalog-picker-premium__card-list   { display: grid; gap: 8px; }
+}

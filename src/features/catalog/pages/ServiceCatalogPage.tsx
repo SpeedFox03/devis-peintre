@@ -490,38 +490,105 @@ export function ServiceCatalogPage() {
       ) : null}
 
       {!showForm && filteredServices.length > 0 && (
-        <div className="catalog-premium-page__table-shell">
-          <DataTable
-            headers={
-              <tr>
-                <th>Nom</th>
-                <th>Catégorie</th>
-                <th>Unité</th>
-                <th>Prix HT</th>
-                <th>TVA</th>
-                <th>Statut</th>
-                <th style={{ textAlign: "right" }}>Actions</th>
-              </tr>
-            }
-          >
+        <>
+          {/* ── Tableau desktop ── */}
+          <div className="catalog-premium-page__table-shell">
+            <DataTable
+              headers={
+                <tr>
+                  <th>Nom</th>
+                  <th>Catégorie</th>
+                  <th>Unité</th>
+                  <th>Prix HT</th>
+                  <th>TVA</th>
+                  <th>Statut</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
+                </tr>
+              }
+            >
+              {filteredServices.map((service) => (
+                <tr key={service.id}>
+                  <td>
+                    <div className="catalog-premium-page__service-cell">
+                      <strong>{service.name}</strong>
+                      {service.default_description && (
+                        <div className="catalog-premium-page__service-description">
+                          {service.default_description}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td>{getCategoryLabel(service.category)}</td>
+                  <td>{getUnitLabel(service.default_unit)}</td>
+                  <td>{formatCurrency(service.default_unit_price_ht)}</td>
+                  <td>{Number(service.default_tva_rate).toFixed(2)} %</td>
+                  <td>
+                    <span
+                      className={`catalog-premium-page__status-badge ${
+                        service.is_active
+                          ? "catalog-premium-page__status-badge--active"
+                          : "catalog-premium-page__status-badge--inactive"
+                      }`}
+                    >
+                      {service.is_active ? "Active" : "Inactive"}
+                    </span>
+                  </td>
+                  <td style={{ textAlign: "right" }}>
+                    <div className="catalog-premium-page__row-actions">
+                      <Button type="button" variant="secondary" onClick={() => openEditForm(service)}>
+                        Modifier
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => handleToggleActive(service)}
+                        disabled={updatingServiceId === service.id}
+                      >
+                        {updatingServiceId === service.id ? "Mise à jour..." : service.is_active ? "Désactiver" : "Activer"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="danger"
+                        onClick={() => handleDelete(service.id)}
+                        disabled={deletingServiceId === service.id}
+                      >
+                        {deletingServiceId === service.id ? "Suppression..." : "Supprimer"}
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </DataTable>
+          </div>
+
+          {/* ── Vue cartes mobile ── */}
+          <div className="catalog-premium-page__card-list">
             {filteredServices.map((service) => (
-              <tr key={service.id}>
-                <td>
-                  <div className="catalog-premium-page__service-cell">
-                    <strong>{service.name}</strong>
+              <article key={service.id} className="catalog-premium-page__service-card">
+                <div className="catalog-premium-page__service-card-header">
+                  <div className="catalog-premium-page__service-card-main">
+                    <p className="catalog-premium-page__service-card-name">{service.name}</p>
                     {service.default_description && (
-                      <div className="catalog-premium-page__service-description">
+                      <p className="catalog-premium-page__service-card-desc">
                         {service.default_description}
-                      </div>
+                      </p>
                     )}
                   </div>
-                </td>
+                  <span className="catalog-premium-page__service-card-price">
+                    {formatCurrency(service.default_unit_price_ht)}
+                  </span>
+                </div>
 
-                <td>{getCategoryLabel(service.category)}</td>
-                <td>{getUnitLabel(service.default_unit)}</td>
-                <td>{formatCurrency(service.default_unit_price_ht)}</td>
-                <td>{Number(service.default_tva_rate).toFixed(2)} %</td>
-                <td>
+                <div className="catalog-premium-page__service-card-meta">
+                  <span className="catalog-premium-page__service-card-chip">
+                    {getCategoryLabel(service.category)}
+                  </span>
+                  <span className="catalog-premium-page__service-card-chip">
+                    {getUnitLabel(service.default_unit)}
+                  </span>
+                  <span className="catalog-premium-page__service-card-chip">
+                    TVA {Number(service.default_tva_rate).toFixed(0)} %
+                  </span>
                   <span
                     className={`catalog-premium-page__status-badge ${
                       service.is_active
@@ -531,47 +598,33 @@ export function ServiceCatalogPage() {
                   >
                     {service.is_active ? "Active" : "Inactive"}
                   </span>
-                </td>
+                </div>
 
-                <td style={{ textAlign: "right" }}>
-                  <div className="catalog-premium-page__row-actions">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => openEditForm(service)}
-                    >
-                      Modifier
-                    </Button>
-
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => handleToggleActive(service)}
-                      disabled={updatingServiceId === service.id}
-                    >
-                      {updatingServiceId === service.id
-                        ? "Mise à jour..."
-                        : service.is_active
-                        ? "Désactiver"
-                        : "Activer"}
-                    </Button>
-
-                    <Button
-                      type="button"
-                      variant="danger"
-                      onClick={() => handleDelete(service.id)}
-                      disabled={deletingServiceId === service.id}
-                    >
-                      {deletingServiceId === service.id
-                        ? "Suppression..."
-                        : "Supprimer"}
-                    </Button>
-                  </div>
-                </td>
-              </tr>
+                <div className="catalog-premium-page__service-card-actions">
+                  <Button type="button" variant="secondary" onClick={() => openEditForm(service)}>
+                    Modifier
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => handleToggleActive(service)}
+                    disabled={updatingServiceId === service.id}
+                  >
+                    {updatingServiceId === service.id ? "Mise à jour..." : service.is_active ? "Désactiver" : "Activer"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    onClick={() => handleDelete(service.id)}
+                    disabled={deletingServiceId === service.id}
+                  >
+                    {deletingServiceId === service.id ? "Suppression..." : "Supprimer"}
+                  </Button>
+                </div>
+              </article>
             ))}
-          </DataTable>
-        </div>
+          </div>
+        </>
       )}
     </section>
   );

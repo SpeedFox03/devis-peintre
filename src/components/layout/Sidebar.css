@@ -91,16 +91,6 @@
 
 .app-sidebar__footer { margin-top: auto; }
 
-.app-sidebar__footer-card {
-  padding: 16px;
-  border-radius: 18px;
-  background: rgba(255, 250, 244, 0.78);
-  border: 1px solid rgba(120, 92, 68, 0.12);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-
-.app-sidebar__footer-label { margin: 0 0 6px; font-size: 0.82rem; font-weight: 700; color: #5e4635; }
-.app-sidebar__footer-text  { margin: 0; color: #826b59; font-size: 0.9rem; line-height: 1.45; }
 
 /* ── Mobile bar : cachée sur desktop ── */
 .app-sidebar__mobile-bar { display: none; }
@@ -190,5 +180,84 @@
   .app-sidebar--mobile-open {
     transform: translateX(0);
     box-shadow: 8px 0 40px rgba(47, 33, 24, 0.18);
+  }
+}
+/* ══════════════════════════════════════════
+   Bloc utilisateur + déconnexion (mobile only)
+══════════════════════════════════════════ */
+.app-sidebar__user-block {
+  display: none; /* caché sur desktop */
+}
+
+@media (max-width: 768px) {
+  .app-sidebar__user-block {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 18px;
+    background: rgba(255, 250, 244, 0.78);
+    border: 1px solid rgba(120, 92, 68, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    margin-bottom: 10px;
+  }
+
+  .app-sidebar__user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .app-sidebar__user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(145deg, #6f523c 0%, #4f3929 100%);
+    color: #fff8f2;
+    font-weight: 800;
+    font-size: 0.82rem;
+    flex: 0 0 auto;
+  }
+
+  .app-sidebar__user-meta {
+    display: grid;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  .app-sidebar__user-label {
+    font-size: 0.68rem;
+    color: #9c7f65;
+    white-space: nowrap;
+  }
+
+  .app-sidebar__user-email {
+    color: #2f2118;
+    font-size: 0.85rem;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .app-sidebar__logout {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(79, 57, 41, 0.7);
+    background: linear-gradient(180deg, #7d5d45, #5c4430);
+    color: #fff8f2;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    transition: background 0.15s ease;
+  }
+
+  .app-sidebar__logout:hover {
+    background: linear-gradient(180deg, #8a6850, #6b4f3a);
   }
 }

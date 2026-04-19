@@ -116,46 +116,90 @@ export function QuoteCatalogPicker({
           Aucune prestation ne correspond aux filtres sélectionnés.
         </div>
       ) : (
-        <DataTable
-          headers={
-            <tr>
-              <th>Prestation</th>
-              <th>Catégorie</th>
-              <th>Unité</th>
-              <th>Prix HT</th>
-              <th>TVA</th>
-              <th />
-            </tr>
-          }
-        >
-          {filteredServices.map((service) => (
-            <tr key={service.id}>
-              <td>
-                <div className="quote-catalog-picker-premium__service-cell">
-                  <strong>{service.name}</strong>
-                  {service.default_description && (
-                    <div className="quote-catalog-picker-premium__service-description">
-                      {service.default_description}
+        <>
+          {/* ── Tableau desktop ── */}
+          <div className="quote-catalog-picker-premium__table-shell">
+            <DataTable
+              headers={
+                <tr>
+                  <th>Prestation</th>
+                  <th>Catégorie</th>
+                  <th>Unité</th>
+                  <th>Prix HT</th>
+                  <th>TVA</th>
+                  <th />
+                </tr>
+              }
+            >
+              {filteredServices.map((service) => (
+                <tr key={service.id}>
+                  <td>
+                    <div className="quote-catalog-picker-premium__service-cell">
+                      <strong>{service.name}</strong>
+                      {service.default_description && (
+                        <div className="quote-catalog-picker-premium__service-description">
+                          {service.default_description}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </td>
+                  <td>{getCategoryLabel(service.category)}</td>
+                  <td>{getUnitLabel(service.default_unit)}</td>
+                  <td>{Number(service.default_unit_price_ht).toFixed(2)} €</td>
+                  <td>{Number(service.default_tva_rate).toFixed(2)} %</td>
+                  <td>
+                    <Button
+                      size="sm"
+                      disabled={addingServiceId === service.id}
+                      onClick={() => onAdd(service)}
+                    >
+                      {addingServiceId === service.id ? "Ajout..." : "Ajouter"}
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </DataTable>
+          </div>
+
+          {/* ── Vue cartes mobile ── */}
+          <div className="quote-catalog-picker-premium__card-list">
+            {filteredServices.map((service) => (
+              <article key={service.id} className="quote-catalog-picker-premium__card">
+                <div className="quote-catalog-picker-premium__card-header">
+                  <p className="quote-catalog-picker-premium__card-name">{service.name}</p>
+                  <span className="quote-catalog-picker-premium__card-price">
+                    {Number(service.default_unit_price_ht).toFixed(2)} €
+                  </span>
                 </div>
-              </td>
-              <td>{getCategoryLabel(service.category)}</td>
-              <td>{getUnitLabel(service.default_unit)}</td>
-              <td>{Number(service.default_unit_price_ht).toFixed(2)} €</td>
-              <td>{Number(service.default_tva_rate).toFixed(2)} %</td>
-              <td>
-                <Button
-                  size="sm"
-                  disabled={addingServiceId === service.id}
-                  onClick={() => onAdd(service)}
-                >
-                  {addingServiceId === service.id ? "Ajout..." : "Ajouter"}
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </DataTable>
+                {service.default_description && (
+                  <p className="quote-catalog-picker-premium__service-description">
+                    {service.default_description}
+                  </p>
+                )}
+                <div className="quote-catalog-picker-premium__card-meta">
+                  <span className="quote-catalog-picker-premium__card-chip">
+                    {getCategoryLabel(service.category)}
+                  </span>
+                  <span className="quote-catalog-picker-premium__card-chip">
+                    {getUnitLabel(service.default_unit)}
+                  </span>
+                  <span className="quote-catalog-picker-premium__card-chip">
+                    TVA {Number(service.default_tva_rate).toFixed(0)} %
+                  </span>
+                </div>
+                <div className="quote-catalog-picker-premium__card-actions">
+                  <Button
+                    size="sm"
+                    disabled={addingServiceId === service.id}
+                    onClick={() => onAdd(service)}
+                  >
+                    {addingServiceId === service.id ? "Ajout..." : "Ajouter"}
+                  </Button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
