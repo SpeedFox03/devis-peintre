@@ -16,6 +16,7 @@ import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import { TextArea } from "../../../components/ui/TextArea/TextArea";
 import { Select } from "../../../components/ui/Select/Select";
 import { exportPeppolInvoiceXml } from "../peppol/exportPeppolInvoiceXml";
+import { sendPeppolInvoice } from "../peppol/sendPeppolInvoice";
 
 type InvoiceStatus =
   | "draft"
@@ -176,6 +177,22 @@ function getPeppolStatusLabel(status: string) {
   }
 }
 
+function getPeppolStatusColor(status: string): string {
+  switch (status) {
+    case "delivered":
+      return "#16a34a";
+    case "submitted":
+      return "#2563eb";
+    case "ready":
+      return "#7c3aed";
+    case "rejected":
+    case "error":
+      return "#dc2626";
+    default:
+      return "#6b7280";
+  }
+}
+
 function getPaymentMethodLabel(method: string) {
   switch (method) {
     case "bank_transfer":
@@ -227,6 +244,17 @@ function buildAddressBlock(parts: Array<string | null | undefined>) {
   return parts.filter(Boolean).join(", ");
 }
 
+/** Returns true if this invoice can be sent via Peppol network */
+function canSendViaPeppol(invoice: InvoiceDetails): boolean {
+  const sendableStatuses: InvoiceStatus[] = ["issued", "sent", "partially_paid"];
+  return (
+    sendableStatuses.includes(invoice.status) &&
+    !!invoice.seller_endpoint_id?.trim() &&
+    !!invoice.buyer_endpoint_id?.trim() &&
+    invoice.peppol_status !== "delivered"
+  );
+}
+
 export function InvoiceDetailsPage() {
   const { invoiceId } = useParams();
 
@@ -239,6 +267,7 @@ export function InvoiceDetailsPage() {
   const [savingPayment, setSavingPayment] = useState(false);
   const [deletingPaymentId, setDeletingPaymentId] = useState<string | null>(null);
   const [exportingPeppolXml, setExportingPeppolXml] = useState(false);
+  const [sendingPeppol, setSendingPeppol] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
@@ -453,6 +482,35 @@ export function InvoiceDetailsPage() {
     }
   }
 
+  async function handleSendPeppol() {
+    if (!invoice || !invoiceId) {
+      setError("Facture introuvable.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Envoyer la facture ${invoice.invoice_number} via le réseau Peppol ?\n\nCette action transmet la facture à l'acheteur de façon électronique.`
+    );
+    if (!confirmed) return;
+
+    setSendingPeppol(true);
+    setError(null);
+
+    try {
+      await sendPeppolInvoice(invoiceId);
+      // Reload to reflect the new peppol_status ("submitted")
+      await loadInvoicePage();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Impossible d'envoyer la facture via Peppol."
+      );
+    } finally {
+      setSendingPeppol(false);
+    }
+  }
+
   async function handleRegisterPayment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -569,6 +627,8 @@ export function InvoiceDetailsPage() {
     invoice.customer_jobsite_country_snapshot,
   ]);
 
+  const peppolSendable = canSendViaPeppol(invoice);
+
   return (
     <section>
       <PageHeader
@@ -592,10 +652,18 @@ export function InvoiceDetailsPage() {
               onClick={handleExportPeppolXml}
               disabled={exportingPeppolXml}
             >
-              {exportingPeppolXml
-                ? "Export XML..."
-                : "Exporter facture Peppol (XML)"}
+              {exportingPeppolXml ? "Export XML..." : "Exporter Peppol (XML)"}
             </Button>
+
+            {peppolSendable && (
+              <Button
+                type="button"
+                onClick={handleSendPeppol}
+                disabled={sendingPeppol}
+              >
+                {sendingPeppol ? "Envoi en cours..." : "Envoyer via Peppol"}
+              </Button>
+            )}
 
             <Button
               type="button"
@@ -632,7 +700,12 @@ export function InvoiceDetailsPage() {
             <p><strong>Date :</strong> {invoice.issue_date}</p>
             <p><strong>Échéance :</strong> {invoice.due_date || "-"}</p>
             <p><strong>Devise :</strong> {invoice.currency_code}</p>
-            <p><strong>Peppol :</strong> {getPeppolStatusLabel(invoice.peppol_status)}</p>
+            <p>
+              <strong>Peppol :</strong>{" "}
+              <span style={{ color: getPeppolStatusColor(invoice.peppol_status), fontWeight: 600 }}>
+                {getPeppolStatusLabel(invoice.peppol_status)}
+              </span>
+            </p>
           </Card>
 
           <Card>
@@ -677,6 +750,27 @@ export function InvoiceDetailsPage() {
             <p><strong>IBAN :</strong> {invoice.company_iban_snapshot || "-"}</p>
           </Card>
         </FormGrid>
+
+        {/* Avertissement si les endpoints ne sont pas configurés */}
+        {(["issued", "sent", "partially_paid"] as InvoiceStatus[]).includes(invoice.status) &&
+          (!invoice.seller_endpoint_id || !invoice.buyer_endpoint_id) && (
+          <p style={{ marginTop: 12, color: "#b45309", fontSize: "0.9rem" }}>
+            ⚠️ Les endpoints Peppol vendeur et/ou acheteur ne sont pas renseignés.
+            L'envoi réseau est désactivé jusqu'à leur configuration.
+          </p>
+        )}
+
+        {invoice.peppol_status === "delivered" && (
+          <p style={{ marginTop: 12, color: "#16a34a", fontSize: "0.9rem" }}>
+            ✓ Cette facture a été distribuée avec succès via le réseau Peppol.
+          </p>
+        )}
+
+        {invoice.peppol_status === "rejected" && (
+          <p style={{ marginTop: 12, color: "#dc2626", fontSize: "0.9rem" }}>
+            ✗ Cette facture a été rejetée. Corrigez les erreurs et renvoyez-la.
+          </p>
+        )}
       </SectionCard>
 
       <SectionCard title="Totaux">

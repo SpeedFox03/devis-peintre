@@ -1,4 +1,4 @@
-export type InvoiceType = "invoice" | "deposit" | "final" | "credit_note";
+ export type InvoiceType = "invoice" | "deposit" | "final" | "credit_note";
 
 export type PeppolInvoice = {
   id: string;
@@ -144,16 +144,14 @@ function formatQuantity(value: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// Validation — two levels
+// Validation — pure, no XML build side-effect
 // ---------------------------------------------------------------------------
 
 /**
- * Validation minimale pour l'export fichier XML.
- * Vérifie uniquement les champs nécessaires pour produire un XML UBL valide
- * et importable par un logiciel tiers. Les endpoints Peppol et le payment
- * means code ne sont PAS requis ici.
+ * Returns a list of validation errors for the given Peppol invoice input.
+ * Does NOT throw. Does NOT call buildPeppolInvoiceXml.
  */
-export function getPeppolExportValidationErrors({
+export function getPeppolValidationErrors({
   invoice,
   items,
 }: BuildPeppolInvoiceInput): PeppolValidationError[] {
@@ -165,10 +163,19 @@ export function getPeppolExportValidationErrors({
     }
   }
 
-  // Document-level
+  // Document-level required fields
   required(invoice.invoice_number, "invoice_number", "Numéro de facture");
   required(invoice.issue_date, "issue_date", "Date d'émission");
   required(invoice.currency_code, "currency_code", "Devise");
+  required(invoice.peppol_customization_id, "peppol_customization_id", "CustomizationID Peppol");
+  required(invoice.peppol_profile_id, "peppol_profile_id", "ProfileID Peppol");
+  required(invoice.payment_means_code, "payment_means_code", "Code moyen de paiement");
+
+  // Endpoints
+  required(invoice.seller_endpoint_id, "seller_endpoint_id", "Endpoint ID vendeur");
+  required(invoice.seller_endpoint_scheme, "seller_endpoint_scheme", "Scheme endpoint vendeur");
+  required(invoice.buyer_endpoint_id, "buyer_endpoint_id", "Endpoint ID acheteur");
+  required(invoice.buyer_endpoint_scheme, "buyer_endpoint_scheme", "Scheme endpoint acheteur");
 
   // Seller party
   required(invoice.company_name_snapshot, "company_name_snapshot", "Nom de l'entreprise");
@@ -183,7 +190,7 @@ export function getPeppolExportValidationErrors({
     errors.push({ field: "customer_name", message: "Nom du client manquant." });
   }
 
-  // Credit note
+  // Credit note: reference to original invoice is mandatory
   if (invoice.invoice_type === "credit_note") {
     required(
       invoice.source_invoice_number,
@@ -229,49 +236,7 @@ export function getPeppolExportValidationErrors({
 }
 
 /**
- * Validation complète pour l'envoi réseau Peppol via un Access Point.
- * Inclut tout ce qui est requis pour l'export, PLUS les endpoints et le
- * payment means code nécessaires pour le routage sur le réseau.
- */
-export function getPeppolValidationErrors({
-  invoice,
-  items,
-}: BuildPeppolInvoiceInput): PeppolValidationError[] {
-  // On part de la validation export comme base
-  const errors = getPeppolExportValidationErrors({ invoice, items });
-
-  function required(value: string | null | undefined, field: string, label: string) {
-    if (!value?.trim()) {
-      errors.push({ field, message: `Champ obligatoire manquant : ${label}` });
-    }
-  }
-
-  // Champs supplémentaires requis uniquement pour l'envoi réseau
-  required(invoice.peppol_customization_id, "peppol_customization_id", "CustomizationID Peppol");
-  required(invoice.peppol_profile_id, "peppol_profile_id", "ProfileID Peppol");
-  required(invoice.payment_means_code, "payment_means_code", "Code moyen de paiement");
-  required(invoice.seller_endpoint_id, "seller_endpoint_id", "Endpoint ID vendeur");
-  required(invoice.seller_endpoint_scheme, "seller_endpoint_scheme", "Scheme endpoint vendeur");
-  required(invoice.buyer_endpoint_id, "buyer_endpoint_id", "Endpoint ID acheteur");
-  required(invoice.buyer_endpoint_scheme, "buyer_endpoint_scheme", "Scheme endpoint acheteur");
-
-  return errors;
-}
-
-/**
- * Lance la validation export et lève une erreur agrégée si des problèmes
- * sont détectés. À utiliser avant buildPeppolInvoiceXml() pour un export fichier.
- */
-export function validatePeppolInvoiceForExport(input: BuildPeppolInvoiceInput): void {
-  const errors = getPeppolExportValidationErrors(input);
-  if (errors.length > 0) {
-    throw new Error(errors.map((e) => e.message).join("\n"));
-  }
-}
-
-/**
- * Lance la validation complète (export + réseau) et lève une erreur agrégée.
- * À utiliser avant l'envoi via un Access Point Peppol.
+ * Throws an aggregated Error if any validation errors are found.
  */
 export function validatePeppolInvoiceInput(input: BuildPeppolInvoiceInput): void {
   const errors = getPeppolValidationErrors(input);
@@ -361,26 +326,15 @@ function buildPartyAddress(
   `;
 }
 
-/**
- * Génère le bloc EndpointID si les données sont disponibles.
- * Pour l'export fichier, l'endpoint est optionnel — on l'émet si présent,
- * on l'omet sinon (le fichier reste valide pour import dans un logiciel tiers).
- */
-function buildEndpointId(
-  endpointId: string | null | undefined,
-  endpointScheme: string | null | undefined
-): string {
-  if (!endpointId?.trim() || !endpointScheme?.trim()) return "";
-  return xmlTagWithAttrs("cbc:EndpointID", endpointId, { schemeID: endpointScheme });
-}
-
 function buildSupplierParty(invoice: PeppolInvoice): string {
+  const endpointId = requireField(invoice.seller_endpoint_id, "seller_endpoint_id");
+  const endpointScheme = requireField(invoice.seller_endpoint_scheme, "seller_endpoint_scheme");
   const supplierName = requireField(invoice.company_name_snapshot, "company_name_snapshot");
 
   return `
     <cac:AccountingSupplierParty>
       <cac:Party>
-        ${buildEndpointId(invoice.seller_endpoint_id, invoice.seller_endpoint_scheme)}
+        ${xmlTagWithAttrs("cbc:EndpointID", endpointId, { schemeID: endpointScheme })}
         ${invoice.seller_company_id ? `
         <cac:PartyIdentification>
           <cbc:ID>${escapeXml(invoice.seller_company_id)}</cbc:ID>
@@ -414,12 +368,14 @@ function buildSupplierParty(invoice: PeppolInvoice): string {
 }
 
 function buildCustomerParty(invoice: PeppolInvoice): string {
+  const endpointId = requireField(invoice.buyer_endpoint_id, "buyer_endpoint_id");
+  const endpointScheme = requireField(invoice.buyer_endpoint_scheme, "buyer_endpoint_scheme");
   const customerName = getCustomerPartyName(invoice);
 
   return `
     <cac:AccountingCustomerParty>
       <cac:Party>
-        ${buildEndpointId(invoice.buyer_endpoint_id, invoice.buyer_endpoint_scheme)}
+        ${xmlTagWithAttrs("cbc:EndpointID", endpointId, { schemeID: endpointScheme })}
         ${invoice.buyer_company_id ? `
         <cac:PartyIdentification>
           <cbc:ID>${escapeXml(invoice.buyer_company_id)}</cbc:ID>
@@ -479,15 +435,8 @@ function buildDelivery(invoice: PeppolInvoice): string {
   `;
 }
 
-/**
- * Bloc PaymentMeans — optionnel pour l'export fichier.
- * Émis si payment_means_code est présent, omis sinon.
- * Pour l'envoi réseau, payment_means_code est obligatoire (validé en amont).
- */
 function buildPaymentMeans(invoice: PeppolInvoice): string {
-  const paymentMeansCode = invoice.payment_means_code?.trim();
-  if (!paymentMeansCode) return "";
-
+  const paymentMeansCode = requireField(invoice.payment_means_code, "payment_means_code");
   const iban = invoice.payment_account_iban || invoice.company_iban_snapshot || null;
   const bic = invoice.payment_account_bic || invoice.company_bic_snapshot || null;
 
@@ -611,36 +560,15 @@ function buildInvoiceLine(
 // Main builder
 // ---------------------------------------------------------------------------
 
-/**
- * Construit le XML UBL 2.1 à partir des données de la facture.
- *
- * Par défaut, utilise la validation export (minimale).
- * Pour l'envoi réseau, passe `{ validateForNetwork: true }` pour déclencher
- * la validation complète avec endpoints et payment means code.
- *
- * Les champs optionnels pour l'export (endpoints, payment means) sont inclus
- * dans le XML s'ils sont présents, omis sinon — le fichier reste valide.
- */
-export function buildPeppolInvoiceXml(
-  { invoice, items }: BuildPeppolInvoiceInput,
-  options: { validateForNetwork?: boolean } = {}
-): string {
-  // Validation selon le contexte d'utilisation
-  if (options.validateForNetwork) {
-    validatePeppolInvoiceInput({ invoice, items });
-  } else {
-    validatePeppolInvoiceForExport({ invoice, items });
-  }
+export function buildPeppolInvoiceXml({
+  invoice,
+  items,
+}: BuildPeppolInvoiceInput): string {
+  // Run validation before building — throws on first aggregated error list
+  validatePeppolInvoiceInput({ invoice, items });
 
-  // CustomizationID et ProfileID : valeurs par défaut si absentes (export fichier)
-  const customizationId =
-    invoice.peppol_customization_id?.trim() ||
-    "urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1";
-
-  const profileId =
-    invoice.peppol_profile_id?.trim() ||
-    "urn:fdc:peppol.eu:2017:poacc:billing:3.0";
-
+  const customizationId = requireField(invoice.peppol_customization_id, "peppol_customization_id");
+  const profileId = requireField(invoice.peppol_profile_id, "peppol_profile_id");
   const invoiceNumber = requireField(invoice.invoice_number, "invoice_number");
   const issueDate = requireField(invoice.issue_date, "issue_date");
   const currencyCode = requireField(invoice.currency_code, "currency_code");
