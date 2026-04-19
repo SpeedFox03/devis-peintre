@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../features/auth/hooks/useAuth";
+import { Button } from "../../components/ui/Button/Button";
 import "./Topbar.css";
 
 function getInitials(email?: string | null) {
@@ -36,9 +37,9 @@ export function Topbar() {
           </div>
         </div>
 
-        <button className="app-topbar__logout" onClick={handleLogout}>
+        <Button className="app-topbar__logout" onClick={handleLogout}>
           Déconnexion
-        </button>
+        </Button>
       </div>
     </header>
   );

@@ -164,11 +164,11 @@ export function QuoteDetailsPage() {
     );
   }
 
-  // The tab nav injected into the Topbar
+  // The tab nav injected into the Topbar (desktop/tablet)
   const tabNav = (
     <nav className="quote-topbar-nav" aria-label="Pages du devis">
       {quotePages.map((page) => (
-        <button
+        <Button
           key={page.id}
           type="button"
           className={`quote-topbar-nav__tab ${
@@ -177,14 +177,32 @@ export function QuoteDetailsPage() {
           onClick={() => setActivePage(page.id)}
         >
           {page.label}
-        </button>
+        </Button>
       ))}
     </nav>
   );
 
+  // Tab nav dupliqué pour mobile (topbar cachée sur mobile)
+  const tabNavMobile = (
+    <div className="quote-page-tabs-mobile" aria-label="Pages du devis">
+      {quotePages.map((page) => (
+        <Button
+          key={page.id}
+          type="button"
+          className={`quote-topbar-nav__tab ${
+            activePage === page.id ? "quote-topbar-nav__tab--active" : ""
+          }`}
+          onClick={() => setActivePage(page.id)}
+        >
+          {page.label}
+        </Button>
+      ))}
+    </div>
+  );
+
   return (
     <section className="quote-premium-page">
-      {/* Inject nav into Topbar via portal */}
+      {/* Inject nav into Topbar via portal (desktop/tablet) */}
       {topbarPortalTarget ? createPortal(tabNav, topbarPortalTarget) : null}
 
       <header className="quote-premium-page__hero">
@@ -224,6 +242,9 @@ export function QuoteDetailsPage() {
           </div>
         </div>
       </header>
+
+      {/* Onglets visibles uniquement sur mobile (topbar cachée) */}
+      {tabNavMobile}
 
       <div className="quote-premium-page__page-content">
         {activePage === "builder" ? (
@@ -301,7 +322,7 @@ export function QuoteDetailsPage() {
                   </div>
 
                   <div className="quote-premium-page__section-actions" ref={generalMenuRef}>
-                    <button
+                    <Button
                       type="button"
                       className="quote-premium-page__more-btn"
                       aria-haspopup="menu"
@@ -310,11 +331,11 @@ export function QuoteDetailsPage() {
                       onClick={() => setShowGeneralMenu((current) => !current)}
                     >
                       ⋯
-                    </button>
+                    </Button>
 
                     {showGeneralMenu ? (
                       <div className="quote-premium-page__dropdown-menu" role="menu">
-                        <button
+                        <Button
                           type="button"
                           className="quote-premium-page__dropdown-item"
                           role="menuitem"
@@ -324,9 +345,9 @@ export function QuoteDetailsPage() {
                           }}
                         >
                           Réappliquer les paramètres
-                        </button>
+                        </Button>
 
-                        <button
+                        <Button
                           type="button"
                           className="quote-premium-page__dropdown-item"
                           role="menuitem"
@@ -336,7 +357,7 @@ export function QuoteDetailsPage() {
                           }}
                         >
                           Réinitialiser le formulaire
-                        </button>
+                        </Button>
                       </div>
                     ) : null}
                   </div>

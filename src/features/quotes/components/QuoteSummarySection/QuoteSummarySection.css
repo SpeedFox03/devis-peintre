@@ -1,7 +1,4 @@
-.quote-summary-premium {
-  display: grid;
-  gap: 14px;
-}
+.quote-summary-premium { display: grid; gap: 14px; }
 
 .quote-summary-premium__header {
   display: flex;
@@ -10,12 +7,9 @@
   gap: 12px;
 }
 
-.quote-summary-premium__title {
-  margin: 0;
-  color: #111827;
-  font-size: 1.16rem;
-}
+.quote-summary-premium__title { margin: 0; color: #111827; font-size: 1.16rem; }
 
+/* Chip brun */
 .quote-summary-premium__tax-chip {
   flex: 0 0 auto;
   min-height: 32px;
@@ -23,11 +17,11 @@
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
-  background: rgba(228, 156, 33, 0.08);
-  color: #8a5a00;
+  background: rgba(111, 82, 60, 0.1);
+  color: #503c2e;
   font-size: 0.8rem;
   font-weight: 700;
-  border: 1px solid rgba(228, 156, 33, 0.18);
+  border: 1px solid rgba(111, 82, 60, 0.2);
 }
 
 .quote-summary-premium__grid {
@@ -36,10 +30,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.quote-summary-premium__stat {
-  display: grid;
-  gap: 6px;
-}
+.quote-summary-premium__stat { display: grid; gap: 6px; }
 
 .quote-summary-premium__label {
   margin: 0;
@@ -57,17 +48,13 @@
   letter-spacing: -0.03em;
 }
 
+/* Total TTC : brun foncé */
 .quote-summary-premium__value--strong {
   font-size: clamp(1.3rem, 2.2vw, 1.7rem);
-  color: #8a5a00;
+  color: #503c2e;
 }
 
 @media (max-width: 900px) {
-  .quote-summary-premium__header {
-    flex-direction: column;
-  }
-
-  .quote-summary-premium__grid {
-    grid-template-columns: 1fr;
-  }
+  .quote-summary-premium__header { flex-direction: column; }
+  .quote-summary-premium__grid { grid-template-columns: 1fr; }
 }

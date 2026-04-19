@@ -33,7 +33,7 @@
 
 .ui-button:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(228, 156, 33, 0.16);
+  box-shadow: 0 0 0 4px rgba(111, 82, 60, 0.18);
 }
 
 .ui-button:disabled {
@@ -56,23 +56,28 @@
   font-size: 0.86rem;
 }
 
+/* Brun noisette au lieu de l'amber/orange */
 .ui-button--primary {
-  background: linear-gradient(180deg, rgba(233, 166, 57, 0.96), rgba(228, 156, 33, 0.96));
-  color: #111827;
-  border-color: rgba(228, 156, 33, 0.9);
+  background: linear-gradient(180deg, #7d5d45, #5c4430);
+  color: #fff8f2;
+  border-color: rgba(79, 57, 41, 0.7);
   box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    0 1px 2px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .ui-button--primary:hover:not(:disabled) {
-  background: linear-gradient(180deg, rgba(239, 173, 68, 1), rgba(232, 160, 39, 1));
-  border-color: rgba(228, 156, 33, 1);
+  background: linear-gradient(180deg, #8a6850, #6b4f3a);
+  border-color: rgba(79, 57, 41, 0.9);
+  color: #fff8f2;
+  box-shadow:
+    0 4px 12px rgba(79, 57, 41, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .ui-button--secondary {
   background: rgba(255, 255, 255, 0.92);
-  color: #374151;
+  color: #fff8f2;
   border-color: rgba(229, 231, 235, 1);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }

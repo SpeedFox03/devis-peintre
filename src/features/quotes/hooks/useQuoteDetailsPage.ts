@@ -112,7 +112,7 @@ export function useQuoteDetailsPage() {
         supabase
           .from("companies")
           .select(
-            "id, name, vat_number, email, phone, address_line1, address_line2, postal_code, city, country, default_tva_rate, default_quote_validity_days, default_notes, default_terms"
+            "id, name, vat_number, email, phone, address_line1, address_line2, postal_code, city, country, default_tva_rate, default_quote_validity_days, default_notes, default_terms, pdf_theme, pdf_color_mode, logo_url"
           )
           .eq("id", loadedQuote.company_id)
           .single(),
@@ -220,7 +220,7 @@ export function useQuoteDetailsPage() {
       supabase
         .from("companies")
         .select(
-          "id, name, vat_number, email, phone, address_line1, address_line2, postal_code, city, country, default_tva_rate, default_quote_validity_days, default_notes, default_terms"
+          "id, name, vat_number, email, phone, address_line1, address_line2, postal_code, city, country, default_tva_rate, default_quote_validity_days, default_notes, default_terms, pdf_theme, pdf_color_mode, logo_url"
         )
         .eq("id", loadedQuote.company_id)
         .single(),
@@ -829,7 +829,8 @@ export function useQuoteDetailsPage() {
         })),
       };
 
-      generateQuotePdf(pdfData).download(`${quote.quote_number}.pdf`);
+      const pdf = await generateQuotePdf(pdfData, company?.pdf_theme, company?.pdf_color_mode ?? true);
+      pdf.download(`${quote.quote_number}.pdf`);
     } catch (err) {
       console.error(err);
       setError("Impossible de générer le PDF.");

@@ -1,20 +1,7 @@
-.quote-room-form-premium {
-  display: grid;
-  gap: 16px;
-}
+.quote-room-form-premium { display: grid; gap: 16px; }
 
-.quote-room-form-premium__actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.quote-room-form-premium__actions .ui-button {
-  color: inherit;
-}
-
-.quote-room-form-premium__actions .ui-button svg {
-  width: 18px;
-  height: 18px;
-  flex: 0 0 auto;
-}
+.quote-room-form-premium__actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.quote-room-form-premium__actions .ui-button--primary { color: #fff8f2; }
+.quote-room-form-premium__actions .ui-button--secondary,
+.quote-room-form-premium__actions .ui-button--danger { color: inherit; }
+.quote-room-form-premium__actions .ui-button svg { width: 18px; height: 18px; flex: 0 0 auto; }

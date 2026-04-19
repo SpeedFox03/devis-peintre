@@ -8,6 +8,7 @@ export type QuotePdfCompany = {
   postal_code: string | null;
   city: string | null;
   country: string | null;
+  logo_url?: string | null;
 };
 
 export type QuotePdfCustomer = {
@@ -64,4 +65,23 @@ export type QuotePdfData = {
   quote: QuotePdfQuote;
   rooms: QuotePdfRoom[];
   items: QuotePdfItem[];
-}; 
+  colorMode?: boolean | null;
+  logoBase64?: string | null;
+};
+
+
+export type PdfTheme = "normal" | "aere" | "compact";
+
+export const PDF_THEME_LABELS: Record<PdfTheme, string> = {
+  normal:   "Normal",
+  aere:     "Aéré",
+  compact:  "Compact",
+};
+
+export function isPdfTheme(value: unknown): value is PdfTheme {
+  return value === "normal" || value === "aere" || value === "compact";
+}
+
+export function resolvePdfTheme(value: unknown): PdfTheme {
+  return isPdfTheme(value) ? value : "normal";
+}

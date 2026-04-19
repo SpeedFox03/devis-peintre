@@ -171,3 +171,271 @@
     justify-content: flex-start;
   }
 }
+/* ─── Logo uploader ───────────────────────────────────────────────────────── */
+
+.settings-premium-page__logo-uploader {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-premium-page__logo-preview {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-start;
+  width: fit-content;
+}
+
+.settings-premium-page__logo-img {
+  max-height: 72px;
+  max-width: 240px;
+  width: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(120, 92, 68, 0.14);
+  background: #fff;
+  object-fit: contain;
+  padding: 6px;
+}
+
+.settings-premium-page__logo-remove {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(120, 92, 68, 0.2);
+  background: #fff;
+  color: #7b6554;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.settings-premium-page__logo-remove:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: rgba(185, 28, 28, 0.3);
+}
+
+.settings-premium-page__logo-drop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+  padding: 16px 20px;
+  border: 1.5px dashed rgba(120, 92, 68, 0.28);
+  border-radius: 16px;
+  background: rgba(255, 253, 249, 0.6);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  text-align: center;
+}
+
+.settings-premium-page__logo-drop:hover {
+  border-color: rgba(142, 116, 82, 0.5);
+  background: rgba(255, 253, 249, 1);
+}
+
+.settings-premium-page__logo-drop--loading {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.settings-premium-page__logo-drop span {
+  display: grid;
+  gap: 4px;
+  font-size: 0.88rem;
+  color: #7d6654;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.settings-premium-page__logo-drop em {
+  font-style: normal;
+  font-size: 0.76rem;
+  font-weight: 400;
+  color: #9c8472;
+}
+
+.settings-premium-page__logo-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.settings-premium-page__logo-error {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #b91c1c;
+}
+
+
+/* ─── Theme picker ────────────────────────────────────────────────────────── */
+
+.settings-premium-page__theme-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.settings-premium-page__theme-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  border: 1.5px solid rgba(120, 92, 68, 0.18);
+  border-radius: 16px;
+  background: rgba(255, 253, 249, 0.7);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
+}
+
+.settings-premium-page__theme-card:hover {
+  border-color: rgba(142, 116, 82, 0.45);
+  background: rgba(255, 253, 249, 1);
+  box-shadow: 0 4px 16px rgba(90, 63, 44, 0.08);
+  transform: translateY(-1px);
+}
+
+.settings-premium-page__theme-card--active {
+  border-color: #8e7452;
+  background: linear-gradient(135deg, rgba(142, 116, 82, 0.1), rgba(168, 143, 108, 0.06));
+  box-shadow:
+    0 0 0 3px rgba(142, 116, 82, 0.14),
+    0 4px 16px rgba(90, 63, 44, 0.1);
+}
+
+.settings-premium-page__theme-card--active::after {
+  content: "✓";
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #8e7452;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}
+
+.settings-premium-page__theme-card-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #34251b;
+  pointer-events: none;
+}
+
+.settings-premium-page__theme-card--active .settings-premium-page__theme-card-label {
+  color: #6b4f2e;
+}
+
+.settings-premium-page__theme-card-desc {
+  font-size: 0.78rem;
+  color: #9c846f;
+  line-height: 1.45;
+  pointer-events: none;
+}
+
+/* ─── Theme preview ───────────────────────────────────────────────────────── */
+
+.settings-premium-page__theme-preview {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-premium-page__theme-preview-label {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9c846f;
+}
+
+.settings-premium-page__theme-preview-svg {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  border: 1px solid rgba(120, 92, 68, 0.16);
+  border-radius: 12px;
+  box-shadow:
+    0 4px 20px rgba(90, 63, 44, 0.08),
+    0 1px 3px rgba(90, 63, 44, 0.06);
+  display: block;
+  transition: opacity 0.2s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* ─── Color mode toggle ───────────────────────────────────────────────────── */
+
+.settings-premium-page__color-mode {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.settings-premium-page__color-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border: 1.5px solid rgba(120, 92, 68, 0.18);
+  border-radius: 14px;
+  background: rgba(255, 253, 249, 0.7);
+  color: #6b5a4a;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.settings-premium-page__color-mode-btn:hover {
+  border-color: rgba(142, 116, 82, 0.45);
+  background: rgba(255, 253, 249, 1);
+}
+
+.settings-premium-page__color-mode-btn--active {
+  border-color: #8e7452;
+  background: linear-gradient(135deg, rgba(142, 116, 82, 0.1), rgba(168, 143, 108, 0.06));
+  color: #5c3e22;
+  box-shadow: 0 0 0 3px rgba(142, 116, 82, 0.12);
+}
+
+/* Small swatch squares */
+.settings-premium-page__color-mode-swatch {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.settings-premium-page__color-mode-swatch--color {
+  background: linear-gradient(135deg, #8e7452 0%, #f6efe4 100%);
+}
+
+.settings-premium-page__color-mode-swatch--bw {
+  background: linear-gradient(135deg, #1a1a1a 0%, #f2f2f2 100%);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */

@@ -323,93 +323,90 @@ export function QuoteItemsSection({
             onAction={onOpenCreateForm}
           />
         ) : (
-          <div className="quote-items-premium__table-wrap">
-            <DataTable
-              headers={
-                <tr>
-                  <th>Désignation</th>
-                  <th>Pièce</th>
-                  <th>Qté</th>
-                  <th>Unité</th>
-                  <th>PU HT</th>
-                  <th>TVA</th>
-                  <th>Total HT</th>
-                  <th>Actions</th>
-                </tr>
-              }
-            >
+          <>
+            {/* ── Vue tableau (desktop/tablette) ── */}
+            <div className="quote-items-premium__table-wrap">
+              <DataTable
+                headers={
+                  <tr>
+                    <th>Désignation</th>
+                    <th>Pièce</th>
+                    <th>Qté</th>
+                    <th>Unité</th>
+                    <th>PU HT</th>
+                    <th>TVA</th>
+                    <th>Total HT</th>
+                    <th>Actions</th>
+                  </tr>
+                }
+              >
+                {items.map((item) => {
+                  const totalHt = Number(item.quantity || 0) * Number(item.unit_price_ht || 0);
+                  return (
+                    <tr key={item.id}>
+                      <td>
+                        <div className="quote-items-premium__cell-main">
+                          <strong>{item.label}</strong>
+                          {item.description?.trim() ? (
+                            <p className="quote-items-premium__cell-subtext">{item.description}</p>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td>{item.room_id ? roomMap.get(item.room_id) || "—" : "—"}</td>
+                      <td>{formatQuantity(item.quantity)}</td>
+                      <td>{item.unit || "—"}</td>
+                      <td>{formatCurrency(item.unit_price_ht)}</td>
+                      <td>{Number(item.tva_rate || 0).toFixed(2)} %</td>
+                      <td>{formatCurrency(totalHt)}</td>
+                      <td>
+                        <div className="quote-items-premium__table-actions">
+                          <Button type="button" size="sm" variant="secondary" onClick={() => onEdit(item)} aria-label="Modifier" title="Modifier"><PencilIcon /></Button>
+                          <Button type="button" size="sm" variant="secondary" onClick={() => onDuplicate(item)} aria-label="Dupliquer" title="Dupliquer"><CopyIcon /></Button>
+                          <Button type="button" size="sm" variant="secondary" onClick={() => onOpenMove(item)} aria-label="Déplacer" title="Déplacer"><ArrowsLeftRightIcon /></Button>
+                          <Button type="button" size="sm" variant="danger" disabled={deletingItemId === item.id} onClick={() => onDelete(item.id)} aria-label="Supprimer" title="Supprimer"><TrashIcon /></Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </DataTable>
+            </div>
+
+            {/* ── Vue cartes (mobile uniquement, via CSS display:none/grid) ── */}
+            <div className="quote-items-premium__card-list">
               {items.map((item) => {
                 const totalHt = Number(item.quantity || 0) * Number(item.unit_price_ht || 0);
-
+                const roomName = item.room_id ? roomMap.get(item.room_id) : null;
                 return (
-                  <tr key={item.id}>
-                    <td>
-                      <div className="quote-items-premium__cell-main">
-                        <strong>{item.label}</strong>
+                  <article key={item.id} className="quote-items-premium__item-card">
+                    <div className="quote-items-premium__item-card-header">
+                      <div>
+                        <p className="quote-items-premium__item-card-title">{item.label}</p>
                         {item.description?.trim() ? (
-                          <p className="quote-items-premium__cell-subtext">{item.description}</p>
+                          <p className="quote-items-premium__item-card-desc">{item.description}</p>
                         ) : null}
                       </div>
-                    </td>
-                    <td>{item.room_id ? roomMap.get(item.room_id) || "—" : "—"}</td>
-                    <td>{formatQuantity(item.quantity)}</td>
-                    <td>{item.unit || "—"}</td>
-                    <td>{formatCurrency(item.unit_price_ht)}</td>
-                    <td>{Number(item.tva_rate || 0).toFixed(2)} %</td>
-                    <td>{formatCurrency(totalHt)}</td>
-                    <td>
-                      <div className="quote-items-premium__table-actions">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => onEdit(item)}
-                          aria-label="Modifier"
-                          title="Modifier"
-                        >
-                          <PencilIcon />
-                        </Button>
+                      <span className="quote-items-premium__item-card-total">{formatCurrency(totalHt)}</span>
+                    </div>
 
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => onDuplicate(item)}
-                          aria-label="Dupliquer"
-                          title="Dupliquer"
-                        >
-                          <CopyIcon />
-                        </Button>
+                    <div className="quote-items-premium__item-card-meta">
+                      {roomName ? <span className="quote-items-premium__item-card-chip">📍 {roomName}</span> : null}
+                      <span className="quote-items-premium__item-card-chip">{formatQuantity(item.quantity)} {item.unit || ""}</span>
+                      <span className="quote-items-premium__item-card-chip">{formatCurrency(item.unit_price_ht)} / u</span>
+                      <span className="quote-items-premium__item-card-chip">TVA {Number(item.tva_rate || 0).toFixed(0)} %</span>
+                    </div>
 
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => onOpenMove(item)}
-                          aria-label="Déplacer"
-                          title="Déplacer"
-                        >
-                          <ArrowsLeftRightIcon />
-                        </Button>
-
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="danger"
-                          disabled={deletingItemId === item.id}
-                          onClick={() => onDelete(item.id)}
-                          aria-label="Supprimer"
-                          title="Supprimer"
-                        >
-                          <TrashIcon />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
+                    <div className="quote-items-premium__item-card-actions">
+                      <Button type="button" size="sm" variant="secondary" onClick={() => onEdit(item)} aria-label="Modifier" title="Modifier"><PencilIcon /></Button>
+                      <Button type="button" size="sm" variant="secondary" onClick={() => onDuplicate(item)} aria-label="Dupliquer" title="Dupliquer"><CopyIcon /></Button>
+                      <Button type="button" size="sm" variant="secondary" onClick={() => onOpenMove(item)} aria-label="Déplacer" title="Déplacer"><ArrowsLeftRightIcon /></Button>
+                      <Button type="button" size="sm" variant="danger" disabled={deletingItemId === item.id} onClick={() => onDelete(item.id)} aria-label="Supprimer" title="Supprimer"><TrashIcon /></Button>
+                    </div>
+                  </article>
                 );
               })}
-            </DataTable>
-          </div>
+            </div>
+          </>
         )}
       </Card>
     </section>
