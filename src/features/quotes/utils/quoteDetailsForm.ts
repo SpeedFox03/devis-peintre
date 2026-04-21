@@ -16,7 +16,7 @@ export function getDefaultValidUntil(validityDays = 30) {
   return formatDateForInput(date);
 }
 
-export function createInitialItemForm(tvaRate = 21): QuoteItemFormState {
+export function createInitialItemForm(defaultTvaRate = 21): QuoteItemFormState {
   return {
     room_id: "",
     item_type: "service",
@@ -24,9 +24,11 @@ export function createInitialItemForm(tvaRate = 21): QuoteItemFormState {
     label: "",
     description: "",
     unit: "m2",
-    quantity: "1",
-    unit_price_ht: "0",
-    tva_rate: String(tvaRate),
+    quantity: "",
+    unit_price_ht: "",
+    tva_rate: String(defaultTvaRate),
+    dim_length: "",
+    dim_height: "",
   };
 }
 
@@ -58,14 +60,16 @@ export function getNextSortOrder(values: number[]) {
 
 export function mapItemToForm(item: QuoteItem): QuoteItemFormState {
   return {
-    room_id: item.room_id || "",
-    item_type: item.item_type,
-    category: item.category || "other",
-    label: item.label,
-    description: item.description || "",
-    unit: item.unit,
-    quantity: String(item.quantity),
-    unit_price_ht: String(item.unit_price_ht),
-    tva_rate: String(item.tva_rate),
+    room_id: item.room_id ?? "",
+    item_type: item.item_type ?? "service",
+    category: item.category ?? "other",
+    label: item.label ?? "",
+    description: item.description ?? "",
+    unit: item.unit ?? "qty",
+    quantity: String(item.quantity ?? ""),
+    unit_price_ht: String(item.unit_price_ht ?? ""),
+    tva_rate: String(item.tva_rate ?? ""),
+    dim_length: "",
+    dim_height: "",
   };
 }

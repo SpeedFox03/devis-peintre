@@ -7,27 +7,8 @@ import { FormGrid } from "../../../../components/ui/FormGrid/FormGrid";
 import { Button } from "../../../../components/ui/Button/Button";
 import { ErrorMessage } from "../../../../components/ui/ErrorMessage/ErrorMessage";
 import { CloseIcon } from "../../../../components/ui/Icons/AppIcons";
+import type { QuoteItemFormState, Room } from "../../types";
 import "./QuoteItemForm.css";
-
-type Room = {
-  id: string;
-  name: string;
-};
-
-type QuoteItemFormState = {
-  room_id: string;
-  item_type: string;
-  category: string;
-  label: string;
-  description: string;
-  unit: string;
-  quantity: string;
-  unit_price_ht: string;
-  tva_rate: string;
-  // Champs optionnels pour le calcul m²
-  dim_length: string;
-  dim_height: string;
-};
 
 type QuoteItemFormProps = {
   form: QuoteItemFormState;
@@ -55,7 +36,6 @@ export function QuoteItemForm({
 }: QuoteItemFormProps) {
   const isM2 = form.unit === "m2";
 
-  // Met à jour L ou H et recalcule automatiquement la quantité si les deux sont renseignés
   function handleDimChange(field: "dim_length" | "dim_height", value: string) {
     onChange(field, value);
 

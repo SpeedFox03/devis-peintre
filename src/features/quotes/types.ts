@@ -95,6 +95,8 @@ export type QuoteItemFormState = {
   quantity: string;
   unit_price_ht: string;
   tva_rate: string;
+  dim_length: string;
+  dim_height: string;
 };
 
 export type RoomFormState = {
