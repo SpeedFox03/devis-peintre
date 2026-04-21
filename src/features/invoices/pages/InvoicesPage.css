@@ -1,0 +1,294 @@
+.invoices-premium-page {
+  display: grid;
+  gap: 20px;
+  padding-bottom: 28px;
+}
+
+/* ══════════════════════════════════════════
+   Hero
+══════════════════════════════════════════ */
+.invoices-premium-page__hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px 28px;
+  border: 1px solid rgba(229, 231, 235, 0.82);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 10px 30px rgba(15, 23, 42, 0.04);
+}
+
+.invoices-premium-page__hero-main {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.invoices-premium-page__eyebrow {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.invoices-premium-page__title {
+  margin: 0;
+  color: #111827;
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.invoices-premium-page__description {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.55;
+}
+
+/* ══════════════════════════════════════════
+   Filtres
+══════════════════════════════════════════ */
+.invoices-premium-page__filters-card {
+  display: grid;
+  gap: 14px;
+}
+
+.invoices-premium-page__filters-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(200px, 2fr) minmax(160px, 1fr) minmax(160px, 1fr);
+  align-items: end;
+}
+
+/* ══════════════════════════════════════════
+   Tableau desktop
+══════════════════════════════════════════ */
+.invoices-premium-page__table-shell {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(229, 231, 235, 0.95);
+  border-radius: 18px;
+}
+
+.invoices-premium-page__table-shell table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.invoices-premium-page__table-shell th:nth-child(1),
+.invoices-premium-page__table-shell td:nth-child(1) { width: 11%; }
+.invoices-premium-page__table-shell th:nth-child(2),
+.invoices-premium-page__table-shell td:nth-child(2) { width: 13%; }
+.invoices-premium-page__table-shell th:nth-child(3),
+.invoices-premium-page__table-shell td:nth-child(3) { width: 17%; }
+.invoices-premium-page__table-shell th:nth-child(4),
+.invoices-premium-page__table-shell td:nth-child(4) { width: 13%; }
+.invoices-premium-page__table-shell th:nth-child(5),
+.invoices-premium-page__table-shell td:nth-child(5) { width: 9%; }
+.invoices-premium-page__table-shell th:nth-child(6),
+.invoices-premium-page__table-shell td:nth-child(6) { width: 9%; }
+.invoices-premium-page__table-shell th:nth-child(7),
+.invoices-premium-page__table-shell td:nth-child(7) { width: 9%; }
+.invoices-premium-page__table-shell th:nth-child(8),
+.invoices-premium-page__table-shell td:nth-child(8) { width: 8%; }
+.invoices-premium-page__table-shell th:nth-child(9),
+.invoices-premium-page__table-shell td:nth-child(9) { width: 8%; }
+.invoices-premium-page__table-shell th:nth-child(10),
+.invoices-premium-page__table-shell td:nth-child(10) { width: 13%; }
+
+.invoices-premium-page__invoice-number {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.06);
+  color: #374151;
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.invoices-premium-page__status-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.invoices-premium-page__status-chip--draft        { background: rgba(17,24,39,0.06);   color: #374151; border-color: rgba(17,24,39,0.1); }
+.invoices-premium-page__status-chip--issued       { background: rgba(59,130,246,0.1);  color: #1d4ed8; border-color: rgba(59,130,246,0.18); }
+.invoices-premium-page__status-chip--sent         { background: rgba(139,92,246,0.1);  color: #6d28d9; border-color: rgba(139,92,246,0.18); }
+.invoices-premium-page__status-chip--partially_paid { background: rgba(245,158,11,0.12); color: #b45309; border-color: rgba(245,158,11,0.2); }
+.invoices-premium-page__status-chip--paid         { background: rgba(16,185,129,0.12); color: #047857; border-color: rgba(16,185,129,0.18); }
+.invoices-premium-page__status-chip--cancelled    { background: rgba(239,68,68,0.1);   color: #b91c1c; border-color: rgba(239,68,68,0.18); }
+.invoices-premium-page__status-chip--credited     { background: rgba(107,114,128,0.1); color: #4b5563; border-color: rgba(107,114,128,0.18); }
+
+.invoices-premium-page__row-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* ══════════════════════════════════════════
+   Vue cartes mobile
+══════════════════════════════════════════ */
+.invoices-premium-page__card-list {
+  display: none;
+}
+
+.invoices-premium-page__invoice-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(229, 231, 235, 0.95);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.invoices-premium-page__invoice-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.invoices-premium-page__invoice-card-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.invoices-premium-page__invoice-card-customer {
+  margin: 0;
+  color: #111827;
+  font-size: 0.95rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.invoices-premium-page__invoice-card-type {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.82rem;
+}
+
+.invoices-premium-page__invoice-card-total {
+  font-weight: 800;
+  color: #503c2e;
+  font-size: 1rem;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.invoices-premium-page__invoice-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.invoices-premium-page__invoice-card-date {
+  color: #6b7280;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.invoices-premium-page__invoice-card-balances {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.invoices-premium-page__invoice-card-balance {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(249, 250, 251, 0.8);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+}
+
+.invoices-premium-page__invoice-card-balance-label {
+  color: #6b7280;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.invoices-premium-page__invoice-card-balance-value {
+  color: #111827;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.invoices-premium-page__invoice-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.invoices-premium-page__invoice-card-actions > * {
+  flex: 1 1 auto;
+}
+
+/* ══════════════════════════════════════════
+   Couleurs boutons
+══════════════════════════════════════════ */
+.invoices-premium-page__row-actions .ui-button--primary,
+.invoices-premium-page__invoice-card-actions .ui-button--primary   { color: #fff8f2; }
+
+.invoices-premium-page__row-actions .ui-button--secondary,
+.invoices-premium-page__row-actions .ui-button--danger,
+.invoices-premium-page__invoice-card-actions .ui-button--secondary,
+.invoices-premium-page__invoice-card-actions .ui-button--danger    { color: inherit; }
+
+.invoices-premium-page__row-actions .ui-button svg,
+.invoices-premium-page__invoice-card-actions .ui-button svg        { width: 16px; height: 16px; flex: 0 0 auto; }
+
+/* ══════════════════════════════════════════
+   Breakpoints
+══════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .invoices-premium-page__hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 18px 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .invoices-premium-page {
+    gap: 14px;
+  }
+
+  .invoices-premium-page__hero {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .invoices-premium-page__filters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Masquer tableau, afficher cartes */
+  .invoices-premium-page__table-shell { display: none; }
+  .invoices-premium-page__card-list   { display: grid; gap: 10px; }
+}

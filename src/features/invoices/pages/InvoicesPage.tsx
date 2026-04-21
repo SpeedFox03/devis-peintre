@@ -1,17 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
-import { PageHeader } from "../../../components/ui/PageHeader/PageHeader";
 import { LoadingBlock } from "../../../components/ui/LoadingBlock/LoadingBlock";
 import { ErrorMessage } from "../../../components/ui/ErrorMessage/ErrorMessage";
 import { EmptyState } from "../../../components/ui/EmptyState/EmptyState";
-import { SectionCard } from "../../../components/ui/SectionCard/SectionCard";
+import { Card } from "../../../components/ui/Card/Card";
 import { DataTable } from "../../../components/ui/DataTable/DataTable";
 import { Button } from "../../../components/ui/Button/Button";
 import { FormField } from "../../../components/ui/FormField/FormField";
-import { FormGrid } from "../../../components/ui/FormGrid/FormGrid";
 import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import { Select } from "../../../components/ui/Select/Select";
+import "./InvoicesPage.css";
 
 type InvoiceStatus =
   | "draft"
@@ -42,138 +41,91 @@ type InvoiceListItem = {
 
 function getInvoiceStatusLabel(status: InvoiceStatus) {
   switch (status) {
-    case "draft":
-      return "Brouillon";
-    case "issued":
-      return "Émise";
-    case "sent":
-      return "Envoyée";
-    case "partially_paid":
-      return "Partiellement payée";
-    case "paid":
-      return "Payée";
-    case "cancelled":
-      return "Annulée";
-    case "credited":
-      return "Avoirée";
-    default:
-      return status;
+    case "draft": return "Brouillon";
+    case "issued": return "Émise";
+    case "sent": return "Envoyée";
+    case "partially_paid": return "Partiellement payée";
+    case "paid": return "Payée";
+    case "cancelled": return "Annulée";
+    case "credited": return "Avoirée";
+    default: return status;
   }
 }
 
 function getInvoiceTypeLabel(type: InvoiceType) {
   switch (type) {
-    case "invoice":
-      return "Facture";
-    case "deposit":
-      return "Facture d'acompte";
-    case "final":
-      return "Facture finale";
-    case "credit_note":
-      return "Avoir";
-    default:
-      return type;
+    case "invoice": return "Facture";
+    case "deposit": return "Acompte";
+    case "final": return "Finale";
+    case "credit_note": return "Avoir";
+    default: return type;
   }
 }
 
 function getCustomerDisplayName(invoice: InvoiceListItem) {
-  if (invoice.customer_company_name_snapshot?.trim()) {
-    return invoice.customer_company_name_snapshot;
-  }
-
-  const fullName = [
-    invoice.customer_first_name_snapshot,
-    invoice.customer_last_name_snapshot,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
-
+  if (invoice.customer_company_name_snapshot?.trim()) return invoice.customer_company_name_snapshot;
+  const fullName = [invoice.customer_first_name_snapshot, invoice.customer_last_name_snapshot]
+    .filter(Boolean).join(" ").trim();
   return fullName || "Client non renseigné";
+}
+
+function formatCurrency(value: number) {
+  return `${Number(value || 0).toFixed(2)} €`;
 }
 
 export function InvoicesPage() {
   const [invoices, setInvoices] = useState<InvoiceListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
 
-  useEffect(() => {
-    void loadInvoices();
-  }, []);
+  useEffect(() => { void loadInvoices(); }, []);
 
   async function loadInvoices() {
     setLoading(true);
     setError(null);
-
     const { data, error: fetchError } = await supabase
       .from("invoices")
-      .select(
-        `
-        id,
-        invoice_number,
-        invoice_type,
-        status,
-        issue_date,
-        due_date,
-        total_ttc,
-        amount_paid,
-        balance_due,
-        customer_company_name_snapshot,
-        customer_first_name_snapshot,
-        customer_last_name_snapshot,
-        source_quote_id
-      `
-      )
+      .select(`id, invoice_number, invoice_type, status, issue_date, due_date,
+        total_ttc, amount_paid, balance_due, customer_company_name_snapshot,
+        customer_first_name_snapshot, customer_last_name_snapshot, source_quote_id`)
       .order("issue_date", { ascending: false })
       .order("created_at", { ascending: false });
 
-    if (fetchError) {
-      setError(fetchError.message);
-      setLoading(false);
-      return;
-    }
-
+    if (fetchError) { setError(fetchError.message); setLoading(false); return; }
     setInvoices((data ?? []) as InvoiceListItem[]);
     setLoading(false);
   }
 
   const filteredInvoices = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-
-    return invoices.filter((invoice) => {
-      const customerName = getCustomerDisplayName(invoice).toLowerCase();
-
-      const matchesSearch =
-        !normalizedSearch ||
-        invoice.invoice_number.toLowerCase().includes(normalizedSearch) ||
-        customerName.includes(normalizedSearch);
-
-      const matchesStatus =
-        statusFilter === "all" || invoice.status === statusFilter;
-
-      const matchesType = typeFilter === "all" || invoice.invoice_type === typeFilter;
-
-      return matchesSearch && matchesStatus && matchesType;
+    const q = search.trim().toLowerCase();
+    return invoices.filter((inv) => {
+      const name = getCustomerDisplayName(inv).toLowerCase();
+      const matchSearch = !q || inv.invoice_number.toLowerCase().includes(q) || name.includes(q);
+      const matchStatus = statusFilter === "all" || inv.status === statusFilter;
+      const matchType = typeFilter === "all" || inv.invoice_type === typeFilter;
+      return matchSearch && matchStatus && matchType;
     });
   }, [invoices, search, statusFilter, typeFilter]);
 
-  if (loading) {
-    return <LoadingBlock message="Chargement des factures..." />;
-  }
+  if (loading) return <LoadingBlock message="Chargement des factures..." />;
 
   return (
-    <section>
-      <PageHeader
-        title="Factures"
-        description="Consulte et filtre les factures générées depuis les devis."
-      />
+    <section className="invoices-premium-page">
+      <header className="invoices-premium-page__hero">
+        <div className="invoices-premium-page__hero-main">
+          <p className="invoices-premium-page__eyebrow">Comptabilité</p>
+          <h1 className="invoices-premium-page__title">Factures</h1>
+          <p className="invoices-premium-page__description">
+            Consulte et filtre les factures générées depuis les devis.
+          </p>
+        </div>
+      </header>
 
-      <SectionCard title="Filtres">
-        <FormGrid columns="3">
+      <Card className="invoices-premium-page__filters-card">
+        <div className="invoices-premium-page__filters-grid">
           <FormField label="Recherche">
             <TextInput
               value={search}
@@ -183,10 +135,7 @@ export function InvoicesPage() {
           </FormField>
 
           <FormField label="Statut">
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
+            <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="all">Tous</option>
               <option value="draft">Brouillon</option>
               <option value="issued">Émise</option>
@@ -202,13 +151,13 @@ export function InvoicesPage() {
             <Select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
               <option value="all">Tous</option>
               <option value="invoice">Facture</option>
-              <option value="deposit">Facture d'acompte</option>
-              <option value="final">Facture finale</option>
+              <option value="deposit">Acompte</option>
+              <option value="final">Finale</option>
               <option value="credit_note">Avoir</option>
             </Select>
           </FormField>
-        </FormGrid>
-      </SectionCard>
+        </div>
+      </Card>
 
       {error && <ErrorMessage message={error} />}
 
@@ -218,55 +167,121 @@ export function InvoicesPage() {
           description="Transforme un devis en facture pour la voir apparaître ici."
         />
       ) : (
-        <SectionCard title={`Factures (${filteredInvoices.length})`}>
-          <DataTable
-            headers={
-              <tr>
-                <th>Numéro</th>
-                <th>Type</th>
-                <th>Client</th>
-                <th>Statut</th>
-                <th>Date</th>
-                <th>Échéance</th>
-                <th>Total TTC</th>
-                <th>Payé</th>
-                <th>Solde</th>
-                <th />
-              </tr>
-            }
-          >
+        <>
+          {/* ── Tableau desktop ── */}
+          <div className="invoices-premium-page__table-shell">
+            <DataTable
+              headers={
+                <tr>
+                  <th>Numéro</th>
+                  <th>Type</th>
+                  <th>Client</th>
+                  <th>Statut</th>
+                  <th>Date</th>
+                  <th>Échéance</th>
+                  <th>Total TTC</th>
+                  <th>Payé</th>
+                  <th>Solde</th>
+                  <th style={{ textAlign: "right" }}>Actions</th>
+                </tr>
+              }
+            >
+              {filteredInvoices.map((invoice) => (
+                <tr key={invoice.id}>
+                  <td>
+                    <span className="invoices-premium-page__invoice-number">
+                      {invoice.invoice_number}
+                    </span>
+                  </td>
+                  <td>{getInvoiceTypeLabel(invoice.invoice_type)}</td>
+                  <td style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {getCustomerDisplayName(invoice)}
+                  </td>
+                  <td>
+                    <span className={`invoices-premium-page__status-chip invoices-premium-page__status-chip--${invoice.status}`}>
+                      {getInvoiceStatusLabel(invoice.status)}
+                    </span>
+                  </td>
+                  <td>{invoice.issue_date}</td>
+                  <td>{invoice.due_date || "—"}</td>
+                  <td><strong>{formatCurrency(invoice.total_ttc)}</strong></td>
+                  <td>{formatCurrency(invoice.amount_paid)}</td>
+                  <td>{formatCurrency(invoice.balance_due)}</td>
+                  <td>
+                    <div className="invoices-premium-page__row-actions">
+                      <Link to={`/factures/${invoice.id}`}>
+                        <Button size="sm" type="button">Voir</Button>
+                      </Link>
+                      {invoice.source_quote_id && (
+                        <Link to={`/devis/${invoice.source_quote_id}`}>
+                          <Button size="sm" variant="secondary" type="button">Devis</Button>
+                        </Link>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </DataTable>
+          </div>
+
+          {/* ── Vue cartes mobile ── */}
+          <div className="invoices-premium-page__card-list">
             {filteredInvoices.map((invoice) => (
-              <tr key={invoice.id}>
-                <td>{invoice.invoice_number}</td>
-                <td>{getInvoiceTypeLabel(invoice.invoice_type)}</td>
-                <td>{getCustomerDisplayName(invoice)}</td>
-                <td>{getInvoiceStatusLabel(invoice.status)}</td>
-                <td>{invoice.issue_date}</td>
-                <td>{invoice.due_date || "-"}</td>
-                <td>{Number(invoice.total_ttc).toFixed(2)} €</td>
-                <td>{Number(invoice.amount_paid).toFixed(2)} €</td>
-                <td>{Number(invoice.balance_due).toFixed(2)} €</td>
-                <td>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <Link to={`/factures/${invoice.id}`}>
-                      <Button size="sm" type="button">
-                        Voir
+              <article key={invoice.id} className="invoices-premium-page__invoice-card">
+                <div className="invoices-premium-page__invoice-card-header">
+                  <div className="invoices-premium-page__invoice-card-main">
+                    <span className="invoices-premium-page__invoice-number">
+                      {invoice.invoice_number}
+                    </span>
+                    <p className="invoices-premium-page__invoice-card-customer">
+                      {getCustomerDisplayName(invoice)}
+                    </p>
+                    <p className="invoices-premium-page__invoice-card-type">
+                      {getInvoiceTypeLabel(invoice.invoice_type)}
+                    </p>
+                  </div>
+                  <span className="invoices-premium-page__invoice-card-total">
+                    {formatCurrency(invoice.total_ttc)}
+                  </span>
+                </div>
+
+                <div className="invoices-premium-page__invoice-card-meta">
+                  <span className={`invoices-premium-page__status-chip invoices-premium-page__status-chip--${invoice.status}`}>
+                    {getInvoiceStatusLabel(invoice.status)}
+                  </span>
+                  <span className="invoices-premium-page__invoice-card-date">
+                    {invoice.issue_date}
+                    {invoice.due_date ? ` · éch. ${invoice.due_date}` : ""}
+                  </span>
+                </div>
+
+                <div className="invoices-premium-page__invoice-card-balances">
+                  <div className="invoices-premium-page__invoice-card-balance">
+                    <span className="invoices-premium-page__invoice-card-balance-label">Payé</span>
+                    <span className="invoices-premium-page__invoice-card-balance-value">{formatCurrency(invoice.amount_paid)}</span>
+                  </div>
+                  <div className="invoices-premium-page__invoice-card-balance">
+                    <span className="invoices-premium-page__invoice-card-balance-label">Solde</span>
+                    <span className="invoices-premium-page__invoice-card-balance-value">{formatCurrency(invoice.balance_due)}</span>
+                  </div>
+                </div>
+
+                <div className="invoices-premium-page__invoice-card-actions">
+                  <Link to={`/factures/${invoice.id}`} style={{ flex: "1 1 auto" }}>
+                    <Button type="button" style={{ width: "100%", justifyContent: "center" }}>Voir</Button>
+                  </Link>
+                  {invoice.source_quote_id && (
+                    <Link to={`/devis/${invoice.source_quote_id}`} style={{ flex: "1 1 auto" }}>
+                      <Button type="button" variant="secondary" style={{ width: "100%", justifyContent: "center" }}>
+                        Voir le devis
                       </Button>
                     </Link>
-
-                    {invoice.source_quote_id && (
-                      <Link to={`/devis/${invoice.source_quote_id}`}>
-                        <Button size="sm" variant="secondary" type="button">
-                          Voir le devis
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
-                </td>
-              </tr>
+                  )}
+                </div>
+              </article>
             ))}
-          </DataTable>
-        </SectionCard>
+          </div>
+        </>
       )}
     </section>
   );

@@ -61,8 +61,10 @@
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+/* Carte catalogue : flex column pour que le bouton colle toujours en bas à droite */
 .quote-items-premium__catalog-card {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   padding: 14px;
   border-radius: 16px;
@@ -95,8 +97,53 @@
 .quote-items-premium__move-label,
 .quote-items-premium__cell-subtext { margin: 0; color: #6b7280; line-height: 1.45; font-size: 0.88rem; }
 
-.quote-items-premium__catalog-actions { display: flex; justify-content: flex-start; }
-.quote-items-premium__move-content    { display: grid; gap: 14px; }
+/* Bouton poussé en bas à droite, taille naturelle */
+.quote-items-premium__catalog-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: auto;
+}
+.quote-items-premium__catalog-actions .ui-button { width: auto !important; flex: 0 0 auto; }
+
+.quote-items-premium__move-content { display: grid; gap: 14px; }
+
+/* ── Widget dimensions m² dans les cartes catalogue ── */
+.quote-items-premium__catalog-dims {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(111, 82, 60, 0.16);
+  background: linear-gradient(180deg, rgba(255, 251, 246, 0.85), rgba(253, 247, 240, 0.6));
+}
+
+.quote-items-premium__catalog-dims-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 6px;
+}
+
+.quote-items-premium__catalog-dims-sep {
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1;
+}
+
+.quote-items-premium__catalog-dims-hint {
+  margin: 0;
+  color: #503c2e;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.quote-items-premium__catalog-dims-qty {
+  padding-top: 4px;
+  border-top: 1px dashed rgba(111, 82, 60, 0.18);
+}
 
 /* ══════════════════════════════════════════
    Tableau desktop
@@ -139,7 +186,7 @@
    Vue cartes mobile (remplace le tableau)
 ══════════════════════════════════════════ */
 .quote-items-premium__card-list {
-  display: none; /* caché sur desktop */
+  display: none;
 }
 
 .quote-items-premium__item-card {
@@ -227,7 +274,6 @@
   .quote-items-premium__header-actions,
   .quote-items-premium__move-actions { width: 100%; }
 
-  /* Masquer le tableau, afficher les cartes */
   .quote-items-premium__table-wrap { display: none; }
   .quote-items-premium__card-list  { display: grid; gap: 10px; }
 }

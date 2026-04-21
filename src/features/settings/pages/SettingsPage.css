@@ -169,8 +169,53 @@
 
   .settings-premium-page__hero-actions {
     justify-content: flex-start;
+    width: 100%;
+  }
+
+  .settings-premium-page__hero-actions > * {
+    flex: 1 1 auto;
   }
 }
+
+/* ── Tab nav mobile ────────────────────────────────────────────────────────── */
+.settings-premium-page .quote-page-tabs-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .settings-premium-page {
+    gap: 14px;
+  }
+
+  .settings-premium-page__hero {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .settings-premium-page .quote-page-tabs-mobile {
+    display: flex;
+    gap: 8px;
+    padding: 0 2px;
+  }
+
+  .settings-premium-page .quote-page-tabs-mobile .quote-topbar-nav__tab {
+    flex: 1 1 0;
+    font-size: 0.85rem;
+    padding: 10px 8px;
+  }
+}
+
+/* ── Couleurs boutons ──────────────────────────────────────────────────────── */
+.settings-premium-page__hero-actions .ui-button--primary,
+.settings-premium-page__form-actions .ui-button--primary   { color: #fff8f2; }
+
+.settings-premium-page__hero-actions .ui-button--secondary,
+.settings-premium-page__hero-actions .ui-button--danger,
+.settings-premium-page__form-actions .ui-button--secondary,
+.settings-premium-page__form-actions .ui-button--danger    { color: inherit; }
+
+.settings-premium-page__hero-actions .ui-button svg,
+.settings-premium-page__form-actions .ui-button svg        { width: 18px; height: 18px; flex: 0 0 auto; }
 /* ─── Logo uploader ───────────────────────────────────────────────────────── */
 
 .settings-premium-page__logo-uploader {

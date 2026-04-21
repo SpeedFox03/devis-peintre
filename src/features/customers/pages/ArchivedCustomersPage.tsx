@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
 import { LoadingBlock } from "../../../components/ui/LoadingBlock/LoadingBlock";
@@ -37,7 +37,7 @@ export function ArchivedCustomersPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  async function loadArchivedCustomers() {
+  const loadArchivedCustomers = useCallback(async function loadArchivedCustomers() {
     setLoading(true);
     setError(null);
 
@@ -57,11 +57,11 @@ export function ArchivedCustomersPage() {
 
     setCustomers((data ?? []) as ArchivedCustomer[]);
     setLoading(false);
-  }
+  }, []);
 
   useEffect(() => {
     void loadArchivedCustomers();
-  }, []);
+  }, [loadArchivedCustomers]);
 
   async function handleRestore(customerId: string) {
     setRestoringCustomerId(customerId);

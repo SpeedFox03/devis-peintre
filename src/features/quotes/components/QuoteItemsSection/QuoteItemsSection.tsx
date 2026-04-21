@@ -1,4 +1,5 @@
 import type { FormEvent } from "react";
+import { useState } from "react";
 import { Button } from "../../../../components/ui/Button/Button";
 import { Card } from "../../../../components/ui/Card/Card";
 import { DataTable } from "../../../../components/ui/DataTable/DataTable";
@@ -46,7 +47,7 @@ type QuoteItemsSectionProps = {
   onCatalogSearchChange: (value: string) => void;
   onCatalogCategoryChange: (value: string) => void;
   onCatalogRoomChange: (value: string) => void;
-  onAddFromCatalog: (service: ServiceCatalogItem) => void;
+  onAddFromCatalog: (service: ServiceCatalogItem, quantity?: number) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onChange: <K extends keyof QuoteItemFormState>(field: K, value: QuoteItemFormState[K]) => void;
   onEdit: (item: QuoteItem) => void;
@@ -56,6 +57,13 @@ type QuoteItemsSectionProps = {
   onMoveRoomChange: (value: string) => void;
   onConfirmMove: () => void;
   onDelete: (itemId: string) => void;
+};
+
+// État local par carte catalogue pour L × H
+type CatalogDims = {
+  length: string;
+  height: string;
+  quantity: string; // surface saisie directement
 };
 
 function formatCurrency(value: number | string) {
@@ -71,6 +79,77 @@ function getCategories(services: ServiceCatalogItem[]) {
   return Array.from(new Set(services.map((service) => service.category).filter(Boolean))).sort(
     (a, b) => String(a).localeCompare(String(b), "fr")
   ) as string[];
+}
+
+// ── Mini-widget dimensions pour les cartes catalogue ──────────────────────────
+function CatalogDimsWidget({
+  dims,
+  onChange,
+}: {
+  dims: CatalogDims;
+  onChange: (next: CatalogDims) => void;
+}) {
+  function handleDim(field: "length" | "height", value: string) {
+    const next = { ...dims, [field]: value };
+    const l = parseFloat(field === "length" ? value : dims.length);
+    const h = parseFloat(field === "height" ? value : dims.height);
+    if (!isNaN(l) && !isNaN(h) && l > 0 && h > 0) {
+      next.quantity = (l * h).toFixed(2);
+    }
+    onChange(next);
+  }
+
+  function handleQuantity(value: string) {
+    // Saisie directe → efface L/H pour éviter la confusion
+    onChange({ length: "", height: "", quantity: value });
+  }
+
+  const computed =
+    dims.length && dims.height
+      ? (parseFloat(dims.length || "0") * parseFloat(dims.height || "0")).toFixed(2)
+      : null;
+
+  return (
+    <div className="quote-items-premium__catalog-dims">
+      <div className="quote-items-premium__catalog-dims-row">
+        <TextInput
+          type="number"
+          step="0.01"
+          min="0"
+          value={dims.length}
+          onChange={(e) => handleDim("length", e.target.value)}
+          placeholder="L (m)"
+          aria-label="Longueur"
+        />
+        <span className="quote-items-premium__catalog-dims-sep">×</span>
+        <TextInput
+          type="number"
+          step="0.01"
+          min="0"
+          value={dims.height}
+          onChange={(e) => handleDim("height", e.target.value)}
+          placeholder="H (m)"
+          aria-label="Hauteur"
+        />
+      </div>
+
+      {computed && (
+        <p className="quote-items-premium__catalog-dims-hint">= {computed} m²</p>
+      )}
+
+      <div className="quote-items-premium__catalog-dims-qty">
+        <TextInput
+          type="number"
+          step="0.01"
+          min="0"
+          value={dims.quantity}
+          onChange={(e) => handleQuantity(e.target.value)}
+          placeholder="m²"
+          aria-label="Surface m²"
+        />
+      </div>
+    </div>
+  );
 }
 
 export function QuoteItemsSection({
@@ -112,6 +191,28 @@ export function QuoteItemsSection({
 }: QuoteItemsSectionProps) {
   const categories = getCategories(services);
 
+  // État L×H par service du catalogue (clé = service.id)
+  const [catalogDims, setCatalogDims] = useState<Record<string, CatalogDims>>({});
+
+  function getDims(serviceId: string): CatalogDims {
+    return catalogDims[serviceId] ?? { length: "", height: "", quantity: "" };
+  }
+
+  function setDims(serviceId: string, next: CatalogDims) {
+    setCatalogDims((prev) => ({ ...prev, [serviceId]: next }));
+  }
+
+  function handleAddFromCatalog(service: ServiceCatalogItem) {
+    const isM2 = service.default_unit === "m2";
+    if (isM2) {
+      const dims = getDims(service.id);
+      const qty = dims.quantity ? parseFloat(dims.quantity) : undefined;
+      onAddFromCatalog(service, qty);
+    } else {
+      onAddFromCatalog(service);
+    }
+  }
+
   const filteredServices = services.filter((service) => {
     const normalizedSearch = catalogSearch.trim().toLowerCase();
     const matchesSearch =
@@ -144,7 +245,7 @@ export function QuoteItemsSection({
                 variant="secondary"
                 onClick={onCloseForm}
                 aria-label="Fermer la saisie"
-                title="Fermer la saisie" 
+                title="Fermer la saisie"
               >
                 <CloseIcon />
               </Button>
@@ -221,36 +322,50 @@ export function QuoteItemsSection({
               />
             ) : (
               <div className="quote-items-premium__catalog-grid">
-                {filteredServices.map((service) => (
-                  <article key={service.id} className="quote-items-premium__catalog-card">
-                    <div className="quote-items-premium__catalog-card-top">
-                      <div className="quote-items-premium__catalog-card-main">
-                        <h3 className="quote-items-premium__catalog-title">{service.name}</h3>
+                {filteredServices.map((service) => {
+                  const isM2 = service.default_unit === "m2";
+                  const dims = getDims(service.id);
+
+                  return (
+                    <article key={service.id} className="quote-items-premium__catalog-card">
+                      <div className="quote-items-premium__catalog-card-top">
+                        <div className="quote-items-premium__catalog-card-main">
+                          <h3 className="quote-items-premium__catalog-title">{service.name}</h3>
+                        </div>
+
+                        <span className="quote-items-premium__catalog-badge">
+                          {formatCurrency(service.default_unit_price_ht)}
+                          {isM2 ? " /m²" : ""}
+                        </span>
                       </div>
 
-                      <span className="quote-items-premium__catalog-badge">
-                        {formatCurrency(service.default_unit_price_ht)}
-                      </span>
-                    </div>
+                      <p className="quote-items-premium__catalog-text">
+                        {service.default_description?.trim()
+                          ? service.default_description
+                          : ""}
+                      </p>
 
-                    <p className="quote-items-premium__catalog-text">
-                      {service.default_description?.trim()
-                        ? service.default_description
-                        : ""}
-                    </p>
+                      {/* ── Widget m² uniquement si l'unité est m² ── */}
+                      {isM2 && (
+                        <CatalogDimsWidget
+                          dims={dims}
+                          onChange={(next) => setDims(service.id, next)}
+                        />
+                      )}
 
-                    <div className="quote-items-premium__catalog-actions">
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={addingCatalogServiceId === service.id}
-                        onClick={() => onAddFromCatalog(service)}
-                      >
-                        {addingCatalogServiceId === service.id ? "Ajout..." : "Ajouter"}
-                      </Button>
-                    </div>
-                  </article>
-                ))}
+                      <div className="quote-items-premium__catalog-actions">
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={addingCatalogServiceId === service.id}
+                          onClick={() => handleAddFromCatalog(service)}
+                        >
+                          {addingCatalogServiceId === service.id ? "Ajout..." : "Ajouter"}
+                        </Button>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             )}
           </div>

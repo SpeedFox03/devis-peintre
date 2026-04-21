@@ -732,6 +732,23 @@ export function SettingsPage() {
     </nav>
   );
 
+  const tabNavMobile = (
+    <div className="quote-page-tabs-mobile" aria-label="Pages des paramètres">
+      {settingsPages.map((page) => (
+        <button
+          key={page.id}
+          type="button"
+          className={`quote-topbar-nav__tab ${
+            activePage === page.id ? "quote-topbar-nav__tab--active" : ""
+          }`}
+          onClick={() => setActivePage(page.id)}
+        >
+          {page.label}
+        </button>
+      ))}
+    </div>
+  );
+
   // ── Shared logo uploader ──────────────────────────────────────────────────
 
   const logoUploaderBlock = (
@@ -801,6 +818,8 @@ export function SettingsPage() {
           </Button>
         </div>
       </header>
+
+      {tabNavMobile}
 
       {/* ══ PAGE : INFORMATIONS ══════════════════════════════════════════════ */}
       {activePage === "informations" && (

@@ -4,6 +4,7 @@ import "./FormField.css";
 type FormFieldProps = {
   label: string;
   children: ReactNode;
+  hint?: string;
 };
 
 export function FormField({ label, children }: FormFieldProps) {

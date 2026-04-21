@@ -1,8 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "../../../lib/supabase";
-import { LoadingBlock } from "../../../components/ui/LoadingBlock/LoadingBlock";
 import { EmptyState } from "../../../components/ui/EmptyState/EmptyState";
 import { ErrorMessage } from "../../../components/ui/ErrorMessage/ErrorMessage";
 import { Button } from "../../../components/ui/Button/Button";
@@ -13,260 +9,32 @@ import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import { TextArea } from "../../../components/ui/TextArea/TextArea";
 import { DataTable } from "../../../components/ui/DataTable/DataTable";
 import { Select } from "../../../components/ui/Select/Select";
+import { LoadingBlock } from "../../../components/ui/LoadingBlock/LoadingBlock";
+import { useCustomersPage, getCustomerName } from "../hooks/useCustomersPage";
 import "./CustomersPage.css";
 
-type CustomerRow = {
-  id: string;
-  company_name: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  email: string | null;
-  phone: string | null;
-  billing_city: string | null;
-  created_at: string;
-  archived_at: string | null;
-};
-
-type QuoteCustomerRef = {
-  customer_id: string;
-};
-
-type CustomerFormState = {
-  company_name: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  billing_address_line1: string;
-  billing_postal_code: string;
-  billing_city: string;
-  notes: string;
-};
-
-type CustomerSortField = "name" | "city" | "created_at";
-type SortDirection = "asc" | "desc";
-type QuotesFilter = "all" | "with_quotes" | "without_quotes";
-
-const initialForm: CustomerFormState = {
-  company_name: "",
-  first_name: "",
-  last_name: "",
-  email: "",
-  phone: "",
-  billing_address_line1: "",
-  billing_postal_code: "",
-  billing_city: "",
-  notes: "",
-};
-
-function getCustomerName(customer: CustomerRow) {
-  return (
-    customer.company_name ||
-    [customer.first_name, customer.last_name].filter(Boolean).join(" ") ||
-    "Sans nom"
-  );
-}
-
 export function CustomersPage() {
-  const [customers, setCustomers] = useState<CustomerRow[]>([]);
-  const [quoteCountByCustomerId, setQuoteCountByCustomerId] = useState<
-    Record<string, number>
-  >({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<CustomerFormState>(initialForm);
-  const [saving, setSaving] = useState(false);
-  const [archivingCustomerId, setArchivingCustomerId] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [sortField, setSortField] = useState<CustomerSortField>("created_at");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [quotesFilter, setQuotesFilter] = useState<QuotesFilter>("all");
-
-  async function loadCustomers() {
-    setLoading(true);
-    setError(null);
-
-    const [customersRes, quotesRes] = await Promise.all([
-      supabase
-        .from("customers")
-        .select(
-          "id, company_name, first_name, last_name, email, phone, billing_city, created_at, archived_at"
-        )
-        .is("archived_at", null)
-        .order("created_at", { ascending: false }),
-      supabase.from("quotes").select("customer_id"),
-    ]);
-
-    if (customersRes.error) {
-      setError(customersRes.error.message);
-      setLoading(false);
-      return;
-    }
-
-    if (quotesRes.error) {
-      setError(quotesRes.error.message);
-      setLoading(false);
-      return;
-    }
-
-    const counts: Record<string, number> = {};
-    ((quotesRes.data ?? []) as QuoteCustomerRef[]).forEach((quote) => {
-      counts[quote.customer_id] = (counts[quote.customer_id] ?? 0) + 1;
-    });
-
-    setCustomers((customersRes.data ?? []) as CustomerRow[]);
-    setQuoteCountByCustomerId(counts);
-    setLoading(false);
-  }
-
-  useEffect(() => {
-    void loadCustomers();
-  }, []);
-
-  const filteredCustomers = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-
-    const filtered = customers.filter((customer) => {
-      const quoteCount = quoteCountByCustomerId[customer.id] ?? 0;
-
-      if (quotesFilter === "with_quotes" && quoteCount === 0) {
-        return false;
-      }
-
-      if (quotesFilter === "without_quotes" && quoteCount > 0) {
-        return false;
-      }
-
-      if (!normalizedSearch) return true;
-
-      const haystack = [
-        customer.company_name,
-        customer.first_name,
-        customer.last_name,
-        customer.email,
-        customer.phone,
-        customer.billing_city,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return haystack.includes(normalizedSearch);
-    });
-
-    return [...filtered].sort((a, b) => {
-      let comparison = 0;
-
-      if (sortField === "name") {
-        comparison = getCustomerName(a).localeCompare(getCustomerName(b), "fr", {
-          sensitivity: "base",
-        });
-      } else if (sortField === "city") {
-        comparison = (a.billing_city || "").localeCompare(b.billing_city || "", "fr", {
-          sensitivity: "base",
-        });
-      } else {
-        comparison =
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      }
-
-      return sortDirection === "asc" ? comparison : -comparison;
-    });
-  }, [customers, quoteCountByCustomerId, search, sortField, sortDirection, quotesFilter]);
-
-  function updateField<K extends keyof CustomerFormState>(
-    field: K,
-    value: CustomerFormState[K]
-  ) {
-    setForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSaving(true);
-    setError(null);
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      setError("Utilisateur non connecté.");
-      setSaving(false);
-      return;
-    }
-
-    const payload = {
-      owner_user_id: user.id,
-      company_name: form.company_name || null,
-      first_name: form.first_name || null,
-      last_name: form.last_name || null,
-      email: form.email || null,
-      phone: form.phone || null,
-      billing_address_line1: form.billing_address_line1 || null,
-      billing_postal_code: form.billing_postal_code || null,
-      billing_city: form.billing_city || null,
-      billing_country: "Belgique",
-      jobsite_address_line1: form.billing_address_line1 || null,
-      jobsite_postal_code: form.billing_postal_code || null,
-      jobsite_city: form.billing_city || null,
-      jobsite_country: "Belgique",
-      notes: form.notes || null,
-      archived_at: null,
-    };
-
-    const { error: insertError } = await supabase.from("customers").insert(payload);
-
-    if (insertError) {
-      setError(insertError.message);
-      setSaving(false);
-      return;
-    }
-
-    setForm(initialForm);
-    setShowForm(false);
-    setSaving(false);
-    await loadCustomers();
-  }
-
-  async function handleArchiveCustomer(customer: CustomerRow) {
-    const confirmed = window.confirm("Archiver ce client ?");
-    if (!confirmed) return;
-
-    setArchivingCustomerId(customer.id);
-    setError(null);
-
-    const { error: updateError } = await supabase
-      .from("customers")
-      .update({ archived_at: new Date().toISOString() })
-      .eq("id", customer.id);
-
-    if (updateError) {
-      setError(updateError.message);
-      setArchivingCustomerId(null);
-      return;
-    }
-
-    setArchivingCustomerId(null);
-    await loadCustomers();
-  }
-
-  const totalCustomers = customers.length;
-  const customersWithQuotes = customers.filter(
-    (customer) => (quoteCountByCustomerId[customer.id] ?? 0) > 0
-  ).length;
-  const customersWithoutQuotes = customers.filter(
-    (customer) => (quoteCountByCustomerId[customer.id] ?? 0) === 0
-  ).length;
-  const totalQuotesLinked = Object.values(quoteCountByCustomerId).reduce(
-    (sum, count) => sum + count,
-    0
-  );
+  const {
+    customers,
+    quoteCountByCustomerId,
+    filteredCustomers,
+    loading,
+    error,
+    saving,
+    archivingCustomerId,
+    showForm,
+    form,
+    stats,
+    search, setSearch,
+    sortField, setSortField,
+    sortDirection, setSortDirection,
+    quotesFilter, setQuotesFilter,
+    updateField,
+    openForm,
+    closeForm,
+    handleSubmit,
+    handleArchiveCustomer,
+  } = useCustomersPage();
 
   if (loading) {
     return <LoadingBlock message="Chargement des clients..." />;
@@ -293,10 +61,7 @@ export function CustomersPage() {
 
           <Button
             variant="primary"
-            onClick={() => {
-              setShowForm((prev) => !prev);
-              setError(null);
-            }}
+            onClick={showForm ? closeForm : openForm}
           >
             {showForm ? "Fermer le formulaire" : "Nouveau client"}
           </Button>
@@ -306,22 +71,22 @@ export function CustomersPage() {
       <div className="customers-premium-page__stats">
         <Card>
           <p className="customers-premium-page__stat-label">Clients actifs</p>
-          <p className="customers-premium-page__stat-value">{totalCustomers}</p>
+          <p className="customers-premium-page__stat-value">{stats.totalCustomers}</p>
         </Card>
 
         <Card>
           <p className="customers-premium-page__stat-label">Avec devis</p>
-          <p className="customers-premium-page__stat-value">{customersWithQuotes}</p>
+          <p className="customers-premium-page__stat-value">{stats.customersWithQuotes}</p>
         </Card>
 
         <Card>
           <p className="customers-premium-page__stat-label">Sans devis</p>
-          <p className="customers-premium-page__stat-value">{customersWithoutQuotes}</p>
+          <p className="customers-premium-page__stat-value">{stats.customersWithoutQuotes}</p>
         </Card>
 
         <Card>
           <p className="customers-premium-page__stat-label">Devis liés</p>
-          <p className="customers-premium-page__stat-value">{totalQuotesLinked}</p>
+          <p className="customers-premium-page__stat-value">{stats.totalQuotesLinked}</p>
         </Card>
       </div>
 
@@ -392,9 +157,7 @@ export function CustomersPage() {
               <FormField label="Adresse">
                 <TextInput
                   value={form.billing_address_line1}
-                  onChange={(e) =>
-                    updateField("billing_address_line1", e.target.value)
-                  }
+                  onChange={(e) => updateField("billing_address_line1", e.target.value)}
                 />
               </FormField>
 
@@ -421,15 +184,7 @@ export function CustomersPage() {
                 {saving ? "Enregistrement..." : "Enregistrer le client"}
               </Button>
 
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setShowForm(false);
-                  setForm(initialForm);
-                  setError(null);
-                }}
-              >
+              <Button type="button" variant="secondary" onClick={closeForm}>
                 Annuler
               </Button>
             </div>
@@ -457,7 +212,7 @@ export function CustomersPage() {
               <FormField label="Avec devis">
                 <Select
                   value={quotesFilter}
-                  onChange={(e) => setQuotesFilter(e.target.value as QuotesFilter)}
+                  onChange={(e) => setQuotesFilter(e.target.value as typeof quotesFilter)}
                 >
                   <option value="all">Tous</option>
                   <option value="with_quotes">Avec devis</option>
@@ -468,7 +223,7 @@ export function CustomersPage() {
               <FormField label="Trier par">
                 <Select
                   value={sortField}
-                  onChange={(e) => setSortField(e.target.value as CustomerSortField)}
+                  onChange={(e) => setSortField(e.target.value as typeof sortField)}
                 >
                   <option value="created_at">Date de création</option>
                   <option value="name">Nom</option>
@@ -479,7 +234,7 @@ export function CustomersPage() {
               <FormField label="Ordre">
                 <Select
                   value={sortDirection}
-                  onChange={(e) => setSortDirection(e.target.value as SortDirection)}
+                  onChange={(e) => setSortDirection(e.target.value as typeof sortDirection)}
                 >
                   <option value="asc">Croissant</option>
                   <option value="desc">Décroissant</option>
@@ -533,7 +288,6 @@ export function CustomersPage() {
                         {name}
                       </Link>
                     </td>
-
                     <td>{customer.email || "-"}</td>
                     <td>{customer.phone || "-"}</td>
                     <td>{customer.billing_city || "-"}</td>
@@ -542,7 +296,6 @@ export function CustomersPage() {
                         {quoteCount}
                       </span>
                     </td>
-
                     <td style={{ textAlign: "right" }}>
                       <div className="customers-premium-page__row-actions">
                         <Link to={`/?new=1&customerId=${customer.id}`}>
@@ -557,9 +310,7 @@ export function CustomersPage() {
                           onClick={() => handleArchiveCustomer(customer)}
                           disabled={archivingCustomerId === customer.id}
                         >
-                          {archivingCustomerId === customer.id
-                            ? "Archivage..."
-                            : "Archiver"}
+                          {archivingCustomerId === customer.id ? "Archivage..." : "Archiver"}
                         </Button>
                       </div>
                     </td>
@@ -611,10 +362,7 @@ export function CustomersPage() {
                   </div>
 
                   <div className="customers-premium-page__customer-card-actions">
-                    <Link
-                      to={`/clients/${customer.id}`}
-                      style={{ flex: "1 1 auto" }}
-                    >
+                    <Link to={`/clients/${customer.id}`} style={{ flex: "1 1 auto" }}>
                       <Button
                         type="button"
                         variant="secondary"
@@ -624,10 +372,7 @@ export function CustomersPage() {
                       </Button>
                     </Link>
 
-                    <Link
-                      to={`/?new=1&customerId=${customer.id}`}
-                      style={{ flex: "1 1 auto" }}
-                    >
+                    <Link to={`/?new=1&customerId=${customer.id}`} style={{ flex: "1 1 auto" }}>
                       <Button
                         type="button"
                         variant="secondary"

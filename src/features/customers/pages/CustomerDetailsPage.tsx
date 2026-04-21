@@ -1,9 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import type { FormEvent } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { supabase } from "../../../lib/supabase";
-import { LoadingBlock } from "../../../components/ui/LoadingBlock/LoadingBlock";
+import { Link } from "react-router-dom";
 import { EmptyState } from "../../../components/ui/EmptyState/EmptyState";
 import { ErrorMessage } from "../../../components/ui/ErrorMessage/ErrorMessage";
 import { Button } from "../../../components/ui/Button/Button";
@@ -13,130 +10,14 @@ import { FormField } from "../../../components/ui/FormField/FormField";
 import { FormGrid } from "../../../components/ui/FormGrid/FormGrid";
 import { TextArea } from "../../../components/ui/TextArea/TextArea";
 import { TextInput } from "../../../components/ui/TextInput/TextInput";
+import { LoadingBlock } from "../../../components/ui/LoadingBlock/LoadingBlock";
+import {
+  useCustomerDetails,
+  getCustomerName,
+  getStatusLabel,
+  formatCurrency,
+} from "../hooks/useCustomerDetails";
 import "./CustomerDetailsPage.css";
-
-type CustomerDetails = {
-  id: string;
-  company_name: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  email: string | null;
-  phone: string | null;
-
-  billing_address_line1: string | null;
-  billing_address_line2: string | null;
-  billing_postal_code: string | null;
-  billing_city: string | null;
-  billing_country: string | null;
-
-  jobsite_address_line1: string | null;
-  jobsite_address_line2: string | null;
-  jobsite_postal_code: string | null;
-  jobsite_city: string | null;
-  jobsite_country: string | null;
-
-  notes: string | null;
-  archived_at: string | null;
-  created_at: string;
-};
-
-type QuoteStatus =
-  | "draft"
-  | "sent"
-  | "accepted"
-  | "rejected"
-  | "expired"
-  | "invoiced";
-
-type CustomerQuote = {
-  id: string;
-  quote_number: string;
-  title: string;
-  status: QuoteStatus;
-  issue_date: string;
-  total_ttc: number;
-};
-
-type CustomerFormState = {
-  company_name: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-
-  billing_address_line1: string;
-  billing_address_line2: string;
-  billing_postal_code: string;
-  billing_city: string;
-  billing_country: string;
-
-  jobsite_address_line1: string;
-  jobsite_address_line2: string;
-  jobsite_postal_code: string;
-  jobsite_city: string;
-  jobsite_country: string;
-
-  notes: string;
-};
-
-function createInitialForm(customer: CustomerDetails | null): CustomerFormState {
-  return {
-    company_name: customer?.company_name ?? "",
-    first_name: customer?.first_name ?? "",
-    last_name: customer?.last_name ?? "",
-    email: customer?.email ?? "",
-    phone: customer?.phone ?? "",
-
-    billing_address_line1: customer?.billing_address_line1 ?? "",
-    billing_address_line2: customer?.billing_address_line2 ?? "",
-    billing_postal_code: customer?.billing_postal_code ?? "",
-    billing_city: customer?.billing_city ?? "",
-    billing_country: customer?.billing_country ?? "Belgique",
-
-    jobsite_address_line1: customer?.jobsite_address_line1 ?? "",
-    jobsite_address_line2: customer?.jobsite_address_line2 ?? "",
-    jobsite_postal_code: customer?.jobsite_postal_code ?? "",
-    jobsite_city: customer?.jobsite_city ?? "",
-    jobsite_country: customer?.jobsite_country ?? "Belgique",
-
-    notes: customer?.notes ?? "",
-  };
-}
-
-function getCustomerName(customer: CustomerDetails) {
-  return (
-    customer.company_name ||
-    [customer.first_name, customer.last_name].filter(Boolean).join(" ") ||
-    "Client sans nom"
-  );
-}
-
-function getStatusLabel(status: QuoteStatus) {
-  switch (status) {
-    case "draft":
-      return "Brouillon";
-    case "sent":
-      return "Envoyé";
-    case "accepted":
-      return "Accepté";
-    case "rejected":
-      return "Refusé";
-    case "expired":
-      return "Expiré";
-    case "invoiced":
-      return "Facturé";
-    default:
-      return status;
-  }
-}
-
-function formatCurrency(value: number) {
-  return `${Number(value || 0).toFixed(2)} €`;
-}
-
-function buildAddress(parts: Array<string | null | undefined>) {
-  return parts.filter(Boolean).join(", ");
-}
 
 const customerPages = [
   { id: "quotes", label: "Devis" },
@@ -146,19 +27,25 @@ const customerPages = [
 type CustomerPageId = (typeof customerPages)[number]["id"];
 
 export function CustomerDetailsPage() {
-  const { customerId } = useParams();
-  const navigate = useNavigate();
+  const {
+    customer,
+    quotes,
+    loading,
+    saving,
+    archiving,
+    error,
+    form,
+    isDirty,
+    stats,
+    addresses,
+    updateField,
+    resetForm,
+    handleSubmit,
+    handleArchiveCustomer,
+  } = useCustomerDetails();
 
   const [activePage, setActivePage] = useState<CustomerPageId>("quotes");
   const [topbarPortalTarget, setTopbarPortalTarget] = useState<Element | null>(null);
-
-  const [customer, setCustomer] = useState<CustomerDetails | null>(null);
-  const [quotes, setQuotes] = useState<CustomerQuote[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [archiving, setArchiving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState<CustomerFormState>(createInitialForm(null));
 
   useEffect(() => {
     const topbar = document.querySelector(".app-topbar");
@@ -166,172 +53,6 @@ export function CustomerDetailsPage() {
     topbar?.classList.add("app-topbar--with-quote-nav");
     return () => { topbar?.classList.remove("app-topbar--with-quote-nav"); };
   }, []);
-
-  async function loadCustomerPage() {
-    if (!customerId) {
-      setError("Client introuvable.");
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    const [customerRes, quotesRes] = await Promise.all([
-      supabase
-        .from("customers")
-        .select(
-          `
-          id,
-          company_name,
-          first_name,
-          last_name,
-          email,
-          phone,
-          billing_address_line1,
-          billing_address_line2,
-          billing_postal_code,
-          billing_city,
-          billing_country,
-          jobsite_address_line1,
-          jobsite_address_line2,
-          jobsite_postal_code,
-          jobsite_city,
-          jobsite_country,
-          notes,
-          archived_at,
-          created_at
-        `
-        )
-        .eq("id", customerId)
-        .single(),
-      supabase
-        .from("quotes")
-        .select("id, quote_number, title, status, issue_date, total_ttc")
-        .eq("customer_id", customerId)
-        .order("created_at", { ascending: false }),
-    ]);
-
-    if (customerRes.error) {
-      setError(customerRes.error.message);
-      setLoading(false);
-      return;
-    }
-
-    if (quotesRes.error) {
-      setError(quotesRes.error.message);
-      setLoading(false);
-      return;
-    }
-
-    const loadedCustomer = customerRes.data as CustomerDetails;
-
-    setCustomer(loadedCustomer);
-    setQuotes((quotesRes.data ?? []) as CustomerQuote[]);
-    setForm(createInitialForm(loadedCustomer));
-    setLoading(false);
-  }
-
-  useEffect(() => {
-    void loadCustomerPage();
-  }, [customerId]);
-
-  function updateField<K extends keyof CustomerFormState>(
-    field: K,
-    value: CustomerFormState[K]
-  ) {
-    setForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  }
-
-  function resetForm() {
-    setForm(createInitialForm(customer));
-    setError(null);
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!customer) {
-      setError("Client introuvable.");
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-
-    const payload = {
-      company_name: form.company_name || null,
-      first_name: form.first_name || null,
-      last_name: form.last_name || null,
-      email: form.email || null,
-      phone: form.phone || null,
-
-      billing_address_line1: form.billing_address_line1 || null,
-      billing_address_line2: form.billing_address_line2 || null,
-      billing_postal_code: form.billing_postal_code || null,
-      billing_city: form.billing_city || null,
-      billing_country: form.billing_country || null,
-
-      jobsite_address_line1: form.jobsite_address_line1 || null,
-      jobsite_address_line2: form.jobsite_address_line2 || null,
-      jobsite_postal_code: form.jobsite_postal_code || null,
-      jobsite_city: form.jobsite_city || null,
-      jobsite_country: form.jobsite_country || null,
-
-      notes: form.notes || null,
-    };
-
-    const { error: updateError } = await supabase
-      .from("customers")
-      .update(payload)
-      .eq("id", customer.id);
-
-    if (updateError) {
-      setError(updateError.message);
-      setSaving(false);
-      return;
-    }
-
-    setSaving(false);
-    await loadCustomerPage();
-  }
-
-  async function handleArchiveCustomer() {
-    if (!customer) {
-      setError("Client introuvable.");
-      return;
-    }
-
-    const confirmed = window.confirm("Archiver ce client ?");
-    if (!confirmed) return;
-
-    setArchiving(true);
-    setError(null);
-
-    const { error: updateError } = await supabase
-      .from("customers")
-      .update({ archived_at: new Date().toISOString() })
-      .eq("id", customer.id);
-
-    if (updateError) {
-      setError(updateError.message);
-      setArchiving(false);
-      return;
-    }
-
-    setArchiving(false);
-    navigate("/clients");
-  }
-
-  const acceptedQuotesCount = quotes.filter((quote) => quote.status === "accepted").length;
-  const totalPotentialSigned = useMemo(() => {
-    return quotes
-      .filter((quote) => quote.status === "accepted")
-      .reduce((sum, quote) => sum + Number(quote.total_ttc || 0), 0);
-  }, [quotes]);
 
   if (loading) {
     return <LoadingBlock message="Chargement du client..." />;
@@ -349,22 +70,6 @@ export function CustomerDetailsPage() {
       />
     );
   }
-
-  const billingAddress = buildAddress([
-    customer.billing_address_line1,
-    customer.billing_address_line2,
-    customer.billing_postal_code,
-    customer.billing_city,
-    customer.billing_country,
-  ]);
-
-  const jobsiteAddress = buildAddress([
-    customer.jobsite_address_line1,
-    customer.jobsite_address_line2,
-    customer.jobsite_postal_code,
-    customer.jobsite_city,
-    customer.jobsite_country,
-  ]);
 
   const tabNav = (
     <nav className="quote-topbar-nav" aria-label="Pages du client">
@@ -445,16 +150,14 @@ export function CustomerDetailsPage() {
         <Card>
           <p className="customer-details-premium-page__stat-label">Devis acceptés</p>
           <p className="customer-details-premium-page__stat-value">
-            {acceptedQuotesCount}
+            {stats.acceptedQuotesCount}
           </p>
         </Card>
 
         <Card>
-          <p className="customer-details-premium-page__stat-label">
-            Potentiel signé
-          </p>
+          <p className="customer-details-premium-page__stat-label">Potentiel signé</p>
           <p className="customer-details-premium-page__stat-value">
-            {formatCurrency(totalPotentialSigned)}
+            {formatCurrency(stats.totalPotentialSigned)}
           </p>
         </Card>
 
@@ -471,12 +174,8 @@ export function CustomerDetailsPage() {
         <Card>
           <div className="customer-details-premium-page__section-header">
             <div>
-              <p className="customer-details-premium-page__section-eyebrow">
-                Historique
-              </p>
-              <h2 className="customer-details-premium-page__section-title">
-                Devis liés
-              </h2>
+              <p className="customer-details-premium-page__section-eyebrow">Historique</p>
+              <h2 className="customer-details-premium-page__section-title">Devis liés</h2>
             </div>
           </div>
 
@@ -516,9 +215,7 @@ export function CustomerDetailsPage() {
                       </td>
                       <td style={{ textAlign: "right" }}>
                         <Link to={`/devis/${quote.id}`}>
-                          <Button type="button" variant="secondary">
-                            Ouvrir
-                          </Button>
+                          <Button type="button" variant="secondary">Ouvrir</Button>
                         </Link>
                       </td>
                     </tr>
@@ -597,11 +294,11 @@ export function CustomerDetailsPage() {
                   </li>
                   <li>
                     <span>Adresse facturation</span>
-                    <strong>{billingAddress || "-"}</strong>
+                    <strong>{addresses.billingAddress || "-"}</strong>
                   </li>
                   <li>
                     <span>Adresse chantier</span>
-                    <strong>{jobsiteAddress || "-"}</strong>
+                    <strong>{addresses.jobsiteAddress || "-"}</strong>
                   </li>
                 </ul>
               </div>
@@ -617,6 +314,27 @@ export function CustomerDetailsPage() {
                   </p>
                   <h2 className="customer-details-premium-page__section-title">
                     Modifier la fiche client
+                    {/* Indicateur visuel de modifications non sauvegardées */}
+                    {isDirty && (
+                      <span
+                        style={{
+                          display: "inline-block",
+                          marginLeft: "10px",
+                          fontSize: "0.72rem",
+                          fontWeight: 600,
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                          color: "#b45309",
+                          background: "rgba(251, 191, 36, 0.15)",
+                          border: "1px solid rgba(217, 119, 6, 0.25)",
+                          borderRadius: "999px",
+                          padding: "2px 10px",
+                          verticalAlign: "middle",
+                        }}
+                      >
+                        Modifications non sauvegardées
+                      </span>
+                    )}
                   </h2>
                 </div>
               </div>
@@ -683,18 +401,14 @@ export function CustomerDetailsPage() {
                     <FormField label="Adresse ligne 1">
                       <TextInput
                         value={form.billing_address_line1}
-                        onChange={(e) =>
-                          updateField("billing_address_line1", e.target.value)
-                        }
+                        onChange={(e) => updateField("billing_address_line1", e.target.value)}
                       />
                     </FormField>
 
                     <FormField label="Adresse ligne 2">
                       <TextInput
                         value={form.billing_address_line2}
-                        onChange={(e) =>
-                          updateField("billing_address_line2", e.target.value)
-                        }
+                        onChange={(e) => updateField("billing_address_line2", e.target.value)}
                       />
                     </FormField>
                   </FormGrid>
@@ -703,9 +417,7 @@ export function CustomerDetailsPage() {
                     <FormField label="Code postal">
                       <TextInput
                         value={form.billing_postal_code}
-                        onChange={(e) =>
-                          updateField("billing_postal_code", e.target.value)
-                        }
+                        onChange={(e) => updateField("billing_postal_code", e.target.value)}
                       />
                     </FormField>
 
@@ -719,9 +431,7 @@ export function CustomerDetailsPage() {
                     <FormField label="Pays">
                       <TextInput
                         value={form.billing_country}
-                        onChange={(e) =>
-                          updateField("billing_country", e.target.value)
-                        }
+                        onChange={(e) => updateField("billing_country", e.target.value)}
                       />
                     </FormField>
                   </FormGrid>
@@ -736,18 +446,14 @@ export function CustomerDetailsPage() {
                     <FormField label="Adresse ligne 1">
                       <TextInput
                         value={form.jobsite_address_line1}
-                        onChange={(e) =>
-                          updateField("jobsite_address_line1", e.target.value)
-                        }
+                        onChange={(e) => updateField("jobsite_address_line1", e.target.value)}
                       />
                     </FormField>
 
                     <FormField label="Adresse ligne 2">
                       <TextInput
                         value={form.jobsite_address_line2}
-                        onChange={(e) =>
-                          updateField("jobsite_address_line2", e.target.value)
-                        }
+                        onChange={(e) => updateField("jobsite_address_line2", e.target.value)}
                       />
                     </FormField>
                   </FormGrid>
@@ -756,9 +462,7 @@ export function CustomerDetailsPage() {
                     <FormField label="Code postal">
                       <TextInput
                         value={form.jobsite_postal_code}
-                        onChange={(e) =>
-                          updateField("jobsite_postal_code", e.target.value)
-                        }
+                        onChange={(e) => updateField("jobsite_postal_code", e.target.value)}
                       />
                     </FormField>
 
@@ -772,9 +476,7 @@ export function CustomerDetailsPage() {
                     <FormField label="Pays">
                       <TextInput
                         value={form.jobsite_country}
-                        onChange={(e) =>
-                          updateField("jobsite_country", e.target.value)
-                        }
+                        onChange={(e) => updateField("jobsite_country", e.target.value)}
                       />
                     </FormField>
                   </FormGrid>
@@ -791,11 +493,16 @@ export function CustomerDetailsPage() {
                 {error && <ErrorMessage message={error} />}
 
                 <div className="customer-details-premium-page__form-actions">
-                  <Button type="submit" disabled={saving}>
+                  <Button type="submit" disabled={saving || !isDirty}>
                     {saving ? "Enregistrement..." : "Enregistrer"}
                   </Button>
 
-                  <Button type="button" variant="secondary" onClick={resetForm}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={resetForm}
+                    disabled={!isDirty}
+                  >
                     Réinitialiser
                   </Button>
                 </div>

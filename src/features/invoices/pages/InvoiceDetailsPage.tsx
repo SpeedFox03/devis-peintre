@@ -2,14 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
-import { PageHeader } from "../../../components/ui/PageHeader/PageHeader";
 import { LoadingBlock } from "../../../components/ui/LoadingBlock/LoadingBlock";
 import { ErrorMessage } from "../../../components/ui/ErrorMessage/ErrorMessage";
 import { EmptyState } from "../../../components/ui/EmptyState/EmptyState";
-import { SectionCard } from "../../../components/ui/SectionCard/SectionCard";
+import { Card } from "../../../components/ui/Card/Card";
 import { DataTable } from "../../../components/ui/DataTable/DataTable";
 import { Button } from "../../../components/ui/Button/Button";
-import { Card } from "../../../components/ui/Card/Card";
 import { FormField } from "../../../components/ui/FormField/FormField";
 import { FormGrid } from "../../../components/ui/FormGrid/FormGrid";
 import { TextInput } from "../../../components/ui/TextInput/TextInput";
@@ -17,6 +15,7 @@ import { TextArea } from "../../../components/ui/TextArea/TextArea";
 import { Select } from "../../../components/ui/Select/Select";
 import { exportPeppolInvoiceXml } from "../peppol/exportPeppolInvoiceXml";
 import { sendPeppolInvoice } from "../peppol/sendPeppolInvoice";
+import "./InvoiceDetailsPage.css";
 
 type InvoiceStatus =
   | "draft"
@@ -630,235 +629,226 @@ export function InvoiceDetailsPage() {
   const peppolSendable = canSendViaPeppol(invoice);
 
   return (
-    <section>
-      <PageHeader
-        title={`${invoice.invoice_number} — ${getInvoiceTypeLabel(invoice.invoice_type)}`}
-        description={`Statut : ${getInvoiceStatusLabel(invoice.status)}`}
-        actions={
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            {invoice.status === "draft" && (
-              <Button
-                type="button"
-                onClick={handleIssueInvoice}
-                disabled={issuingInvoice}
-              >
-                {issuingInvoice ? "Émission..." : "Émettre la facture"}
-              </Button>
-            )}
+    <section className="invoice-details-premium">
+      {/* ── Hero ── */}
+      <div className="invoice-details-premium__hero">
+        <div className="invoice-details-premium__hero-copy">
+          <h1 className="invoice-details-premium__hero-title">
+            {invoice.invoice_number} — {getInvoiceTypeLabel(invoice.invoice_type)}
+          </h1>
+          <span className={`invoice-details-premium__status-chip invoice-details-premium__status-chip--${invoice.status}`}>
+            {getInvoiceStatusLabel(invoice.status)}
+          </span>
+        </div>
 
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleExportPeppolXml}
-              disabled={exportingPeppolXml}
-            >
-              {exportingPeppolXml ? "Export XML..." : "Exporter Peppol (XML)"}
+        <div className="invoice-details-premium__hero-actions">
+          {invoice.status === "draft" && (
+            <Button type="button" onClick={handleIssueInvoice} disabled={issuingInvoice}>
+              {issuingInvoice ? "Émission..." : "Émettre la facture"}
             </Button>
-
-            {peppolSendable && (
-              <Button
-                type="button"
-                onClick={handleSendPeppol}
-                disabled={sendingPeppol}
-              >
-                {sendingPeppol ? "Envoi en cours..." : "Envoyer via Peppol"}
-              </Button>
-            )}
-
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={showPaymentForm ? closePaymentForm : openPaymentForm}
-            >
-              {showPaymentForm ? "Fermer le paiement" : "Ajouter un paiement"}
+          )}
+          <Button type="button" variant="secondary" onClick={handleExportPeppolXml} disabled={exportingPeppolXml}>
+            {exportingPeppolXml ? "Export..." : "Peppol XML"}
+          </Button>
+          {peppolSendable && (
+            <Button type="button" onClick={handleSendPeppol} disabled={sendingPeppol}>
+              {sendingPeppol ? "Envoi..." : "Envoyer Peppol"}
             </Button>
-
-            {invoice.source_quote_id && (
-              <Link to={`/devis/${invoice.source_quote_id}`}>
-                <Button type="button" variant="secondary">
-                  Voir le devis source
-                </Button>
-              </Link>
-            )}
-
-            <Link to="/factures">
-              <Button type="button" variant="secondary">
-                Retour aux factures
-              </Button>
+          )}
+          <Button type="button" variant="secondary" onClick={showPaymentForm ? closePaymentForm : openPaymentForm}>
+            {showPaymentForm ? "Fermer paiement" : "Ajouter un paiement"}
+          </Button>
+          {invoice.source_quote_id && (
+            <Link to={`/devis/${invoice.source_quote_id}`}>
+              <Button type="button" variant="secondary">Devis source</Button>
             </Link>
-          </div>
-        }
-      />
+          )}
+          <Link to="/factures">
+            <Button type="button" variant="secondary">Retour</Button>
+          </Link>
+        </div>
+      </div>
 
-      <SectionCard title="Résumé facture">
-        <FormGrid columns="3">
-          <Card>
-            <h3 style={{ marginTop: 0 }}>Informations document</h3>
-            <p><strong>Numéro :</strong> {invoice.invoice_number}</p>
-            <p><strong>Type :</strong> {getInvoiceTypeLabel(invoice.invoice_type)}</p>
-            <p><strong>Statut :</strong> {getInvoiceStatusLabel(invoice.status)}</p>
-            <p><strong>Date :</strong> {invoice.issue_date}</p>
-            <p><strong>Échéance :</strong> {invoice.due_date || "-"}</p>
-            <p><strong>Devise :</strong> {invoice.currency_code}</p>
-            <p>
-              <strong>Peppol :</strong>{" "}
-              <span style={{ color: getPeppolStatusColor(invoice.peppol_status), fontWeight: 600 }}>
+      {/* ── Résumé ── */}
+      <Card className="invoice-details-premium__section">
+        <h2 className="invoice-details-premium__section-title">Résumé facture</h2>
+        <div className="invoice-details-premium__info-grid">
+          <div className="invoice-details-premium__info-card">
+            <p className="invoice-details-premium__info-card-title">Informations document</p>
+            {[
+              ["Numéro", invoice.invoice_number],
+              ["Type", getInvoiceTypeLabel(invoice.invoice_type)],
+              ["Date", invoice.issue_date],
+              ["Échéance", invoice.due_date || "—"],
+              ["Devise", invoice.currency_code],
+            ].map(([label, value]) => (
+              <div key={label} className="invoice-details-premium__info-row">
+                <span className="invoice-details-premium__info-label">{label} :</span>
+                <span className="invoice-details-premium__info-value">{value}</span>
+              </div>
+            ))}
+            <div className="invoice-details-premium__info-row">
+              <span className="invoice-details-premium__info-label">Peppol :</span>
+              <span className="invoice-details-premium__peppol-status" style={{ color: getPeppolStatusColor(invoice.peppol_status) }}>
                 {getPeppolStatusLabel(invoice.peppol_status)}
               </span>
-            </p>
-          </Card>
+            </div>
+          </div>
 
-          <Card>
-            <h3 style={{ marginTop: 0 }}>Entreprise</h3>
-            <p><strong>Nom :</strong> {invoice.company_name_snapshot || "-"}</p>
-            <p><strong>TVA :</strong> {invoice.company_vat_number_snapshot || "-"}</p>
-            <p><strong>Email :</strong> {invoice.company_email_snapshot || "-"}</p>
-            <p><strong>Téléphone :</strong> {invoice.company_phone_snapshot || "-"}</p>
-            <p><strong>Adresse :</strong> {companyAddress || "-"}</p>
-            <p><strong>IBAN :</strong> {invoice.company_iban_snapshot || "-"}</p>
-            <p><strong>BIC :</strong> {invoice.company_bic_snapshot || "-"}</p>
-          </Card>
+          <div className="invoice-details-premium__info-card">
+            <p className="invoice-details-premium__info-card-title">Entreprise</p>
+            {[
+              ["Nom", invoice.company_name_snapshot],
+              ["TVA", invoice.company_vat_number_snapshot],
+              ["Email", invoice.company_email_snapshot],
+              ["Tél.", invoice.company_phone_snapshot],
+              ["Adresse", companyAddress],
+              ["IBAN", invoice.company_iban_snapshot],
+              ["BIC", invoice.company_bic_snapshot],
+            ].map(([label, value]) => (
+              <div key={label} className="invoice-details-premium__info-row">
+                <span className="invoice-details-premium__info-label">{label} :</span>
+                <span className="invoice-details-premium__info-value">{value || "—"}</span>
+              </div>
+            ))}
+          </div>
 
-          <Card>
-            <h3 style={{ marginTop: 0 }}>Client</h3>
-            <p><strong>Nom :</strong> {getCustomerDisplayName(invoice)}</p>
-            <p><strong>Email :</strong> {invoice.customer_email_snapshot || "-"}</p>
-            <p><strong>Téléphone :</strong> {invoice.customer_phone_snapshot || "-"}</p>
-            <p><strong>Adresse facturation :</strong> {customerAddress || "-"}</p>
-            <p><strong>Adresse chantier :</strong> {jobsiteAddress || "-"}</p>
-          </Card>
-        </FormGrid>
-      </SectionCard>
+          <div className="invoice-details-premium__info-card">
+            <p className="invoice-details-premium__info-card-title">Client</p>
+            {[
+              ["Nom", getCustomerDisplayName(invoice)],
+              ["Email", invoice.customer_email_snapshot],
+              ["Tél.", invoice.customer_phone_snapshot],
+              ["Facturation", customerAddress],
+              ["Chantier", jobsiteAddress],
+            ].map(([label, value]) => (
+              <div key={label} className="invoice-details-premium__info-row">
+                <span className="invoice-details-premium__info-label">{label} :</span>
+                <span className="invoice-details-premium__info-value">{value || "—"}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
 
-      <SectionCard title="Préparation Peppol">
-        <FormGrid columns="3">
-          <Card>
-            <h3 style={{ marginTop: 0 }}>Vendeur</h3>
-            <p><strong>Endpoint ID :</strong> {invoice.seller_endpoint_id || "-"}</p>
-            <p><strong>Scheme :</strong> {invoice.seller_endpoint_scheme || "-"}</p>
-          </Card>
-
-          <Card>
-            <h3 style={{ marginTop: 0 }}>Acheteur</h3>
-            <p><strong>Endpoint ID :</strong> {invoice.buyer_endpoint_id || "-"}</p>
-            <p><strong>Scheme :</strong> {invoice.buyer_endpoint_scheme || "-"}</p>
-          </Card>
-
-          <Card>
-            <h3 style={{ marginTop: 0 }}>Paiement</h3>
-            <p><strong>PaymentMeansCode :</strong> {invoice.payment_means_code || "-"}</p>
-            <p><strong>IBAN :</strong> {invoice.company_iban_snapshot || "-"}</p>
-          </Card>
-        </FormGrid>
-
-        {/* Avertissement si les endpoints ne sont pas configurés */}
+      {/* ── Peppol ── */}
+      <Card className="invoice-details-premium__section">
+        <h2 className="invoice-details-premium__section-title">Préparation Peppol</h2>
+        <div className="invoice-details-premium__info-grid">
+          <div className="invoice-details-premium__info-card">
+            <p className="invoice-details-premium__info-card-title">Vendeur</p>
+            <div className="invoice-details-premium__info-row">
+              <span className="invoice-details-premium__info-label">Endpoint ID :</span>
+              <span className="invoice-details-premium__info-value">{invoice.seller_endpoint_id || "—"}</span>
+            </div>
+            <div className="invoice-details-premium__info-row">
+              <span className="invoice-details-premium__info-label">Scheme :</span>
+              <span className="invoice-details-premium__info-value">{invoice.seller_endpoint_scheme || "—"}</span>
+            </div>
+          </div>
+          <div className="invoice-details-premium__info-card">
+            <p className="invoice-details-premium__info-card-title">Acheteur</p>
+            <div className="invoice-details-premium__info-row">
+              <span className="invoice-details-premium__info-label">Endpoint ID :</span>
+              <span className="invoice-details-premium__info-value">{invoice.buyer_endpoint_id || "—"}</span>
+            </div>
+            <div className="invoice-details-premium__info-row">
+              <span className="invoice-details-premium__info-label">Scheme :</span>
+              <span className="invoice-details-premium__info-value">{invoice.buyer_endpoint_scheme || "—"}</span>
+            </div>
+          </div>
+          <div className="invoice-details-premium__info-card">
+            <p className="invoice-details-premium__info-card-title">Paiement</p>
+            <div className="invoice-details-premium__info-row">
+              <span className="invoice-details-premium__info-label">Code :</span>
+              <span className="invoice-details-premium__info-value">{invoice.payment_means_code || "—"}</span>
+            </div>
+            <div className="invoice-details-premium__info-row">
+              <span className="invoice-details-premium__info-label">IBAN :</span>
+              <span className="invoice-details-premium__info-value">{invoice.company_iban_snapshot || "—"}</span>
+            </div>
+          </div>
+        </div>
         {(["issued", "sent", "partially_paid"] as InvoiceStatus[]).includes(invoice.status) &&
           (!invoice.seller_endpoint_id || !invoice.buyer_endpoint_id) && (
-          <p style={{ marginTop: 12, color: "#b45309", fontSize: "0.9rem" }}>
-            ⚠️ Les endpoints Peppol vendeur et/ou acheteur ne sont pas renseignés.
-            L'envoi réseau est désactivé jusqu'à leur configuration.
-          </p>
+          <div className="invoice-details-premium__peppol-warning">
+            ⚠️ Les endpoints Peppol vendeur et/ou acheteur ne sont pas renseignés. L'envoi réseau est désactivé.
+          </div>
         )}
-
         {invoice.peppol_status === "delivered" && (
-          <p style={{ marginTop: 12, color: "#16a34a", fontSize: "0.9rem" }}>
+          <div className="invoice-details-premium__peppol-success">
             ✓ Cette facture a été distribuée avec succès via le réseau Peppol.
-          </p>
+          </div>
         )}
-
         {invoice.peppol_status === "rejected" && (
-          <p style={{ marginTop: 12, color: "#dc2626", fontSize: "0.9rem" }}>
+          <div className="invoice-details-premium__peppol-error">
             ✗ Cette facture a été rejetée. Corrigez les erreurs et renvoyez-la.
-          </p>
+          </div>
         )}
-      </SectionCard>
+      </Card>
 
-      <SectionCard title="Totaux">
-        <FormGrid columns="4">
-          <Card>
-            <h3 style={{ marginTop: 0 }}>HT</h3>
-            <p style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: 0 }}>
-              {Number(invoice.subtotal_ht).toFixed(2)} €
+      {/* ── Totaux ── */}
+      <div className="invoice-details-premium__totals-grid">
+        {[
+          { label: "Sous-total HT", value: invoice.subtotal_ht },
+          { label: "TVA", value: invoice.total_tva },
+          { label: "Total TTC", value: invoice.total_ttc, strong: true },
+          { label: "Solde restant", value: invoice.balance_due, strong: true },
+        ].map(({ label, value, strong }) => (
+          <div key={label} className="invoice-details-premium__total-card">
+            <p className="invoice-details-premium__total-label">{label}</p>
+            <p className={`invoice-details-premium__total-value${strong ? " invoice-details-premium__total-value--strong" : ""}`}>
+              {Number(value).toFixed(2)} €
             </p>
-          </Card>
+          </div>
+        ))}
+      </div>
 
-          <Card>
-            <h3 style={{ marginTop: 0 }}>TVA</h3>
-            <p style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: 0 }}>
-              {Number(invoice.total_tva).toFixed(2)} €
-            </p>
-          </Card>
-
-          <Card>
-            <h3 style={{ marginTop: 0 }}>TTC</h3>
-            <p style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: 0 }}>
-              {Number(invoice.total_ttc).toFixed(2)} €
-            </p>
-          </Card>
-
-          <Card>
-            <h3 style={{ marginTop: 0 }}>Solde restant</h3>
-            <p style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: 0 }}>
-              {Number(invoice.balance_due).toFixed(2)} €
-            </p>
-          </Card>
-        </FormGrid>
-      </SectionCard>
-
-      {(invoice.customer_reference ||
-        invoice.purchase_order_reference ||
-        invoice.payment_terms ||
-        invoice.notes) && (
-        <SectionCard title="Informations complémentaires">
-          <FormGrid columns="2">
-            <Card>
-              <h3 style={{ marginTop: 0 }}>Références</h3>
-              <p><strong>Référence client :</strong> {invoice.customer_reference || "-"}</p>
-              <p>
-                <strong>Référence commande :</strong>{" "}
-                {invoice.purchase_order_reference || "-"}
-              </p>
-            </Card>
-
-            <Card>
-              <h3 style={{ marginTop: 0 }}>Conditions</h3>
-              <p><strong>Conditions de paiement :</strong> {invoice.payment_terms || "-"}</p>
-              <p><strong>Notes :</strong> {invoice.notes || "-"}</p>
-            </Card>
-          </FormGrid>
-        </SectionCard>
+      {/* ── Infos complémentaires ── */}
+      {(invoice.customer_reference || invoice.purchase_order_reference || invoice.payment_terms || invoice.notes) && (
+        <Card className="invoice-details-premium__section">
+          <h2 className="invoice-details-premium__section-title">Informations complémentaires</h2>
+          <div className="invoice-details-premium__info-grid--2 invoice-details-premium__info-grid">
+            <div className="invoice-details-premium__info-card">
+              <p className="invoice-details-premium__info-card-title">Références</p>
+              <div className="invoice-details-premium__info-row">
+                <span className="invoice-details-premium__info-label">Réf. client :</span>
+                <span className="invoice-details-premium__info-value">{invoice.customer_reference || "—"}</span>
+              </div>
+              <div className="invoice-details-premium__info-row">
+                <span className="invoice-details-premium__info-label">Réf. commande :</span>
+                <span className="invoice-details-premium__info-value">{invoice.purchase_order_reference || "—"}</span>
+              </div>
+            </div>
+            <div className="invoice-details-premium__info-card">
+              <p className="invoice-details-premium__info-card-title">Conditions</p>
+              <div className="invoice-details-premium__info-row">
+                <span className="invoice-details-premium__info-label">Paiement :</span>
+                <span className="invoice-details-premium__info-value">{invoice.payment_terms || "—"}</span>
+              </div>
+              <div className="invoice-details-premium__info-row">
+                <span className="invoice-details-premium__info-label">Notes :</span>
+                <span className="invoice-details-premium__info-value">{invoice.notes || "—"}</span>
+              </div>
+            </div>
+          </div>
+        </Card>
       )}
 
+      {/* ── Formulaire paiement ── */}
       {showPaymentForm && (
-        <SectionCard title="Ajouter un paiement">
-          <form onSubmit={handleRegisterPayment}>
+        <Card className="invoice-details-premium__section">
+          <h2 className="invoice-details-premium__section-title">Ajouter un paiement</h2>
+          <form className="invoice-details-premium__payment-form" onSubmit={handleRegisterPayment}>
             <FormGrid columns="2">
               <FormField label="Date de paiement">
-                <TextInput
-                  type="date"
-                  value={paymentForm.payment_date}
-                  onChange={(e) =>
-                    updatePaymentField("payment_date", e.target.value)
-                  }
-                />
+                <TextInput type="date" value={paymentForm.payment_date} onChange={(e) => updatePaymentField("payment_date", e.target.value)} />
               </FormField>
-
               <FormField label="Montant">
-                <TextInput
-                  type="number"
-                  step="0.01"
-                  value={paymentForm.amount}
-                  onChange={(e) => updatePaymentField("amount", e.target.value)}
-                />
+                <TextInput type="number" step="0.01" value={paymentForm.amount} onChange={(e) => updatePaymentField("amount", e.target.value)} />
               </FormField>
-
               <FormField label="Mode de paiement">
-                <Select
-                  value={paymentForm.payment_method}
-                  onChange={(e) =>
-                    updatePaymentField("payment_method", e.target.value)
-                  }
-                >
+                <Select value={paymentForm.payment_method} onChange={(e) => updatePaymentField("payment_method", e.target.value)}>
                   <option value="bank_transfer">Virement</option>
                   <option value="cash">Espèces</option>
                   <option value="card">Carte</option>
@@ -866,136 +856,162 @@ export function InvoiceDetailsPage() {
                   <option value="other">Autre</option>
                 </Select>
               </FormField>
-
               <FormField label="Référence">
-                <TextInput
-                  value={paymentForm.reference}
-                  onChange={(e) => updatePaymentField("reference", e.target.value)}
-                  placeholder="Communication / référence"
-                />
+                <TextInput value={paymentForm.reference} onChange={(e) => updatePaymentField("reference", e.target.value)} placeholder="Communication / référence" />
               </FormField>
             </FormGrid>
-
             <FormField label="Notes">
-              <TextArea
-                rows={3}
-                value={paymentForm.notes}
-                onChange={(e) => updatePaymentField("notes", e.target.value)}
-              />
+              <TextArea rows={3} value={paymentForm.notes} onChange={(e) => updatePaymentField("notes", e.target.value)} />
             </FormField>
-
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <div className="invoice-details-premium__payment-form-actions">
               <Button type="submit" disabled={savingPayment}>
                 {savingPayment ? "Enregistrement..." : "Enregistrer le paiement"}
               </Button>
-
-              <Button type="button" variant="secondary" onClick={closePaymentForm}>
-                Annuler
-              </Button>
+              <Button type="button" variant="secondary" onClick={closePaymentForm}>Annuler</Button>
             </div>
           </form>
-        </SectionCard>
+        </Card>
       )}
 
-      <SectionCard title={`Lignes (${items.length})`}>
+      {/* ── Lignes ── */}
+      <Card className="invoice-details-premium__section">
+        <h2 className="invoice-details-premium__section-title">Lignes ({items.length})</h2>
         {groupedItems.length === 0 ? (
-          <EmptyState
-            title="Aucune ligne"
-            description="Cette facture ne contient aucune ligne."
-          />
+          <EmptyState title="Aucune ligne" description="Cette facture ne contient aucune ligne." />
         ) : (
-          <div style={{ display: "grid", gap: 16 }}>
+          <div style={{ display: "grid", gap: 20 }}>
             {groupedItems.map((group) => (
-              <div key={group.roomLabel}>
-                <h3 style={{ marginBottom: 12 }}>{group.roomLabel}</h3>
-                <DataTable
-                  headers={
-                    <tr>
-                      <th>Libellé</th>
-                      <th>Unité</th>
-                      <th>Qté</th>
-                      <th>PU HT</th>
-                      <th>TVA</th>
-                      <th>HT</th>
-                      <th>TTC</th>
-                    </tr>
-                  }
-                >
-                  {group.items.map((item) => (
-                    <tr key={item.id}>
-                      <td>
-                        <div>{item.label}</div>
-                        {item.description && (
-                          <div
-                            style={{
-                              marginTop: 4,
-                              color: "#6b7280",
-                              fontSize: "0.92rem",
-                            }}
-                          >
-                            {item.description}
+              <div key={group.roomLabel} className="invoice-details-premium__room-group">
+                <h3 className="invoice-details-premium__room-title">{group.roomLabel}</h3>
+
+                {/* Tableau desktop */}
+                <div className="invoice-details-premium__table-shell invoice-details-premium__table-shell--items">
+                  <DataTable
+                    headers={
+                      <tr>
+                        <th>Libellé</th>
+                        <th>Unité</th>
+                        <th>Qté</th>
+                        <th>PU HT</th>
+                        <th>TVA</th>
+                        <th>HT</th>
+                        <th>TTC</th>
+                      </tr>
+                    }
+                  >
+                    {group.items.map((item) => (
+                      <tr key={item.id}>
+                        <td>
+                          <div className="invoice-details-premium__item-label">
+                            <strong>{item.label}</strong>
+                            {item.description && (
+                              <div className="invoice-details-premium__item-desc">{item.description}</div>
+                            )}
                           </div>
-                        )}
-                      </td>
-                      <td>{item.unit}</td>
-                      <td>{Number(item.quantity).toFixed(2)}</td>
-                      <td>{Number(item.unit_price_ht).toFixed(2)} €</td>
-                      <td>{Number(item.tva_rate).toFixed(2)} %</td>
-                      <td>{Number(item.line_subtotal_ht).toFixed(2)} €</td>
-                      <td>{Number(item.line_total_ttc).toFixed(2)} €</td>
-                    </tr>
+                        </td>
+                        <td>{item.unit}</td>
+                        <td>{Number(item.quantity).toFixed(2)}</td>
+                        <td>{Number(item.unit_price_ht).toFixed(2)} €</td>
+                        <td>{Number(item.tva_rate).toFixed(2)} %</td>
+                        <td>{Number(item.line_subtotal_ht).toFixed(2)} €</td>
+                        <td>{Number(item.line_total_ttc).toFixed(2)} €</td>
+                      </tr>
+                    ))}
+                  </DataTable>
+                </div>
+
+                {/* Cartes mobile */}
+                <div className="invoice-details-premium__item-card-list">
+                  {group.items.map((item) => (
+                    <article key={item.id} className="invoice-details-premium__item-card">
+                      <div className="invoice-details-premium__item-card-header">
+                        <span className="invoice-details-premium__item-card-label">{item.label}</span>
+                        <span className="invoice-details-premium__item-card-ttc">{Number(item.line_total_ttc).toFixed(2)} €</span>
+                      </div>
+                      {item.description && (
+                        <div className="invoice-details-premium__item-desc">{item.description}</div>
+                      )}
+                      <div className="invoice-details-premium__item-card-meta">
+                        <span className="invoice-details-premium__item-chip">{item.unit}</span>
+                        <span className="invoice-details-premium__item-chip">Qté {Number(item.quantity).toFixed(2)}</span>
+                        <span className="invoice-details-premium__item-chip">PU {Number(item.unit_price_ht).toFixed(2)} €</span>
+                        <span className="invoice-details-premium__item-chip">HT {Number(item.line_subtotal_ht).toFixed(2)} €</span>
+                      </div>
+                    </article>
                   ))}
-                </DataTable>
+                </div>
               </div>
             ))}
           </div>
         )}
-      </SectionCard>
+      </Card>
 
-      <SectionCard title={`Paiements (${payments.length})`}>
+      {/* ── Paiements ── */}
+      <Card className="invoice-details-premium__section">
+        <h2 className="invoice-details-premium__section-title">Paiements ({payments.length})</h2>
         {payments.length === 0 ? (
-          <EmptyState
-            title="Aucun paiement"
-            description="Ajoute un paiement pour suivre le règlement de cette facture."
-          />
+          <EmptyState title="Aucun paiement" description="Ajoute un paiement pour suivre le règlement de cette facture." />
         ) : (
-          <DataTable
-            headers={
-              <tr>
-                <th>Date</th>
-                <th>Montant</th>
-                <th>Méthode</th>
-                <th>Référence</th>
-                <th>Notes</th>
-                <th />
-              </tr>
-            }
-          >
-            {payments.map((payment) => (
-              <tr key={payment.id}>
-                <td>{payment.payment_date}</td>
-                <td>{Number(payment.amount).toFixed(2)} €</td>
-                <td>{getPaymentMethodLabel(payment.payment_method)}</td>
-                <td>{payment.reference || "-"}</td>
-                <td>{payment.notes || "-"}</td>
-                <td>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="danger"
-                    disabled={deletingPaymentId === payment.id}
-                    onClick={() => handleDeletePayment(payment.id)}
-                  >
-                    {deletingPaymentId === payment.id
-                      ? "Suppression..."
-                      : "Supprimer"}
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </DataTable>
+          <>
+            {/* Tableau desktop */}
+            <div className="invoice-details-premium__table-shell invoice-details-premium__table-shell--payments">
+              <DataTable
+                headers={
+                  <tr>
+                    <th>Date</th>
+                    <th>Montant</th>
+                    <th>Méthode</th>
+                    <th>Référence</th>
+                    <th>Notes</th>
+                    <th />
+                  </tr>
+                }
+              >
+                {payments.map((payment) => (
+                  <tr key={payment.id}>
+                    <td>{payment.payment_date}</td>
+                    <td><strong>{Number(payment.amount).toFixed(2)} €</strong></td>
+                    <td>{getPaymentMethodLabel(payment.payment_method)}</td>
+                    <td>{payment.reference || "—"}</td>
+                    <td>{payment.notes || "—"}</td>
+                    <td>
+                      <div className="invoice-details-premium__payment-actions">
+                        <Button type="button" size="sm" variant="danger" disabled={deletingPaymentId === payment.id} onClick={() => handleDeletePayment(payment.id)}>
+                          {deletingPaymentId === payment.id ? "Suppression..." : "Supprimer"}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </DataTable>
+            </div>
+
+            {/* Cartes mobile */}
+            <div className="invoice-details-premium__payment-card-list">
+              {payments.map((payment) => (
+                <article key={payment.id} className="invoice-details-premium__payment-card">
+                  <div className="invoice-details-premium__payment-card-header">
+                    <div style={{ display: "grid", gap: 4 }}>
+                      <span className="invoice-details-premium__payment-card-amount">{Number(payment.amount).toFixed(2)} €</span>
+                      <span style={{ color: "#6b7280", fontSize: "0.82rem" }}>{payment.payment_date}</span>
+                    </div>
+                  </div>
+                  <div className="invoice-details-premium__payment-card-meta">
+                    <span className="invoice-details-premium__item-chip">{getPaymentMethodLabel(payment.payment_method)}</span>
+                    {payment.reference && <span className="invoice-details-premium__item-chip">{payment.reference}</span>}
+                  </div>
+                  {payment.notes && <p style={{ margin: 0, color: "#6b7280", fontSize: "0.85rem" }}>{payment.notes}</p>}
+                  <div className="invoice-details-premium__payment-card-actions">
+                    <Button type="button" variant="danger" disabled={deletingPaymentId === payment.id} onClick={() => handleDeletePayment(payment.id)}>
+                      {deletingPaymentId === payment.id ? "Suppression..." : "Supprimer"}
+                    </Button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </>
         )}
-      </SectionCard>
+      </Card>
 
       {error && <ErrorMessage message={error} />}
     </section>
