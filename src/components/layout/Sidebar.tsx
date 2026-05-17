@@ -67,7 +67,7 @@ export function Sidebar() {
           <div className="app-sidebar__section">
             <p className="app-sidebar__section-title">Pilotage</p>
 
-            <NavLink to="/" end className={getNavLinkClassName} onClick={() => setMobileOpen(false)}>
+            <NavLink to="/devis" className={getNavLinkClassName} onClick={() => setMobileOpen(false)}>
               <span className="app-sidebar__link-icon">▦</span>
               <span>Devis</span>
             </NavLink>

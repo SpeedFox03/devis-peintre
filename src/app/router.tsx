@@ -3,6 +3,7 @@ import { LoginPage } from "../features/auth/pages/LoginPage";
 import { RegisterPage } from "../features/auth/pages/RegisterPage";
 import { ProtectedRoute } from "../features/auth/components/ProtectedRoute";
 import { AppLayout } from "../components/layout/AppLayout";
+import { HomePage } from "../features/home/pages/HomePage";
 import { QuotesPage } from "../features/quotes/pages/QuotesPage";
 import { QuoteDetailsPage } from "../features/quotes/pages/QuoteDetailsPage";
 import { CustomersPage } from "../features/customers/pages/CustomersPage";
@@ -31,6 +32,10 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
+            element: <HomePage />,
+          },
+          {
+            path: "devis",
             element: <QuotesPage />,
           },
           {
