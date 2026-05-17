@@ -60,10 +60,11 @@ export type Company = {
   default_quote_validity_days: number | null;
   default_notes: string | null;
   default_terms: string | null;
-  pdf_theme: string;   // "normal" | "aere" | "compact"
+  pdf_theme: string;
   pdf_color_mode: boolean;
-  logo_url: string | null;
+  pdf_accent_color: string | null;
   accent_color: string | null;
+  logo_url: string | null;
 };
 
 export type Customer = {

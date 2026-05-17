@@ -83,7 +83,7 @@ export function useCustomersPage() {
     const [customersRes, quotesRes] = await Promise.all([
       supabase
         .from("customers")
-        .select("id, company_name, first_name, last_name, email, phone, billing_city, created_at, archived_at")
+        .select("id, company_name, first_name, last_name, email, phone, created_at, archived_at")
         .is("archived_at", null)
         .order("created_at", { ascending: false }),
       supabase.from("quotes").select("customer_id"),
@@ -101,12 +101,33 @@ export function useCustomersPage() {
       return;
     }
 
+    // Charger les villes de facturation depuis la table addresses
+    const customerIds = (customersRes.data ?? []).map((c) => c.id);
+    const cityByCustomerId: Record<string, string | null> = {};
+    if (customerIds.length > 0) {
+      const { data: addrData } = await supabase
+        .from("addresses")
+        .select("entity_id, city")
+        .in("entity_id", customerIds)
+        .eq("entity_type", "customer")
+        .eq("role", "billing");
+
+      for (const addr of addrData ?? []) {
+        cityByCustomerId[addr.entity_id] = addr.city;
+      }
+    }
+
     const counts: Record<string, number> = {};
     ((quotesRes.data ?? []) as QuoteCustomerRef[]).forEach((quote) => {
       counts[quote.customer_id] = (counts[quote.customer_id] ?? 0) + 1;
     });
 
-    setCustomers((customersRes.data ?? []) as CustomerRow[]);
+    const customersWithCity: CustomerRow[] = (customersRes.data ?? []).map((c) => ({
+      ...c,
+      billing_city: cityByCustomerId[c.id] ?? null,
+    }));
+
+    setCustomers(customersWithCity);
     setQuoteCountByCustomerId(counts);
     setLoading(false);
   }, []);
@@ -208,16 +229,6 @@ export function useCustomersPage() {
       last_name: form.last_name || null,
       email: form.email || null,
       phone: form.phone || null,
-      billing_address_line1: form.billing_address_line1 || null,
-      billing_postal_code: form.billing_postal_code || null,
-      billing_city: form.billing_city || null,
-      billing_country: "Belgique",
-      // Par défaut : adresse chantier = adresse facturation à la création.
-      // L'utilisateur pourra la modifier ensuite sur la fiche client.
-      jobsite_address_line1: form.billing_address_line1 || null,
-      jobsite_postal_code: form.billing_postal_code || null,
-      jobsite_city: form.billing_city || null,
-      jobsite_country: "Belgique",
       notes: form.notes || null,
       archived_at: null,
     };
@@ -225,7 +236,7 @@ export function useCustomersPage() {
     const { data: inserted, error: insertError } = await supabase
       .from("customers")
       .insert(payload)
-      .select("id, company_name, first_name, last_name, email, phone, billing_city, created_at, archived_at")
+      .select("id, company_name, first_name, last_name, email, phone, created_at, archived_at")
       .single();
 
     if (insertError) {
@@ -234,8 +245,40 @@ export function useCustomersPage() {
       return;
     }
 
+    const addressEntries = [];
+    if (form.billing_address_line1 || form.billing_city) {
+      addressEntries.push({
+        owner_user_id: user.id,
+        entity_type: "customer",
+        entity_id: inserted.id,
+        role: "billing",
+        line1: form.billing_address_line1 || null,
+        postal_code: form.billing_postal_code || null,
+        city: form.billing_city || null,
+        country: "Belgique",
+      });
+      addressEntries.push({
+        owner_user_id: user.id,
+        entity_type: "customer",
+        entity_id: inserted.id,
+        role: "jobsite",
+        line1: form.billing_address_line1 || null,
+        postal_code: form.billing_postal_code || null,
+        city: form.billing_city || null,
+        country: "Belgique",
+      });
+    }
+    if (addressEntries.length > 0) {
+      await supabase.from("addresses").insert(addressEntries);
+    }
+
+    const newCustomerRow: CustomerRow = {
+      ...(inserted as Omit<CustomerRow, "billing_city">),
+      billing_city: form.billing_city || null,
+    };
+
     // ✅ Mise à jour locale — pas de rechargement complet
-    setCustomers((prev) => [inserted as CustomerRow, ...prev]);
+    setCustomers((prev) => [newCustomerRow, ...prev]);
     setForm(initialForm);
     setShowForm(false);
     setSaving(false);

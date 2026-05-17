@@ -153,15 +153,10 @@ export function useCustomerDetails() {
     setLoading(true);
     setError(null);
 
-    const [customerRes, quotesRes] = await Promise.all([
+    const [customerRes, quotesRes, addressesRes] = await Promise.all([
       supabase
         .from("customers")
-        .select(
-          `id, company_name, first_name, last_name, email, phone,
-           billing_address_line1, billing_address_line2, billing_postal_code, billing_city, billing_country,
-           jobsite_address_line1, jobsite_address_line2, jobsite_postal_code, jobsite_city, jobsite_country,
-           notes, archived_at, created_at`
-        )
+        .select("id, company_name, first_name, last_name, email, phone, notes, archived_at, created_at")
         .eq("id", customerId)
         .single(),
       supabase
@@ -169,6 +164,11 @@ export function useCustomerDetails() {
         .select("id, quote_number, title, status, issue_date, total_ttc")
         .eq("customer_id", customerId)
         .order("created_at", { ascending: false }),
+      supabase
+        .from("addresses")
+        .select("role, line1, line2, postal_code, city, country")
+        .eq("entity_id", customerId)
+        .eq("entity_type", "customer"),
     ]);
 
     if (customerRes.error) {
@@ -183,7 +183,24 @@ export function useCustomerDetails() {
       return;
     }
 
-    const loadedCustomer = customerRes.data as CustomerDetails;
+    const addrs = addressesRes.data ?? [];
+    const billing = addrs.find((a) => a.role === "billing");
+    const jobsite = addrs.find((a) => a.role === "jobsite");
+
+    const loadedCustomer: CustomerDetails = {
+      ...customerRes.data,
+      billing_address_line1: billing?.line1 ?? null,
+      billing_address_line2: billing?.line2 ?? null,
+      billing_postal_code: billing?.postal_code ?? null,
+      billing_city: billing?.city ?? null,
+      billing_country: billing?.country ?? null,
+      jobsite_address_line1: jobsite?.line1 ?? null,
+      jobsite_address_line2: jobsite?.line2 ?? null,
+      jobsite_postal_code: jobsite?.postal_code ?? null,
+      jobsite_city: jobsite?.city ?? null,
+      jobsite_country: jobsite?.country ?? null,
+    };
+
     setCustomer(loadedCustomer);
     setQuotes((quotesRes.data ?? []) as CustomerQuote[]);
     setForm(createInitialForm(loadedCustomer));
@@ -227,31 +244,30 @@ export function useCustomerDetails() {
     setSaving(true);
     setError(null);
 
-    const payload = {
+    // Champs core uniquement — les adresses vont dans la table addresses
+    const corePayload = {
       company_name: form.company_name || null,
       first_name: form.first_name || null,
       last_name: form.last_name || null,
       email: form.email || null,
       phone: form.phone || null,
-
-      billing_address_line1: form.billing_address_line1 || null,
-      billing_address_line2: form.billing_address_line2 || null,
-      billing_postal_code: form.billing_postal_code || null,
-      billing_city: form.billing_city || null,
-      billing_country: form.billing_country || null,
-
-      jobsite_address_line1: form.jobsite_address_line1 || null,
-      jobsite_address_line2: form.jobsite_address_line2 || null,
-      jobsite_postal_code: form.jobsite_postal_code || null,
-      jobsite_city: form.jobsite_city || null,
-      jobsite_country: form.jobsite_country || null,
-
       notes: form.notes || null,
     };
 
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      setError("Utilisateur non connecté.");
+      setSaving(false);
+      return;
+    }
+
     const { error: updateError } = await supabase
       .from("customers")
-      .update(payload)
+      .update(corePayload)
       .eq("id", customer.id);
 
     if (updateError) {
@@ -260,10 +276,58 @@ export function useCustomerDetails() {
       return;
     }
 
-    // ✅ Mise à jour locale du customer — pas de rechargement complet
+    // Écriture exclusive dans la table addresses
+    await supabase
+      .from("addresses")
+      .delete()
+      .eq("entity_type", "customer")
+      .eq("entity_id", customer.id);
+
+    const newAddresses = [];
+    if (form.billing_address_line1 || form.billing_city) {
+      newAddresses.push({
+        owner_user_id: user.id,
+        entity_type: "customer",
+        entity_id: customer.id,
+        role: "billing",
+        line1: form.billing_address_line1 || null,
+        line2: form.billing_address_line2 || null,
+        postal_code: form.billing_postal_code || null,
+        city: form.billing_city || null,
+        country: form.billing_country || "Belgique",
+      });
+    }
+    if (form.jobsite_address_line1 || form.jobsite_city) {
+      newAddresses.push({
+        owner_user_id: user.id,
+        entity_type: "customer",
+        entity_id: customer.id,
+        role: "jobsite",
+        line1: form.jobsite_address_line1 || null,
+        line2: form.jobsite_address_line2 || null,
+        postal_code: form.jobsite_postal_code || null,
+        city: form.jobsite_city || null,
+        country: form.jobsite_country || "Belgique",
+      });
+    }
+    if (newAddresses.length > 0) {
+      await supabase.from("addresses").insert(newAddresses);
+    }
+
+    // Mise à jour locale du customer — pas de rechargement complet
     const updatedCustomer: CustomerDetails = {
       ...customer,
-      ...payload,
+      ...corePayload,
+      billing_address_line1: form.billing_address_line1 || null,
+      billing_address_line2: form.billing_address_line2 || null,
+      billing_postal_code: form.billing_postal_code || null,
+      billing_city: form.billing_city || null,
+      billing_country: form.billing_country || null,
+      jobsite_address_line1: form.jobsite_address_line1 || null,
+      jobsite_address_line2: form.jobsite_address_line2 || null,
+      jobsite_postal_code: form.jobsite_postal_code || null,
+      jobsite_city: form.jobsite_city || null,
+      jobsite_country: form.jobsite_country || null,
     };
     setCustomer(updatedCustomer);
     setForm(createInitialForm(updatedCustomer));

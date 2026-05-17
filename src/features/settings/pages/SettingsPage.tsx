@@ -42,9 +42,10 @@ type CompanySettings = {
   default_notes: string | null;
   default_deposit_percent: number;
   pdf_theme: string;
+  pdf_accent_color: string | null;
+  pdf_color_mode: boolean;
   legal_mentions: string | null;
   logo_url: string | null;
-  pdf_color_mode: boolean;
 };
 
 type CompanySettingsFormState = {
@@ -66,9 +67,10 @@ type CompanySettingsFormState = {
   default_notes: string;
   default_deposit_percent: string;
   pdf_theme: string;
+  pdf_accent_color: string;
+  pdf_color_mode: boolean;
   legal_mentions: string;
   logo_url: string;
-  pdf_color_mode: boolean;
 };
 
 const PDF_THEME_OPTIONS: { value: string; label: string; description: string }[] = [
@@ -113,9 +115,10 @@ function createInitialForm(company: CompanySettings | null): CompanySettingsForm
     default_notes: company?.default_notes ?? "",
     default_deposit_percent: String(company?.default_deposit_percent ?? 0),
     pdf_theme: company?.pdf_theme ?? "normal",
+    pdf_accent_color: company?.pdf_accent_color ?? "#8e7452",
+    pdf_color_mode: company?.pdf_color_mode ?? true,
     legal_mentions: company?.legal_mentions ?? "",
     logo_url: company?.logo_url ?? "",
-    pdf_color_mode: company?.pdf_color_mode ?? true,
   };
 }
 
@@ -532,32 +535,7 @@ export function SettingsPage() {
 
     const { data, error } = await supabase
       .from("companies")
-      .select(
-        `
-        id,
-        name,
-        vat_number,
-        email,
-        phone,
-        address_line1,
-        address_line2,
-        postal_code,
-        city,
-        country,
-        website,
-        iban,
-        bic,
-        default_tva_rate,
-        default_quote_validity_days,
-        default_terms,
-        default_notes,
-        default_deposit_percent,
-        pdf_theme,
-        legal_mentions,
-        logo_url,
-        pdf_color_mode
-      `
-      )
+      .select("id, name, vat_number, email, phone, website, iban, bic, logo_url, legal_mentions, accent_color")
       .eq("owner_user_id", user.id)
       .order("created_at", { ascending: true })
       .limit(1)
@@ -569,7 +547,38 @@ export function SettingsPage() {
       return;
     }
 
-    const loadedCompany = (data ?? null) as CompanySettings | null;
+    if (!data) {
+      setCompany(null);
+      setForm(createInitialForm(null));
+      setLoading(false);
+      return;
+    }
+
+    const [settingsRes, addrRes] = await Promise.all([
+      supabase
+        .from("company_settings")
+        .select("pdf_theme, pdf_accent_color, pdf_color_mode, default_tva_rate, default_quote_validity_days, default_deposit_percent, default_terms, default_notes")
+        .eq("company_id", data.id)
+        .maybeSingle(),
+      supabase
+        .from("addresses")
+        .select("line1, line2, postal_code, city, country")
+        .eq("entity_id", data.id)
+        .eq("entity_type", "company")
+        .eq("role", "main")
+        .maybeSingle(),
+    ]);
+
+    const loadedCompany: CompanySettings = {
+      ...data,
+      ...(settingsRes.data ?? {}),
+      address_line1: addrRes.data?.line1 ?? null,
+      address_line2: addrRes.data?.line2 ?? null,
+      postal_code: addrRes.data?.postal_code ?? null,
+      city: addrRes.data?.city ?? null,
+      country: addrRes.data?.country ?? null,
+    } as CompanySettings;
+
     setCompany(loadedCompany);
     setForm(createInitialForm(loadedCompany));
     setLoading(false);
@@ -606,23 +615,26 @@ export function SettingsPage() {
       return;
     }
 
-    const payload = {
-      owner_user_id: user.id,
-      name: "Mon entreprise",
-      country: "Belgique",
-      default_tva_rate: 21,
-      default_quote_validity_days: 30,
-      default_deposit_percent: 0,
-      pdf_theme: "normal",
-    };
+    const { data: newCompany, error } = await supabase
+      .from("companies")
+      .insert({ owner_user_id: user.id, name: "Mon entreprise" })
+      .select("id")
+      .single();
 
-    const { error } = await supabase.from("companies").insert(payload);
-
-    if (error) {
-      setError(error.message);
+    if (error || !newCompany) {
+      setError(error?.message ?? "Impossible de créer l'entreprise.");
       setCreatingCompany(false);
       return;
     }
+
+    await supabase.from("company_settings").insert({
+      company_id: newCompany.id,
+      pdf_theme: "normal",
+      pdf_color_mode: true,
+      default_tva_rate: 21,
+      default_quote_validity_days: 30,
+      default_deposit_percent: 0,
+    });
 
     setCreatingCompany(false);
     await loadSettings();
@@ -639,45 +651,88 @@ export function SettingsPage() {
     setSaving(true);
     setError(null);
 
-    const payload = {
-      name: form.name.trim(),
-      vat_number: form.vat_number.trim() || null,
-      email: form.email.trim() || null,
-      phone: form.phone.trim() || null,
-      address_line1: form.address_line1.trim() || null,
-      address_line2: form.address_line2.trim() || null,
-      postal_code: form.postal_code.trim() || null,
-      city: form.city.trim() || null,
-      country: form.country.trim() || null,
-      website: form.website.trim() || null,
-      iban: form.iban.trim() || null,
-      bic: form.bic.trim() || null,
-      default_tva_rate: Number(form.default_tva_rate || 21),
-      default_quote_validity_days: Number(form.default_quote_validity_days || 30),
-      default_terms: form.default_terms.trim() || null,
-      default_notes: form.default_notes.trim() || null,
-      default_deposit_percent: Number(form.default_deposit_percent || 0),
-      pdf_theme: form.pdf_theme,
-      legal_mentions: form.legal_mentions.trim() || null,
-      logo_url: form.logo_url.trim() || null,
-      pdf_color_mode: form.pdf_color_mode,
-    };
-
-    if (!payload.name) {
+    const name = form.name.trim();
+    if (!name) {
       setError("Le nom de l'entreprise est obligatoire.");
       setSaving(false);
       return;
     }
 
-    const { error } = await supabase
-      .from("companies")
-      .update(payload)
-      .eq("id", company.id);
+    const {
+      data: { user: currentUser },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-    if (error) {
-      setError(error.message);
+    if (authError || !currentUser) {
+      setError("Utilisateur non connecté.");
       setSaving(false);
       return;
+    }
+
+    const tva_rate = Number(form.default_tva_rate || 21);
+    const validity_days = Number(form.default_quote_validity_days || 30);
+    const deposit_percent = Number(form.default_deposit_percent || 0);
+    const terms = form.default_terms.trim() || null;
+    const notes = form.default_notes.trim() || null;
+
+    // 1. Mise à jour des champs core de l'entreprise
+    const { error: coreError } = await supabase
+      .from("companies")
+      .update({
+        name,
+        vat_number: form.vat_number.trim() || null,
+        email: form.email.trim() || null,
+        phone: form.phone.trim() || null,
+        website: form.website.trim() || null,
+        iban: form.iban.trim() || null,
+        bic: form.bic.trim() || null,
+        legal_mentions: form.legal_mentions.trim() || null,
+        logo_url: form.logo_url.trim() || null,
+      })
+      .eq("id", company.id);
+
+    if (coreError) {
+      setError(coreError.message);
+      setSaving(false);
+      return;
+    }
+
+    // 2. Upsert des paramètres PDF / défauts dans company_settings
+    await supabase.from("company_settings").upsert(
+      {
+        company_id: company.id,
+        pdf_theme: form.pdf_theme,
+        pdf_accent_color: form.pdf_accent_color || null,
+        pdf_color_mode: form.pdf_color_mode,
+        default_tva_rate: tva_rate,
+        default_quote_validity_days: validity_days,
+        default_deposit_percent: deposit_percent,
+        default_terms: terms,
+        default_notes: notes,
+      },
+      { onConflict: "company_id" }
+    );
+
+    // 3. Upsert de l'adresse dans la table addresses
+    await supabase.from("addresses").delete()
+      .eq("entity_type", "company")
+      .eq("entity_id", company.id)
+      .eq("role", "main");
+
+    const addrLine1 = form.address_line1.trim();
+    const addrCity = form.city.trim();
+    if (addrLine1 || addrCity) {
+      await supabase.from("addresses").insert({
+        owner_user_id: currentUser.id,
+        entity_type: "company",
+        entity_id: company.id,
+        role: "main",
+        line1: addrLine1 || null,
+        line2: form.address_line2.trim() || null,
+        postal_code: form.postal_code.trim() || null,
+        city: addrCity || null,
+        country: form.country.trim() || "Belgique",
+      });
     }
 
     setSaving(false);
@@ -1097,6 +1152,23 @@ export function SettingsPage() {
                       <span className="settings-premium-page__color-mode-swatch settings-premium-page__color-mode-swatch--bw" />
                       Noir &amp; blanc
                     </button>
+                  </div>
+                </FormField>
+
+                {/* Couleur accent */}
+                <FormField label="Couleur d'accent">
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                    <input
+                      type="color"
+                      value={form.pdf_accent_color || "#8e7452"}
+                      onChange={(e) => updateField("pdf_accent_color", e.target.value)}
+                      style={{ width: "2.5rem", height: "2.5rem", cursor: "pointer", border: "none", background: "none" }}
+                    />
+                    <TextInput
+                      value={form.pdf_accent_color || "#8e7452"}
+                      onChange={(e) => updateField("pdf_accent_color", e.target.value)}
+                      placeholder="#8e7452"
+                    />
                   </div>
                 </FormField>
 

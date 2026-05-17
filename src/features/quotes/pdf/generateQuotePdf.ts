@@ -23,7 +23,8 @@ if (!pdfMakeWithVfs.vfs) {
 export async function generateQuotePdf(
   data: Omit<QuotePdfData, "logoBase64">,
   theme?: PdfTheme | string | null,
-  colorMode?: boolean | null
+  colorMode?: boolean | null,
+  accentColor?: string | null
 ) {
   const resolvedTheme = resolvePdfTheme(theme);
 
@@ -32,7 +33,8 @@ export async function generateQuotePdf(
   const fullData: QuotePdfData = {
     ...data,
     logoBase64,
-    colorMode: colorMode ?? data.colorMode ?? true, // couleur par défaut
+    colorMode: colorMode ?? data.colorMode ?? true,
+    accentColor: accentColor ?? data.accentColor ?? null,
   };
 
   if (resolvedTheme === "compact") {

@@ -50,8 +50,12 @@ const PALETTE_BW: Palette = {
   BG_ROW_ALT:  "#f8f8f8",
 };
 
-function getPalette(colorMode?: boolean | null): Palette {
-  return colorMode === true ? PALETTE_COLOR : PALETTE_BW;
+function getPalette(colorMode?: boolean | null, accentColor?: string | null): Palette {
+  const base = colorMode === true ? PALETTE_COLOR : PALETTE_BW;
+  if (colorMode === true && accentColor) {
+    return { ...base, ACCENT: accentColor, ACCENT_SOFT: accentColor };
+  }
+  return base;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -245,7 +249,7 @@ export function buildQuotePdfDefinition(
   /** true = thème aéré (padding généreux), false/omis = thème normal (tableau serré) */
   aere = false
 ): TDocumentDefinitions {
-  const p    = getPalette(data.colorMode);
+  const p    = getPalette(data.colorMode, data.accentColor);
   const aereB = aere;
 
   const groupedRooms = data.rooms

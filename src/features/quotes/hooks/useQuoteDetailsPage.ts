@@ -96,12 +96,14 @@ export function useQuoteDetailsPage() {
 
       const loadedQuote = quoteRes.data as QuoteDetails;
 
-      const [itemsRes, roomsRes, companyRes, customerRes, servicesRes] = await Promise.all([
+      const [
+        itemsRes, roomsRes, servicesRes,
+        companyCoreRes, companySettingsRes, companyAddrRes,
+        customerCoreRes, customerAddrsRes,
+      ] = await Promise.all([
         supabase
           .from("quote_items")
-          .select(
-            "id, quote_id, room_id, item_type, category, label, description, unit, quantity, unit_price_ht, tva_rate, sort_order"
-          )
+          .select("id, quote_id, room_id, item_type, category, label, description, unit, quantity, unit_price_ht, tva_rate, sort_order")
           .eq("quote_id", quoteId)
           .order("sort_order", { ascending: true }),
         supabase
@@ -110,67 +112,82 @@ export function useQuoteDetailsPage() {
           .eq("quote_id", quoteId)
           .order("sort_order", { ascending: true }),
         supabase
-          .from("companies")
-          .select(
-            "id, name, vat_number, email, phone, address_line1, address_line2, postal_code, city, country, default_tva_rate, default_quote_validity_days, default_notes, default_terms, pdf_theme, pdf_color_mode, logo_url"
-          )
-          .eq("id", loadedQuote.company_id)
-          .single(),
-        supabase
-          .from("customers")
-          .select(
-            "id, company_name, first_name, last_name, email, phone, billing_address_line1, billing_address_line2, billing_postal_code, billing_city, billing_country, jobsite_address_line1, jobsite_address_line2, jobsite_postal_code, jobsite_city, jobsite_country"
-          )
-          .eq("id", loadedQuote.customer_id)
-          .single(),
-        supabase
           .from("service_catalog")
-          .select(
-            "id, name, category, default_unit, default_unit_price_ht, default_tva_rate, default_description, default_metadata, is_active"
-          )
+          .select("id, name, category, default_unit, default_unit_price_ht, default_tva_rate, default_description, default_metadata, is_active")
           .eq("is_active", true)
           .order("category", { ascending: true })
           .order("name", { ascending: true }),
+        supabase
+          .from("companies")
+          .select("id, name, vat_number, email, phone, website, iban, bic, logo_url, accent_color")
+          .eq("id", loadedQuote.company_id)
+          .single(),
+        supabase
+          .from("company_settings")
+          .select("default_tva_rate, default_quote_validity_days, default_notes, default_terms, pdf_theme, pdf_color_mode, pdf_accent_color")
+          .eq("company_id", loadedQuote.company_id)
+          .maybeSingle(),
+        supabase
+          .from("addresses")
+          .select("line1, line2, postal_code, city, country")
+          .eq("entity_id", loadedQuote.company_id)
+          .eq("entity_type", "company")
+          .eq("role", "main")
+          .maybeSingle(),
+        supabase
+          .from("customers")
+          .select("id, company_name, first_name, last_name, email, phone")
+          .eq("id", loadedQuote.customer_id)
+          .single(),
+        supabase
+          .from("addresses")
+          .select("role, line1, line2, postal_code, city, country")
+          .eq("entity_id", loadedQuote.customer_id)
+          .eq("entity_type", "customer"),
       ]);
 
       if (cancelled) return;
 
-      if (itemsRes.error) {
-        setError(itemsRes.error.message);
-        setLoading(false);
-        return;
-      }
+      if (itemsRes.error) { setError(itemsRes.error.message); setLoading(false); return; }
+      if (roomsRes.error) { setError(roomsRes.error.message); setLoading(false); return; }
+      if (servicesRes.error) { setError(servicesRes.error.message); setLoading(false); return; }
+      if (companyCoreRes.error) { setError(companyCoreRes.error.message); setLoading(false); return; }
+      if (customerCoreRes.error) { setError(customerCoreRes.error.message); setLoading(false); return; }
 
-      if (roomsRes.error) {
-        setError(roomsRes.error.message);
-        setLoading(false);
-        return;
-      }
+      const companyAddr = companyAddrRes.data;
+      const mergedCompany: Company = {
+        ...companyCoreRes.data,
+        ...(companySettingsRes.data ?? {}),
+        address_line1: companyAddr?.line1 ?? null,
+        address_line2: companyAddr?.line2 ?? null,
+        postal_code: companyAddr?.postal_code ?? null,
+        city: companyAddr?.city ?? null,
+        country: companyAddr?.country ?? null,
+      } as Company;
 
-      if (companyRes.error) {
-        setError(companyRes.error.message);
-        setLoading(false);
-        return;
-      }
-
-      if (customerRes.error) {
-        setError(customerRes.error.message);
-        setLoading(false);
-        return;
-      }
-
-      if (servicesRes.error) {
-        setError(servicesRes.error.message);
-        setLoading(false);
-        return;
-      }
+      const customerAddrs = customerAddrsRes.data ?? [];
+      const billingAddr = customerAddrs.find((a) => a.role === "billing");
+      const jobsiteAddr = customerAddrs.find((a) => a.role === "jobsite");
+      const mergedCustomer: Customer = {
+        ...customerCoreRes.data,
+        billing_address_line1: billingAddr?.line1 ?? null,
+        billing_address_line2: billingAddr?.line2 ?? null,
+        billing_postal_code: billingAddr?.postal_code ?? null,
+        billing_city: billingAddr?.city ?? null,
+        billing_country: billingAddr?.country ?? null,
+        jobsite_address_line1: jobsiteAddr?.line1 ?? null,
+        jobsite_address_line2: jobsiteAddr?.line2 ?? null,
+        jobsite_postal_code: jobsiteAddr?.postal_code ?? null,
+        jobsite_city: jobsiteAddr?.city ?? null,
+        jobsite_country: jobsiteAddr?.country ?? null,
+      };
 
       setQuote(loadedQuote);
       setQuoteGeneralForm(createInitialQuoteGeneralForm(loadedQuote));
       setItems((itemsRes.data ?? []) as QuoteItem[]);
       setRooms((roomsRes.data ?? []) as Room[]);
-      setCompany(companyRes.data as Company);
-      setCustomer(customerRes.data as Customer);
+      setCompany(mergedCompany);
+      setCustomer(mergedCustomer);
       setServices((servicesRes.data ?? []) as ServiceCatalogItem[]);
       setError(null);
       setLoading(false);
@@ -204,12 +221,14 @@ export function useQuoteDetailsPage() {
 
     const loadedQuote = quoteRes.data as QuoteDetails;
 
-    const [itemsRes, roomsRes, companyRes, customerRes, servicesRes] = await Promise.all([
+    const [
+      itemsRes, roomsRes, servicesRes,
+      companyCoreRes, companySettingsRes, companyAddrRes,
+      customerCoreRes, customerAddrsRes,
+    ] = await Promise.all([
       supabase
         .from("quote_items")
-        .select(
-          "id, quote_id, room_id, item_type, category, label, description, unit, quantity, unit_price_ht, tva_rate, sort_order"
-        )
+        .select("id, quote_id, room_id, item_type, category, label, description, unit, quantity, unit_price_ht, tva_rate, sort_order")
         .eq("quote_id", quoteId)
         .order("sort_order", { ascending: true }),
       supabase
@@ -218,60 +237,80 @@ export function useQuoteDetailsPage() {
         .eq("quote_id", quoteId)
         .order("sort_order", { ascending: true }),
       supabase
-        .from("companies")
-        .select(
-          "id, name, vat_number, email, phone, address_line1, address_line2, postal_code, city, country, default_tva_rate, default_quote_validity_days, default_notes, default_terms, pdf_theme, pdf_color_mode, logo_url"
-        )
-        .eq("id", loadedQuote.company_id)
-        .single(),
-      supabase
-        .from("customers")
-        .select(
-          "id, company_name, first_name, last_name, email, phone, billing_address_line1, billing_address_line2, billing_postal_code, billing_city, billing_country, jobsite_address_line1, jobsite_address_line2, jobsite_postal_code, jobsite_city, jobsite_country"
-        )
-        .eq("id", loadedQuote.customer_id)
-        .single(),
-      supabase
         .from("service_catalog")
-        .select(
-          "id, name, category, default_unit, default_unit_price_ht, default_tva_rate, default_description, default_metadata, is_active"
-        )
+        .select("id, name, category, default_unit, default_unit_price_ht, default_tva_rate, default_description, default_metadata, is_active")
         .eq("is_active", true)
         .order("category", { ascending: true })
         .order("name", { ascending: true }),
+      supabase
+        .from("companies")
+        .select("id, name, vat_number, email, phone, website, iban, bic, logo_url, accent_color")
+        .eq("id", loadedQuote.company_id)
+        .single(),
+      supabase
+        .from("company_settings")
+        .select("default_tva_rate, default_quote_validity_days, default_notes, default_terms, pdf_theme, pdf_color_mode, pdf_accent_color")
+        .eq("company_id", loadedQuote.company_id)
+        .maybeSingle(),
+      supabase
+        .from("addresses")
+        .select("line1, line2, postal_code, city, country")
+        .eq("entity_id", loadedQuote.company_id)
+        .eq("entity_type", "company")
+        .eq("role", "main")
+        .maybeSingle(),
+      supabase
+        .from("customers")
+        .select("id, company_name, first_name, last_name, email, phone")
+        .eq("id", loadedQuote.customer_id)
+        .single(),
+      supabase
+        .from("addresses")
+        .select("role, line1, line2, postal_code, city, country")
+        .eq("entity_id", loadedQuote.customer_id)
+        .eq("entity_type", "customer"),
     ]);
 
-    if (itemsRes.error) {
-      setError(itemsRes.error.message);
-      return;
-    }
+    if (itemsRes.error) { setError(itemsRes.error.message); return; }
+    if (roomsRes.error) { setError(roomsRes.error.message); return; }
+    if (servicesRes.error) { setError(servicesRes.error.message); return; }
+    if (companyCoreRes.error) { setError(companyCoreRes.error.message); return; }
+    if (customerCoreRes.error) { setError(customerCoreRes.error.message); return; }
 
-    if (roomsRes.error) {
-      setError(roomsRes.error.message);
-      return;
-    }
+    const companyAddr = companyAddrRes.data;
+    const mergedCompany: Company = {
+      ...companyCoreRes.data,
+      ...(companySettingsRes.data ?? {}),
+      address_line1: companyAddr?.line1 ?? null,
+      address_line2: companyAddr?.line2 ?? null,
+      postal_code: companyAddr?.postal_code ?? null,
+      city: companyAddr?.city ?? null,
+      country: companyAddr?.country ?? null,
+    } as Company;
 
-    if (companyRes.error) {
-      setError(companyRes.error.message);
-      return;
-    }
-
-    if (customerRes.error) {
-      setError(customerRes.error.message);
-      return;
-    }
-
-    if (servicesRes.error) {
-      setError(servicesRes.error.message);
-      return;
-    }
+    const customerAddrs = customerAddrsRes.data ?? [];
+    const billingAddr = customerAddrs.find((a) => a.role === "billing");
+    const jobsiteAddr = customerAddrs.find((a) => a.role === "jobsite");
+    const mergedCustomer: Customer = {
+      ...customerCoreRes.data,
+      billing_address_line1: billingAddr?.line1 ?? null,
+      billing_address_line2: billingAddr?.line2 ?? null,
+      billing_postal_code: billingAddr?.postal_code ?? null,
+      billing_city: billingAddr?.city ?? null,
+      billing_country: billingAddr?.country ?? null,
+      jobsite_address_line1: jobsiteAddr?.line1 ?? null,
+      jobsite_address_line2: jobsiteAddr?.line2 ?? null,
+      jobsite_postal_code: jobsiteAddr?.postal_code ?? null,
+      jobsite_city: jobsiteAddr?.city ?? null,
+      jobsite_country: jobsiteAddr?.country ?? null,
+    };
 
     setQuote(loadedQuote);
     setQuoteGeneralForm(createInitialQuoteGeneralForm(loadedQuote));
     setItems((itemsRes.data ?? []) as QuoteItem[]);
     setRooms((roomsRes.data ?? []) as Room[]);
-    setCompany(companyRes.data as Company);
-    setCustomer(customerRes.data as Customer);
+    setCompany(mergedCompany);
+    setCustomer(mergedCustomer);
     setServices((servicesRes.data ?? []) as ServiceCatalogItem[]);
     setError(null);
   }
@@ -829,7 +868,7 @@ export function useQuoteDetailsPage() {
         })),
       };
 
-      const pdf = await generateQuotePdf(pdfData, company?.pdf_theme, company?.pdf_color_mode ?? true);
+      const pdf = await generateQuotePdf(pdfData, company?.pdf_theme, company?.pdf_color_mode ?? true, company?.pdf_accent_color);
       pdf.download(`${quote.quote_number}.pdf`);
     } catch (err) {
       console.error(err);

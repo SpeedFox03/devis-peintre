@@ -66,6 +66,7 @@ export type QuotePdfData = {
   rooms: QuotePdfRoom[];
   items: QuotePdfItem[];
   colorMode?: boolean | null;
+  accentColor?: string | null;
   logoBase64?: string | null;
 };
 

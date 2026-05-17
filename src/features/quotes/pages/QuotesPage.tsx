@@ -140,7 +140,7 @@ export function QuotesPage() {
     let cancelled = false;
 
     async function fetchPageData() {
-      const [quotesRes, customersRes, companiesRes] = await Promise.all([
+      const [quotesRes, customersRes, companiesRes, settingsRes] = await Promise.all([
         supabase
           .from("quotes")
           .select("id, quote_number, title, status, total_ttc, issue_date")
@@ -152,10 +152,11 @@ export function QuotesPage() {
           .order("created_at", { ascending: false }),
         supabase
           .from("companies")
-          .select(
-            "id, name, default_tva_rate, default_quote_validity_days, default_notes, default_terms"
-          )
+          .select("id, name")
           .order("created_at", { ascending: false }),
+        supabase
+          .from("company_settings")
+          .select("company_id, default_tva_rate, default_quote_validity_days, default_notes, default_terms"),
       ]);
 
       if (cancelled) return;
@@ -178,7 +179,13 @@ export function QuotesPage() {
         return;
       }
 
-      const loadedCompanies = companiesRes.data ?? [];
+      const settingsByCompanyId = Object.fromEntries(
+        (settingsRes.data ?? []).map((s) => [s.company_id, s])
+      );
+      const loadedCompanies = (companiesRes.data ?? []).map((c) => ({
+        ...c,
+        ...settingsByCompanyId[c.id],
+      }));
       const loadedCustomers = customersRes.data ?? [];
 
       setQuotes((quotesRes.data ?? []) as QuoteRow[]);

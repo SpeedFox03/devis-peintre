@@ -50,8 +50,12 @@ const PALETTE_BW: CompactPalette = {
   BG_TOTAL_TTC: "#ebebeb",
 };
 
-function getCompactPalette(colorMode?: boolean | null): CompactPalette {
-  return colorMode === true ? PALETTE_COLOR : PALETTE_BW;
+function getCompactPalette(colorMode?: boolean | null, accentColor?: string | null): CompactPalette {
+  const base = colorMode === true ? PALETTE_COLOR : PALETTE_BW;
+  if (colorMode === true && accentColor) {
+    return { ...base, ACCENT: accentColor, ACCENT_SOFT: accentColor };
+  }
+  return base;
 }
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
@@ -314,7 +318,7 @@ function makeNotesTerms(data: QuotePdfData, cp: CompactPalette): Content[] {
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export function buildCompactQuotePdfDefinition(data: QuotePdfData): TDocumentDefinitions {
-  const cp = getCompactPalette(data.colorMode);
+  const cp = getCompactPalette(data.colorMode, data.accentColor);
 
   const groupedRooms = data.rooms
     .map((room) => ({ ...room, items: data.items.filter((item) => item.room_id === room.id) }))

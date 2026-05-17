@@ -43,9 +43,7 @@ export function ArchivedCustomersPage() {
 
     const { data, error } = await supabase
       .from("customers")
-      .select(
-        "id, company_name, first_name, last_name, email, phone, billing_city, archived_at"
-      )
+      .select("id, company_name, first_name, last_name, email, phone, archived_at")
       .not("archived_at", "is", null)
       .order("archived_at", { ascending: false });
 
@@ -55,7 +53,27 @@ export function ArchivedCustomersPage() {
       return;
     }
 
-    setCustomers((data ?? []) as ArchivedCustomer[]);
+    const customerIds = (data ?? []).map((c) => c.id);
+    const cityByCustomerId: Record<string, string | null> = {};
+    if (customerIds.length > 0) {
+      const { data: addrData } = await supabase
+        .from("addresses")
+        .select("entity_id, city")
+        .in("entity_id", customerIds)
+        .eq("entity_type", "customer")
+        .eq("role", "billing");
+
+      for (const addr of addrData ?? []) {
+        cityByCustomerId[addr.entity_id] = addr.city;
+      }
+    }
+
+    const customersWithCity: ArchivedCustomer[] = (data ?? []).map((c) => ({
+      ...c,
+      billing_city: cityByCustomerId[c.id] ?? null,
+    }));
+
+    setCustomers(customersWithCity);
     setLoading(false);
   }, []);
 
