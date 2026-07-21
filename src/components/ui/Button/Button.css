@@ -6,93 +6,73 @@
   max-width: 100%;
   min-width: 0;
   border: 1px solid transparent;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   font: inherit;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-weight: 600;
   white-space: nowrap;
   text-decoration: none;
   transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    box-shadow 0.15s ease,
-    transform 0.06s ease,
-    color 0.15s ease,
-    opacity 0.15s ease;
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    color var(--transition-fast),
+    opacity var(--transition-fast);
   box-sizing: border-box;
-}
-
-.ui-button:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-
-.ui-button:active:not(:disabled) {
-  transform: scale(0.985);
 }
 
 .ui-button:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(111, 82, 60, 0.18);
+  box-shadow: var(--focus-ring);
 }
 
 .ui-button:disabled {
-  opacity: 0.55;
+  opacity: 0.7;
   cursor: not-allowed;
   box-shadow: none;
-  transform: none;
 }
 
 .ui-button--md {
-  min-height: 42px;
-  padding: 0 14px;
-  font-size: 0.94rem;
+  min-height: 40px;
+  padding: 9px 16px;
+  font-size: 0.9rem;
 }
 
 .ui-button--sm {
-  min-height: 34px;
-  padding: 0 12px;
-  border-radius: 12px;
-  font-size: 0.86rem;
+  min-height: 32px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
 }
 
-/* Brun noisette au lieu de l'amber/orange */
 .ui-button--primary {
-  background: linear-gradient(180deg, #7d5d45, #5c4430);
+  background: var(--primary);
   color: #fff8f2;
-  border-color: rgba(79, 57, 41, 0.7);
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  border-color: var(--primary);
 }
 
 .ui-button--primary:hover:not(:disabled) {
-  background: linear-gradient(180deg, #8a6850, #6b4f3a);
-  border-color: rgba(79, 57, 41, 0.9);
+  background: var(--primary-strong);
+  border-color: var(--primary-strong);
   color: #fff8f2;
-  box-shadow:
-    0 4px 12px rgba(79, 57, 41, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .ui-button--secondary {
-  background: rgba(255, 255, 255, 0.92);
-  color: #fff8f2;
-  border-color: rgba(229, 231, 235, 1);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  background: var(--surface);
+  color: var(--primary);
+  border-color: var(--border);
 }
 
 .ui-button--secondary:hover:not(:disabled) {
-  background: rgba(249, 250, 251, 1);
-  border-color: rgba(209, 213, 219, 1);
-  color: #111827;
+  background: var(--surface-muted);
+  border-color: var(--border-strong);
+  color: var(--primary-strong);
 }
 
 .ui-button--danger {
   background: rgba(254, 242, 242, 0.95);
   color: #b91c1c;
   border-color: rgba(252, 165, 165, 0.42);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
 }
 
 .ui-button--danger:hover:not(:disabled) {

@@ -8,6 +8,7 @@ import type { QuotePdfData } from "../pdf/quotePdfTypes";
 import type {
   Company,
   Customer,
+  CustomerOption,
   QuoteDetails,
   QuoteGeneralFormState,
   QuoteItem,
@@ -32,6 +33,7 @@ export function useQuoteDetailsPage() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [customerOptions, setCustomerOptions] = useState<CustomerOption[]>([]);
   const [services, setServices] = useState<ServiceCatalogItem[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -97,7 +99,7 @@ export function useQuoteDetailsPage() {
       const loadedQuote = quoteRes.data as QuoteDetails;
 
       const [
-        itemsRes, roomsRes, servicesRes,
+        itemsRes, roomsRes, servicesRes, customerOptionsRes,
         companyCoreRes, companySettingsRes, companyAddrRes,
         customerCoreRes, customerAddrsRes,
       ] = await Promise.all([
@@ -117,6 +119,10 @@ export function useQuoteDetailsPage() {
           .eq("is_active", true)
           .order("category", { ascending: true })
           .order("name", { ascending: true }),
+        supabase
+          .from("customers")
+          .select("id, company_name, first_name, last_name")
+          .is("archived_at", null),
         supabase
           .from("companies")
           .select("id, name, vat_number, email, phone, website, iban, bic, logo_url, accent_color")
@@ -151,6 +157,7 @@ export function useQuoteDetailsPage() {
       if (itemsRes.error) { setError(itemsRes.error.message); setLoading(false); return; }
       if (roomsRes.error) { setError(roomsRes.error.message); setLoading(false); return; }
       if (servicesRes.error) { setError(servicesRes.error.message); setLoading(false); return; }
+      if (customerOptionsRes.error) { setError(customerOptionsRes.error.message); setLoading(false); return; }
       if (companyCoreRes.error) { setError(companyCoreRes.error.message); setLoading(false); return; }
       if (customerCoreRes.error) { setError(customerCoreRes.error.message); setLoading(false); return; }
 
@@ -182,12 +189,28 @@ export function useQuoteDetailsPage() {
         jobsite_country: jobsiteAddr?.country ?? null,
       };
 
+      const availableCustomers = (customerOptionsRes.data ?? []) as CustomerOption[];
+      if (!availableCustomers.some((option) => option.id === mergedCustomer.id)) {
+        availableCustomers.push({
+          id: mergedCustomer.id,
+          company_name: mergedCustomer.company_name,
+          first_name: mergedCustomer.first_name,
+          last_name: mergedCustomer.last_name,
+        });
+      }
+      availableCustomers.sort((a, b) => {
+        const nameA = a.company_name || [a.first_name, a.last_name].filter(Boolean).join(" ");
+        const nameB = b.company_name || [b.first_name, b.last_name].filter(Boolean).join(" ");
+        return nameA.localeCompare(nameB, "fr", { sensitivity: "base" });
+      });
+
       setQuote(loadedQuote);
       setQuoteGeneralForm(createInitialQuoteGeneralForm(loadedQuote));
       setItems((itemsRes.data ?? []) as QuoteItem[]);
       setRooms((roomsRes.data ?? []) as Room[]);
       setCompany(mergedCompany);
       setCustomer(mergedCustomer);
+      setCustomerOptions(availableCustomers);
       setServices((servicesRes.data ?? []) as ServiceCatalogItem[]);
       setError(null);
       setLoading(false);
@@ -378,10 +401,16 @@ export function useQuoteDetailsPage() {
       return;
     }
 
+    if (!quoteGeneralForm.customer_id) {
+      setError("Le client du devis est obligatoire.");
+      return;
+    }
+
     setSavingGeneral(true);
     setError(null);
 
     const payload = {
+      customer_id: quoteGeneralForm.customer_id,
       title: quoteGeneralForm.title.trim(),
       description: quoteGeneralForm.description.trim() || null,
       status: quoteGeneralForm.status,
@@ -645,7 +674,10 @@ export function useQuoteDetailsPage() {
     await reloadQuoteData();
   }
 
-  async function handleAddFromCatalog(service: ServiceCatalogItem) {
+  async function handleAddFromCatalog(
+    service: ServiceCatalogItem,
+    quantity?: number
+  ) {
     if (!quoteId || !quote) {
       setError("Devis introuvable.");
       return;
@@ -674,7 +706,7 @@ export function useQuoteDetailsPage() {
       label: service.name,
       description: service.default_description || null,
       unit: service.default_unit,
-      quantity: 1,
+      quantity: Number.isFinite(quantity) ? quantity : 1,
       unit_price_ht: Number(service.default_unit_price_ht || 0),
       tva_rate: Number(service.default_tva_rate || quote.tva_rate || 21),
       metadata: {
@@ -889,6 +921,7 @@ export function useQuoteDetailsPage() {
     rooms,
     company,
     customer,
+    customerOptions,
     services,
 
     loading,

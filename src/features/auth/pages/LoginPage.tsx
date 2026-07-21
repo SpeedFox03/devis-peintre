@@ -7,6 +7,7 @@ import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import { FormField } from "../../../components/ui/FormField/FormField";
 import { ErrorMessage } from "../../../components/ui/ErrorMessage/ErrorMessage";
 import "./LoginPage.css";
+import "./PasswordRecoveryPage.css";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -110,6 +111,10 @@ export function LoginPage() {
                 placeholder="••••••••"
               />
             </FormField>
+
+            <Link to="/mot-de-passe-oublie" className="auth-premium-page__forgot-link">
+              Mot de passe oublié ?
+            </Link>
 
             {error && <ErrorMessage message={error} />}
 

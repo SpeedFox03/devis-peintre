@@ -9,6 +9,7 @@ import { FormField } from "../../../../components/ui/FormField/FormField";
 import { Select } from "../../../../components/ui/Select/Select";
 import { TextInput } from "../../../../components/ui/TextInput/TextInput";
 import { QuoteItemForm } from "../QuoteItemForm/QuoteItemForm";
+import { getUnitLabel } from "../../../catalog/catalogOptions";
 import type { ServiceCatalogItem } from "../../../catalog/types";
 import type { QuoteItem, QuoteItemFormState, Room } from "../../types";
 import "./QuoteItemsSection.css";
@@ -152,6 +153,33 @@ function CatalogDimsWidget({
   );
 }
 
+function CatalogQuantityWidget({
+  unit,
+  quantity,
+  onChange,
+}: {
+  unit: string;
+  quantity: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="quote-items-premium__catalog-quantity">
+      <span className="quote-items-premium__catalog-quantity-label">
+        Quantité ({getUnitLabel(unit)})
+      </span>
+      <TextInput
+        type="number"
+        step="0.01"
+        min="0"
+        value={quantity}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder="1"
+        aria-label={`Quantité en ${getUnitLabel(unit)}`}
+      />
+    </div>
+  );
+}
+
 export function QuoteItemsSection({
   services,
   showCatalogPicker,
@@ -194,8 +222,12 @@ export function QuoteItemsSection({
   // État L×H par service du catalogue (clé = service.id)
   const [catalogDims, setCatalogDims] = useState<Record<string, CatalogDims>>({});
 
-  function getDims(serviceId: string): CatalogDims {
-    return catalogDims[serviceId] ?? { length: "", height: "", quantity: "" };
+  function getDims(service: ServiceCatalogItem): CatalogDims {
+    return catalogDims[service.id] ?? {
+      length: "",
+      height: "",
+      quantity: service.default_unit === "m2" ? "" : "1",
+    };
   }
 
   function setDims(serviceId: string, next: CatalogDims) {
@@ -203,14 +235,12 @@ export function QuoteItemsSection({
   }
 
   function handleAddFromCatalog(service: ServiceCatalogItem) {
-    const isM2 = service.default_unit === "m2";
-    if (isM2) {
-      const dims = getDims(service.id);
-      const qty = dims.quantity ? parseFloat(dims.quantity) : undefined;
-      onAddFromCatalog(service, qty);
-    } else {
-      onAddFromCatalog(service);
-    }
+    const quantityValue = getDims(service).quantity.trim();
+    const parsedQuantity = quantityValue ? Number(quantityValue) : undefined;
+    onAddFromCatalog(
+      service,
+      Number.isFinite(parsedQuantity) ? parsedQuantity : undefined
+    );
   }
 
   const filteredServices = services.filter((service) => {
@@ -324,7 +354,7 @@ export function QuoteItemsSection({
               <div className="quote-items-premium__catalog-grid">
                 {filteredServices.map((service) => {
                   const isM2 = service.default_unit === "m2";
-                  const dims = getDims(service.id);
+                  const dims = getDims(service);
 
                   return (
                     <article key={service.id} className="quote-items-premium__catalog-card">
@@ -345,11 +375,16 @@ export function QuoteItemsSection({
                           : ""}
                       </p>
 
-                      {/* ── Widget m² uniquement si l'unité est m² ── */}
-                      {isM2 && (
+                      {isM2 ? (
                         <CatalogDimsWidget
                           dims={dims}
                           onChange={(next) => setDims(service.id, next)}
+                        />
+                      ) : (
+                        <CatalogQuantityWidget
+                          unit={service.default_unit}
+                          quantity={dims.quantity}
+                          onChange={(quantity) => setDims(service.id, { ...dims, quantity })}
                         />
                       )}
 

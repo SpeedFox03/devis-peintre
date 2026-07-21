@@ -43,6 +43,7 @@ export function createInitialQuoteGeneralForm(
   quote: QuoteDetails | null
 ): QuoteGeneralFormState {
   return {
+    customer_id: quote?.customer_id ?? "",
     title: quote?.title ?? "",
     description: quote?.description ?? "",
     status: quote?.status ?? "draft",

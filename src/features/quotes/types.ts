@@ -86,6 +86,11 @@ export type Customer = {
   jobsite_country: string | null;
 };
 
+export type CustomerOption = Pick<
+  Customer,
+  "id" | "company_name" | "first_name" | "last_name"
+>;
+
 export type QuoteItemFormState = {
   room_id: string;
   item_type: string;
@@ -106,6 +111,7 @@ export type RoomFormState = {
 };
 
 export type QuoteGeneralFormState = {
+  customer_id: string;
   title: string;
   description: string;
   status: QuoteStatus;

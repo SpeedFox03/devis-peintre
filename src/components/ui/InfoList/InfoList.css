@@ -11,11 +11,11 @@
 }
 
 .ui-info-list__label {
-  color: #111827;
+  color: var(--text-strong);
 }
 
 .ui-info-list__value {
-  color: #374151;
+  color: var(--text);
 }
 
 @media (max-width: 768px) {

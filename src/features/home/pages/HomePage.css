@@ -18,7 +18,7 @@
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #9c7f65;
+  color: var(--text-soft);
 }
 
 .home-page__title {
@@ -147,7 +147,7 @@
   font-weight: 800;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: #9c846f;
+  color: var(--text-soft);
 }
 
 .home-page__card-title {
@@ -168,7 +168,7 @@
 /* ── Arrow ── */
 .home-page__card-arrow {
   font-size: 1rem;
-  color: #b09880;
+  color: var(--primary);
   transition: transform 0.18s ease, color 0.18s ease;
   justify-self: end;
 }

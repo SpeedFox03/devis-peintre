@@ -1,6 +1,6 @@
 .ui-form-field {
   display: grid;
-  gap: 7px;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -10,15 +10,15 @@
   gap: 6px;
   margin: 0;
   font-size: 0.82rem;
-  font-weight: 700;
-  color: #374151;
+  font-weight: 500;
+  color: var(--text-strong);
   line-height: 1.35;
   letter-spacing: -0.01em;
 }
 
 .ui-form-field__hint {
   font-size: 0.78rem;
-  color: #6b7280;
+  color: var(--text-soft);
   line-height: 1.4;
 }
 

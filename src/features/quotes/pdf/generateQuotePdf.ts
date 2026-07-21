@@ -2,12 +2,16 @@ import type { QuotePdfData, PdfTheme } from "./quotePdfTypes";
 import { resolvePdfTheme } from "./quotePdfTypes";
 import { buildQuotePdfDefinition } from "./buildQuotePdfDefinition";
 import { buildCompactQuotePdfDefinition } from "./buildCompactQuotePdfDefinition";
+import { buildElegantQuotePdfDefinition } from "./buildElegantQuotePdfDefinition";
+import { registerElegantFonts } from "./elegantFontAssets";
 import { fetchImageAsBase64 } from "./fetchImageAsBase64";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
 
 type PdfMakeWithVfs = typeof pdfMake & {
   vfs?: Record<string, string>;
+  addVirtualFileSystem?: (vfs: Record<string, string>) => void;
+  addFonts?: (fonts: Record<string, Record<string, string>>) => void;
 };
 
 const pdfMakeWithVfs = pdfMake as PdfMakeWithVfs;
@@ -39,6 +43,18 @@ export async function generateQuotePdf(
 
   if (resolvedTheme === "compact") {
     return pdfMake.createPdf(buildCompactQuotePdfDefinition(fullData));
+  }
+
+  if (resolvedTheme === "elegant") {
+    // Le thème Élégant s'appuie sur des polices embarquées (Playfair Display + Great
+    // Vibes). Elles doivent être déclarées dans pdfmake avant createPdf.
+    if (pdfMakeWithVfs.addVirtualFileSystem && pdfMakeWithVfs.addFonts) {
+      registerElegantFonts({
+        addVirtualFileSystem: pdfMakeWithVfs.addVirtualFileSystem.bind(pdfMake),
+        addFonts: pdfMakeWithVfs.addFonts.bind(pdfMake),
+      });
+    }
+    return pdfMake.createPdf(buildElegantQuotePdfDefinition(fullData));
   }
 
   // "normal" (aere=false) ou "aere" (aere=true)

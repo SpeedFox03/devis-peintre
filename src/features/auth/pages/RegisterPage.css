@@ -52,7 +52,7 @@
   font-size: 0.8rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #9c7f65;
+  color: var(--text-soft);
 }
 
 .auth-premium-page__brand-title {
@@ -124,7 +124,7 @@
   font-size: 0.76rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #9c846f;
+  color: var(--text-soft);
 }
 
 .auth-premium-page__form-title {

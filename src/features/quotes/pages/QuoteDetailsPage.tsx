@@ -13,7 +13,11 @@ import { QuoteItemsSection } from "../components/QuoteItemsSection/QuoteItemsSec
 import { QuoteRoomsSection } from "../components/QuoteRoomsSection/QuoteRoomsSection";
 import { QuoteSummarySection } from "../components/QuoteSummarySection/QuoteSummarySection";
 import { useQuoteDetailsPage } from "../hooks/useQuoteDetailsPage";
-import { getQuoteStatusLabel, type QuoteStatus } from "../types";
+import {
+  getQuoteStatusLabel,
+  type CustomerOption,
+  type QuoteStatus,
+} from "../types";
 import {
   DownloadIcon,
 } from "../../../components/ui/Icons/AppIcons";
@@ -32,6 +36,14 @@ const quotePages = [
 ] as const;
 
 type QuotePageId = (typeof quotePages)[number]["id"];
+
+function getCustomerLabel(customer: CustomerOption) {
+  return (
+    customer.company_name ||
+    [customer.first_name, customer.last_name].filter(Boolean).join(" ") ||
+    "Client sans nom"
+  );
+}
 
 export function QuoteDetailsPage() {
   const [showGeneralMenu, setShowGeneralMenu] = useState(false);
@@ -79,6 +91,7 @@ export function QuoteDetailsPage() {
     quote,
     items,
     rooms,
+    customerOptions,
     services,
 
     loading,
@@ -171,6 +184,7 @@ export function QuoteDetailsPage() {
         <Button
           key={page.id}
           type="button"
+          variant={activePage === page.id ? "primary" : "secondary"}
           className={`quote-topbar-nav__tab ${
             activePage === page.id ? "quote-topbar-nav__tab--active" : ""
           }`}
@@ -189,6 +203,7 @@ export function QuoteDetailsPage() {
         <Button
           key={page.id}
           type="button"
+          variant={activePage === page.id ? "primary" : "secondary"}
           className={`quote-topbar-nav__tab ${
             activePage === page.id ? "quote-topbar-nav__tab--active" : ""
           }`}
@@ -372,15 +387,30 @@ export function QuoteDetailsPage() {
                     />
                   </FormField>
 
-                  <FormField label="Titre">
-                    <TextInput
+                  <FormField label="Client">
+                    <Select
                       className="quote-premium-page__field-control"
-                      value={quoteGeneralForm.title}
-                      onChange={(e) => updateQuoteGeneralField("title", e.target.value)}
-                      placeholder="Peinture intérieure maison"
-                    />
+                      value={quoteGeneralForm.customer_id}
+                      onChange={(e) => updateQuoteGeneralField("customer_id", e.target.value)}
+                    >
+                      <option value="">Sélectionner un client</option>
+                      {customerOptions.map((customerOption) => (
+                        <option key={customerOption.id} value={customerOption.id}>
+                          {getCustomerLabel(customerOption)}
+                        </option>
+                      ))}
+                    </Select>
                   </FormField>
                 </div>
+
+                <FormField label="Titre">
+                  <TextInput
+                    className="quote-premium-page__field-control"
+                    value={quoteGeneralForm.title}
+                    onChange={(e) => updateQuoteGeneralField("title", e.target.value)}
+                    placeholder="Peinture intérieure maison"
+                  />
+                </FormField>
 
                 <FormField label="Description">
                   <TextArea

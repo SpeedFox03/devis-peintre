@@ -44,3 +44,83 @@ a {
   background: rgba(228, 156, 33, 0.18);
   color: #2f2118;
 }
+
+/* Composition des pages inspirée de Nexora : en-têtes sobres, hors carte. */
+:root .settings-premium-page__hero,
+:root .catalog-premium-page__hero,
+:root .home-page__hero,
+:root .invoice-details-premium__hero,
+:root .invoices-premium-page__hero,
+:root .archived-customers-premium-page__hero,
+:root .quote-premium-page__hero,
+:root .quotes-premium-page__hero,
+:root .customer-details-premium-page__hero,
+:root .customers-premium-page__hero {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+:root .quote-premium-page__hero {
+  margin-top: 0;
+}
+
+/* Les cartes métier reprennent la construction nette des cartes Nexora. */
+:root .home-page__card,
+:root .settings-premium-page__side-card,
+:root .settings-premium-page__theme-card,
+:root .customers-premium-page__customer-card,
+:root .customer-details-premium-page__side-card,
+:root .customer-details-premium-page__quote-card,
+:root .catalog-premium-page__service-card,
+:root .quote-catalog-picker-premium__card,
+:root .invoices-premium-page__filters-card,
+:root .invoices-premium-page__invoice-card,
+:root .invoice-details-premium__info-card,
+:root .invoice-details-premium__item-card,
+:root .invoice-details-premium__payment-card,
+:root .quotes-premium-page__stat-card,
+:root .quotes-premium-page__filters-card,
+:root .quotes-premium-page__quote-card,
+:root .quote-items-premium__catalog-card,
+:root .quote-items-premium__item-card,
+:root .quote-rooms-premium__card {
+  border-color: var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: none;
+}
+
+main [class$="__title"] {
+  color: var(--text-strong);
+}
+
+main [class$="__description"],
+main [class$="__subtitle"],
+main [class$="__eyebrow"],
+main [class$="__section-eyebrow"] {
+  color: var(--text-soft);
+}
+
+/* Les variantes gardent leur contraste dans les zones qui colorent les boutons par héritage. */
+:root .ui-button.ui-button--primary,
+:root .ui-button.ui-button--primary:hover:not(:disabled) {
+  color: #fff8f2;
+}
+
+:root .ui-button.ui-button--secondary {
+  color: var(--primary);
+}
+
+:root .ui-button.ui-button--secondary:hover:not(:disabled) {
+  color: var(--primary-strong);
+}
+
+:root .ui-button.ui-button--danger,
+:root .ui-button.ui-button--danger:hover:not(:disabled) {
+  color: #991b1b;
+}

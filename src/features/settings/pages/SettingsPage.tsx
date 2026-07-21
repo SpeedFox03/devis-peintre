@@ -89,6 +89,11 @@ const PDF_THEME_OPTIONS: { value: string; label: string; description: string }[]
     label: "Compact",
     description: "Tableau ultra-dense sur fond blanc — vise à tenir en 1 page",
   },
+  {
+    value: "elegant",
+    label: "Élégant",
+    description: "Papier crème, coups de pinceau et grand titre — pour une touche soignée",
+  },
 ];
 
 function getPdfThemeLabel(value: string) {
@@ -436,6 +441,87 @@ function ThemePreviewCompact({ color = false }: { color?: boolean }) {
       {/* Footer */}
       <rect x="20" y="286" width="80" height="3" rx="1.5" fill={accentSoft} opacity="0.3" />
       <rect x="340" y="286" width="60" height="3" rx="1.5" fill={accentSoft} opacity="0.3" />
+    </svg>
+  );
+}
+
+function ThemePreviewElegant({ color = true }: { color?: boolean }) {
+  const accent     = color ? "#8a6244" : "#1a1a1a";
+  const accentSoft = color ? "#b0996f" : "#555555";
+  const bgPage     = color ? "#eae2d1" : "#ffffff";
+  const bgPanel    = color ? "#ddd0b9" : "#f0f0f0";
+  const textDark   = color ? "#403324" : "#111111";
+  const textMuted  = color ? "#8a6f50" : "#666666";
+  const border     = color ? "#cdbfa6" : "#d0d0d0";
+  const stroke     = color ? "#f4efe6" : "#f4f4f4";
+  return (
+    <svg
+      viewBox="0 0 420 297"
+      xmlns="http://www.w3.org/2000/svg"
+      className="settings-premium-page__theme-preview-svg"
+      role="img"
+      aria-label="Aperçu thème Élégant"
+    >
+      <rect width="420" height="297" fill={bgPage} rx="6" />
+
+      {/* Coups de pinceau */}
+      <path d="M 230 26 C 290 8 350 18 400 4 C 418 -2 420 14 412 30 C 380 42 320 36 270 50 C 240 58 230 40 230 30 Z" fill={stroke} fillOpacity="0.55" />
+      <path d="M 250 22 C 300 8 360 18 410 6" stroke={stroke} strokeOpacity="0.5" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <path d="M -8 250 C 40 230 92 246 128 230 C 146 248 134 274 96 284 C 56 294 16 288 -8 274 Z" fill={stroke} fillOpacity="0.5" />
+      <path d="M 0 258 C 44 242 90 252 124 240" stroke={stroke} strokeOpacity="0.45" strokeWidth="2" fill="none" strokeLinecap="round" />
+
+      {/* Logo / nom société */}
+      <rect x="22" y="22" width="96" height="12" rx="3" fill={textDark} opacity="0.85" />
+      <rect x="22" y="40" width="40" height="3" rx="1.5" fill={accentSoft} opacity="0.7" />
+
+      {/* DEVIS + badge + dates (droite) */}
+      <rect x="288" y="22" width="110" height="16" rx="3" fill={textDark} opacity="0.85" />
+      <rect x="318" y="46" width="80" height="16" rx="4" fill={bgPanel} />
+      <rect x="338" y="51" width="42" height="6" rx="2" fill={accent} opacity="0.85" />
+      <rect x="330" y="70" width="68" height="4" rx="2" fill={textMuted} opacity="0.6" />
+      <rect x="346" y="79" width="52" height="4" rx="2" fill={textMuted} opacity="0.5" />
+
+      {/* DE / POUR */}
+      <rect x="22" y="104" width="20" height="3" rx="1.5" fill={accent} opacity="0.7" />
+      <rect x="22" y="110" width="14" height="2" rx="1" fill={accentSoft} opacity="0.6" />
+      <rect x="22" y="118" width="84" height="6" rx="2" fill={textDark} opacity="0.82" />
+      <rect x="22" y="129" width="120" height="3" rx="1.5" fill={textMuted} opacity="0.45" />
+      <rect x="22" y="136" width="96" height="3" rx="1.5" fill={textMuted} opacity="0.45" />
+
+      <rect x="232" y="104" width="24" height="3" rx="1.5" fill={accent} opacity="0.7" />
+      <rect x="232" y="110" width="14" height="2" rx="1" fill={accentSoft} opacity="0.6" />
+      <rect x="232" y="118" width="96" height="6" rx="2" fill={textDark} opacity="0.82" />
+      <rect x="232" y="129" width="120" height="3" rx="1.5" fill={textMuted} opacity="0.45" />
+      <rect x="232" y="136" width="100" height="3" rx="1.5" fill={textMuted} opacity="0.45" />
+
+      {/* En-tête de tableau */}
+      <rect x="22" y="158" width="376" height="16" fill={bgPanel} />
+      <rect x="30" y="164" width="60" height="4" rx="1.5" fill={textMuted} opacity="0.7" />
+      <rect x="244" y="164" width="40" height="4" rx="1.5" fill={textMuted} opacity="0.6" />
+      <rect x="300" y="164" width="36" height="4" rx="1.5" fill={textMuted} opacity="0.6" />
+      <rect x="350" y="164" width="40" height="4" rx="1.5" fill={textMuted} opacity="0.6" />
+
+      {/* Lignes (label + description) séparées par filets */}
+      {[0, 1, 2].map((i) => (
+        <g key={i}>
+          <rect x="30" y={182 + i * 24} width={90 + i * 18} height="5" rx="2" fill={textDark} opacity="0.8" />
+          <rect x="30" y={190 + i * 24} width="150" height="3" rx="1.5" fill={textMuted} opacity="0.4" />
+          <rect x="244" y={184 + i * 24} width="36" height="4" rx="1.5" fill={textDark} opacity="0.6" />
+          <rect x="300" y={184 + i * 24} width="34" height="4" rx="1.5" fill={textDark} opacity="0.6" />
+          <rect x="352" y={184 + i * 24} width="38" height="4" rx="1.5" fill={textDark} opacity="0.78" />
+          <rect x="22" y={200 + i * 24} width="376" height="0.6" fill={border} />
+        </g>
+      ))}
+
+      {/* Panneau totaux */}
+      <rect x="248" y="252" width="150" height="36" rx="2" fill={bgPanel} />
+      <rect x="258" y="258" width="56" height="3" rx="1.5" fill={textMuted} opacity="0.55" />
+      <rect x="356" y="258" width="34" height="3" rx="1.5" fill={textDark} opacity="0.65" />
+      <rect x="258" y="266" width="40" height="3" rx="1.5" fill={textMuted} opacity="0.55" />
+      <rect x="362" y="266" width="28" height="3" rx="1.5" fill={textDark} opacity="0.65" />
+      <rect x="256" y="273" width="134" height="1" fill={accent} />
+      <rect x="258" y="278" width="44" height="6" rx="2" fill={textDark} opacity="0.85" />
+      <rect x="346" y="276" width="46" height="9" rx="2" fill={accent} opacity="0.9" />
     </svg>
   );
 }
@@ -1181,6 +1267,8 @@ export function SettingsPage() {
                     <ThemePreviewCompact color={form.pdf_color_mode} />
                   ) : form.pdf_theme === "aere" ? (
                     <ThemePreviewAere color={form.pdf_color_mode} />
+                  ) : form.pdf_theme === "elegant" ? (
+                    <ThemePreviewElegant color={form.pdf_color_mode} />
                   ) : (
                     <ThemePreviewNormal color={form.pdf_color_mode} />
                   )}

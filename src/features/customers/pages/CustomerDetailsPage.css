@@ -46,7 +46,7 @@
   font-size: 0.76rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #9c846f;
+  color: var(--text-soft);
 }
 
 .customer-details-premium-page__title {
@@ -79,7 +79,7 @@
 
 .customer-details-premium-page__stat-label {
   margin: 0 0 8px;
-  color: #907966;
+  color: var(--text-soft);
   font-size: 0.82rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -130,7 +130,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #9c846f;
+  color: var(--text-soft);
 }
 
 .customer-details-premium-page__meta-list {
@@ -172,7 +172,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #9e8672;
+  color: var(--text-soft);
 }
 
 .customer-details-premium-page__section-title {
@@ -286,7 +286,7 @@
 }
 
 .customer-details-premium-page__quote-card-date {
-  color: #9c846f;
+  color: var(--text-soft);
   font-size: 0.82rem;
   white-space: nowrap;
 }

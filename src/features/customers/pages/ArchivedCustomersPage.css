@@ -30,7 +30,7 @@
   font-size: 0.76rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #9c846f;
+  color: var(--text-soft);
 }
 
 .archived-customers-premium-page__title {
@@ -65,7 +65,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #9e8672;
+  color: var(--text-soft);
 }
 
 .archived-customers-premium-page__section-title {

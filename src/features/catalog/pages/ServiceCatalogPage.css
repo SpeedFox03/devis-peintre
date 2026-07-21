@@ -30,7 +30,7 @@
   font-size: 0.76rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #9c846f;
+  color: var(--text-soft);
 }
 
 .catalog-premium-page__title {
@@ -63,7 +63,7 @@
 
 .catalog-premium-page__stat-label {
   margin: 0 0 8px;
-  color: #907966;
+  color: var(--text-soft);
   font-size: 0.82rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -88,7 +88,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #9e8672;
+  color: var(--text-soft);
 }
 
 .catalog-premium-page__section-title {

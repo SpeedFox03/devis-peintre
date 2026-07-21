@@ -17,7 +17,7 @@
 
 .ui-page-header__title {
   margin: 0;
-  color: #111827;
+  color: var(--text-strong);
   font-size: clamp(1.7rem, 3vw, 2.4rem);
   line-height: 1.04;
   letter-spacing: -0.03em;
@@ -27,7 +27,7 @@
 .ui-page-header__description {
   margin: 0;
   max-width: 760px;
-  color: #6b7280;
+  color: var(--text-soft);
   line-height: 1.55;
   font-size: 0.98rem;
 }

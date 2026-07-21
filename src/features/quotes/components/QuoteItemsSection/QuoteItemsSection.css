@@ -145,6 +145,21 @@
   border-top: 1px dashed rgba(111, 82, 60, 0.18);
 }
 
+.quote-items-premium__catalog-quantity {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(111, 82, 60, 0.16);
+  background: linear-gradient(180deg, rgba(255, 251, 246, 0.85), rgba(253, 247, 240, 0.6));
+}
+
+.quote-items-premium__catalog-quantity-label {
+  color: #503c2e;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 /* ══════════════════════════════════════════
    Tableau desktop
 ══════════════════════════════════════════ */

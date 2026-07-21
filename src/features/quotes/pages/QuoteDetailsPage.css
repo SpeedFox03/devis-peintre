@@ -286,8 +286,8 @@
    Couleurs boutons hero
 ══════════════════════════════════════════ */
 .quote-premium-page__hero-actions .ui-button--primary  { color: #fff8f2; }
-.quote-premium-page__hero-actions .ui-button--secondary { color: inherit; }
-.quote-premium-page__form-footer .ui-button            { color: inherit; }
+.quote-premium-page__hero-actions .ui-button--secondary { color: var(--primary); }
+.quote-premium-page__form-footer .ui-button--primary   { color: #fff8f2; }
 .quote-premium-page__hero-actions .ui-button svg,
 .quote-premium-page__form-footer .ui-button svg        { width: 20px; height: 20px; flex: 0 0 auto; }
 .quote-premium-page__hero-actions .ui-button           { min-width: 40px; padding-inline: 12px; }

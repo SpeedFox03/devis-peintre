@@ -13,7 +13,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #9e8672;
+  color: var(--text-soft);
 }
 
 .quote-catalog-picker-premium__title {

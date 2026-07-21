@@ -1,20 +1,17 @@
 .ui-card {
   min-width: 0;
   overflow: visible;
-  border-radius: 22px;
-  border: 1px solid rgba(229, 231, 235, 0.88);
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(10px);
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 10px 30px rgba(15, 23, 42, 0.04);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
   padding: 20px;
   box-sizing: border-box;
 }
 
 @media (max-width: 640px) {
   .ui-card {
-    border-radius: 18px;
+    border-radius: var(--radius-md);
     padding: 16px;
   }
 }

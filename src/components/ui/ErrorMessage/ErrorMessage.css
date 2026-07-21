@@ -3,7 +3,7 @@
   gap: 8px;
   min-width: 0;
   padding: 14px 16px;
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   border: 1px solid rgba(252, 165, 165, 0.42);
   background: rgba(254, 242, 242, 0.96);
   color: #991b1b;
