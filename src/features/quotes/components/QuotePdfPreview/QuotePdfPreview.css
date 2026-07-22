@@ -1,0 +1,120 @@
+.quote-pdf-preview {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  padding: clamp(16px, 3vw, 24px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.quote-pdf-preview__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.quote-pdf-preview__header h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.quote-pdf-preview__header p:not(.quote-pdf-preview__eyebrow) {
+  margin-top: 6px;
+  color: var(--text-soft);
+  line-height: 1.55;
+}
+
+.quote-pdf-preview__eyebrow {
+  margin: 0 0 4px;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.quote-pdf-preview__actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.quote-pdf-preview__viewport {
+  min-height: 720px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: #dedbd7;
+}
+
+.quote-pdf-preview__viewport iframe {
+  display: block;
+  width: 100%;
+  height: 82vh;
+  min-height: 720px;
+  border: 0;
+  background: #fff;
+}
+
+.quote-pdf-preview__state {
+  display: grid;
+  min-height: 720px;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  padding: 28px;
+  color: var(--text);
+  text-align: center;
+}
+
+.quote-pdf-preview__state p {
+  color: var(--text-soft);
+}
+
+.quote-pdf-preview__state--error strong {
+  color: var(--danger);
+}
+
+.quote-pdf-preview__state--error .ui-button {
+  margin-top: 12px;
+}
+
+.quote-pdf-preview__spinner {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 6px;
+  border: 3px solid var(--border-strong);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: quote-pdf-preview-spin 0.8s linear infinite;
+}
+
+@keyframes quote-pdf-preview-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 760px) {
+  .quote-pdf-preview__header {
+    display: grid;
+  }
+
+  .quote-pdf-preview__actions,
+  .quote-pdf-preview__actions > * {
+    width: 100%;
+  }
+
+  .quote-pdf-preview__viewport,
+  .quote-pdf-preview__viewport iframe,
+  .quote-pdf-preview__state {
+    min-height: 560px;
+  }
+
+  .quote-pdf-preview__viewport iframe {
+    height: 72vh;
+  }
+}

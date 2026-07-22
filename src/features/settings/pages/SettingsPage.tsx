@@ -9,6 +9,7 @@ import { FormField } from "../../../components/ui/FormField/FormField";
 import { FormGrid } from "../../../components/ui/FormGrid/FormGrid";
 import { TextArea } from "../../../components/ui/TextArea/TextArea";
 import { TextInput } from "../../../components/ui/TextInput/TextInput";
+import { EmailSettingsPanel } from "../components/EmailSettingsPanel";
 import "./SettingsPage.css";
 
 // ─── Tab pages ───────────────────────────────────────────────────────────────
@@ -16,6 +17,7 @@ import "./SettingsPage.css";
 const settingsPages = [
   { id: "informations", label: "Informations" },
   { id: "apparence",    label: "Apparence" },
+  { id: "emails",       label: "E-mails" },
 ] as const;
 
 type SettingsPageId = (typeof settingsPages)[number]["id"];
@@ -952,9 +954,11 @@ export function SettingsPage() {
           <h1 className="settings-premium-page__title">Paramètres entreprise</h1>
         </div>
         <div className="settings-premium-page__hero-actions">
-          <Button variant="secondary" onClick={resetForm}>
-            Réinitialiser
-          </Button>
+          {activePage !== "emails" && (
+            <Button variant="secondary" onClick={resetForm}>
+              Réinitialiser
+            </Button>
+          )}
         </div>
       </header>
 
@@ -1321,6 +1325,15 @@ export function SettingsPage() {
             </Card>
           </aside>
         </form>
+      )}
+
+      {/* ══ PAGE : E-MAILS ═══════════════════════════════════════════════════ */}
+      {activePage === "emails" && (
+        <EmailSettingsPanel
+          companyId={company.id}
+          companyName={form.name || company.name}
+          companyEmail={form.email || company.email}
+        />
       )}
     </section>
   );

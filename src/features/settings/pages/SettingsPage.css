@@ -483,4 +483,120 @@
   background: linear-gradient(135deg, #1a1a1a 0%, #f2f2f2 100%);
 }
 
+/* ─── Configuration e-mail ───────────────────────────────────────────────── */
+
+.settings-premium-page__email-loading {
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.settings-premium-page__email-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--text-soft);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.settings-premium-page__email-status--active {
+  border-color: rgba(21, 128, 61, 0.24);
+  background: rgba(240, 253, 244, 0.95);
+  color: #166534;
+}
+
+.settings-premium-page__email-intro {
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(120, 92, 68, 0.12);
+  border-radius: 14px;
+  background: rgba(246, 239, 228, 0.58);
+}
+
+.settings-premium-page__email-intro p {
+  margin: 0;
+  color: #6f5c4d;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.settings-premium-page__email-field-hint {
+  display: block;
+  margin-top: 7px;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.settings-premium-page__email-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-strong);
+  cursor: pointer;
+}
+
+.settings-premium-page__email-toggle input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--primary);
+  flex: 0 0 auto;
+}
+
+.settings-premium-page__email-toggle span {
+  display: grid;
+  gap: 4px;
+  color: var(--text-strong);
+}
+
+.settings-premium-page__email-toggle small {
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.settings-premium-page__email-success {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(21, 128, 61, 0.22);
+  border-radius: 12px;
+  background: rgba(240, 253, 244, 0.96);
+  color: #166534;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.settings-premium-page__email-last-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(254, 242, 242, 0.96);
+  color: #b91c1c;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.settings-premium-page__right .settings-premium-page__meta-list strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .settings-premium-page .quote-page-tabs-mobile .quote-topbar-nav__tab {
+    min-width: 0;
+    font-size: 0.78rem;
+    padding-inline: 6px;
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────────────────── */

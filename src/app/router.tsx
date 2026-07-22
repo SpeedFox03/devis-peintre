@@ -15,6 +15,7 @@ import { SettingsPage } from "../features/settings/pages/SettingsPage";
 import { ServiceCatalogPage } from "../features/catalog/pages/ServiceCatalogPage";
 import { InvoicesPage } from "../features/invoices/pages/InvoicesPage";
 import { InvoiceDetailsPage } from "../features/invoices/pages/InvoiceDetailsPage";
+import { PublicQuotePage } from "../features/quotes/pages/PublicQuotePage";
 
 export const router = createBrowserRouter([
   {
@@ -32,6 +33,10 @@ export const router = createBrowserRouter([
   {
     path: "/reinitialiser-mot-de-passe",
     element: <ResetPasswordPage />,
+  },
+  {
+    path: "/devis-client",
+    element: <PublicQuotePage />,
   },
   {
     element: <ProtectedRoute />,

@@ -12,6 +12,7 @@ import { QuoteItemForm } from "../QuoteItemForm/QuoteItemForm";
 import { getUnitLabel } from "../../../catalog/catalogOptions";
 import type { ServiceCatalogItem } from "../../../catalog/types";
 import type { QuoteItem, QuoteItemFormState, Room } from "../../types";
+import { calculateItemsTotal } from "../../utils/quoteTotals";
 import "./QuoteItemsSection.css";
 import {
   PlusIcon,
@@ -255,6 +256,28 @@ export function QuoteItemsSection({
 
     return matchesSearch && matchesCategory;
   });
+
+  const roomTotals = [
+    ...rooms
+      .map((room) => {
+        const roomItems = items.filter((item) => item.room_id === room.id);
+        return {
+          id: room.id,
+          name: room.name,
+          itemCount: roomItems.length,
+          total: calculateItemsTotal(roomItems),
+        };
+      })
+      .filter((room) => room.itemCount > 0),
+    ...(items.some((item) => !item.room_id)
+      ? [{
+          id: "unassigned",
+          name: "Sans pièce",
+          itemCount: items.filter((item) => !item.room_id).length,
+          total: calculateItemsTotal(items.filter((item) => !item.room_id)),
+        }]
+      : []),
+  ];
 
   return (
     <section className="quote-items-premium">
@@ -557,6 +580,26 @@ export function QuoteItemsSection({
                   </article>
                 );
               })}
+            </div>
+
+            <div className="quote-items-premium__room-totals">
+              <div className="quote-items-premium__room-totals-heading">
+                <span>Total par pièce</span>
+                <small>HTVA</small>
+              </div>
+              <div className="quote-items-premium__room-totals-list">
+                {roomTotals.map((room) => (
+                  <div key={room.id} className="quote-items-premium__room-total">
+                    <span>
+                      {room.name}
+                      <small>
+                        {room.itemCount} {room.itemCount > 1 ? "lignes" : "ligne"}
+                      </small>
+                    </span>
+                    <strong>{formatCurrency(room.total)}</strong>
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         )}

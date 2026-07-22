@@ -6,6 +6,7 @@ import type {
 
 import type { QuotePdfData } from "./quotePdfTypes";
 import { formatDisplayDate } from "../../../lib/formatters";
+import { calculateItemsTotal } from "../utils/quoteTotals";
 
 // ─── Palettes ─────────────────────────────────────────────────────────────────
 
@@ -229,6 +230,31 @@ function makeCompactRoomTable(
       return [mainRow];
     }),
   ];
+  body.push([
+    {
+      text: "TOTAL DE LA PIÈCE HTVA",
+      colSpan: 4,
+      alignment: "right",
+      fontSize: 7.5,
+      bold: true,
+      color: cp.TEXT_DARK,
+      fillColor: cp.BG_HEADER,
+      border: [false, false, false, false],
+      margin: [4, 4, 4, 4],
+    },
+    {}, {}, {},
+    {
+      text: euro(calculateItemsTotal(items)),
+      alignment: "right",
+      fontSize: 8.5,
+      bold: true,
+      color: cp.ACCENT,
+      fillColor: cp.BG_HEADER,
+      border: [false, false, false, false],
+      margin: [2, 4, 4, 4],
+    },
+  ]);
+  const totalRowIndex = body.length - 1;
 
   return {
     table: {
@@ -236,7 +262,7 @@ function makeCompactRoomTable(
       body: body as unknown as import("pdfmake/interfaces").TableCell[][],
     },
     layout: {
-      fillColor:     (rowIndex: number) => rowIndex === 0 ? cp.BG_HEADER : rowIndex % 2 === 0 ? cp.BG_ROW_ALT : cp.BG_PAGE,
+      fillColor:     (rowIndex: number) => rowIndex === 0 || rowIndex === totalRowIndex ? cp.BG_HEADER : rowIndex % 2 === 0 ? cp.BG_ROW_ALT : cp.BG_PAGE,
       hLineWidth:    () => 0,
       vLineWidth:    () => 0,
       paddingLeft:   () => 0,

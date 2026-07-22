@@ -12,6 +12,10 @@ import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import { QuoteItemsSection } from "../components/QuoteItemsSection/QuoteItemsSection";
 import { QuoteRoomsSection } from "../components/QuoteRoomsSection/QuoteRoomsSection";
 import { QuoteSummarySection } from "../components/QuoteSummarySection/QuoteSummarySection";
+import { QuoteClientLinkButton } from "../components/QuoteClientLink/QuoteClientLinkButton";
+import { QuoteClientResponseBanner } from "../components/QuoteClientResponse/QuoteClientResponseBanner";
+import { QuoteEmailButton } from "../components/QuoteEmailButton/QuoteEmailButton";
+import { QuotePdfPreview } from "../components/QuotePdfPreview/QuotePdfPreview";
 import { useQuoteDetailsPage } from "../hooks/useQuoteDetailsPage";
 import {
   getQuoteStatusLabel,
@@ -32,6 +36,10 @@ const quotePages = [
   {
     id: "details",
     label: "Informations",
+  },
+  {
+    id: "preview",
+    label: "Prévisualisation",
   },
 ] as const;
 
@@ -92,6 +100,7 @@ export function QuoteDetailsPage() {
     items,
     rooms,
     roomPhotos,
+    customer,
     customerOptions,
     services,
 
@@ -164,6 +173,7 @@ export function QuoteDetailsPage() {
     setCatalogCategory,
     setCatalogRoomId,
     setMoveRoomId,
+    reloadQuoteData,
   } = useQuoteDetailsPage();
 
   if (loading) {
@@ -239,6 +249,23 @@ export function QuoteDetailsPage() {
           </div>
 
           <div className="quote-premium-page__hero-actions">
+            <QuoteEmailButton
+              quoteId={quote.id}
+              quoteNumber={quote.quote_number}
+              recipientEmail={customer?.email ?? null}
+              disabled={
+                !customer?.email?.trim() ||
+                !(["draft", "sent"] as QuoteStatus[]).includes(quote.status)
+              }
+              onSent={reloadQuoteData}
+            />
+
+            <QuoteClientLinkButton
+              quoteId={quote.id}
+              quoteNumber={quote.quote_number}
+              disabled={!(["draft", "sent"] as QuoteStatus[]).includes(quote.status)}
+            />
+
             <Button
               variant="primary"
               type="button"
@@ -263,6 +290,8 @@ export function QuoteDetailsPage() {
           </div>
         </div>
       </header>
+
+      <QuoteClientResponseBanner quoteId={quote.id} />
 
       {/* Onglets visibles uniquement sur mobile (topbar cachée) */}
       {tabNavMobile}
@@ -339,7 +368,7 @@ export function QuoteDetailsPage() {
               <QuoteSummarySection quote={quote} />
             </section>
           </div>
-        ) : (
+        ) : activePage === "details" ? (
           <div className="quote-premium-page__page-stack">
             <form className="quote-premium-page__general-form" onSubmit={handleSaveQuoteGeneral}>
               <Card className="quote-premium-page__edit-card">
@@ -529,6 +558,11 @@ export function QuoteDetailsPage() {
               </div>
             </form>
           </div>
+        ) : (
+          <QuotePdfPreview
+            quoteId={quote.id}
+            quoteNumber={quote.quote_number}
+          />
         )}
       </div>
     </section>

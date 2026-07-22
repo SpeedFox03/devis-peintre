@@ -1,0 +1,153 @@
+.quote-email__backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(47, 33, 24, 0.48);
+  backdrop-filter: blur(4px);
+}
+
+.quote-email__dialog {
+  width: min(620px, 100%);
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+  padding: clamp(22px, 4vw, 34px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  color: var(--text);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.quote-email__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.quote-email__heading h2 {
+  margin: 0;
+  font-size: 1.55rem;
+}
+
+.quote-email__eyebrow {
+  margin: 0 0 5px;
+  color: var(--accent);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.quote-email__description {
+  margin: 16px 0 22px;
+  color: var(--text-soft);
+  line-height: 1.65;
+}
+
+.quote-email__field {
+  display: grid;
+  gap: 8px;
+  color: var(--text-strong);
+  font-weight: 700;
+}
+
+.quote-email__field small {
+  color: var(--text-soft);
+  font-weight: 500;
+}
+
+.quote-email__field > small {
+  justify-self: end;
+}
+
+.quote-email__field textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 13px 14px;
+  color: var(--text-strong);
+  background: var(--surface);
+}
+
+.quote-email__field textarea:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.quote-email__notice,
+.quote-email__warning,
+.quote-email__error {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.quote-email__notice,
+.quote-email__warning {
+  color: var(--text);
+  background: var(--warning-soft);
+}
+
+.quote-email__error {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.quote-email__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.quote-email__success {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-top: 22px;
+  padding: 18px;
+  border: 1px solid rgba(95, 117, 81, 0.24);
+  border-radius: var(--radius-lg);
+  background: var(--success-soft);
+}
+
+.quote-email__success-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--success);
+  font-weight: 800;
+}
+
+.quote-email__success strong {
+  color: var(--text-strong);
+}
+
+.quote-email__success p {
+  margin-top: 6px;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+@media (max-width: 560px) {
+  .quote-email__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .quote-email__actions .ui-button {
+    width: 100%;
+  }
+}

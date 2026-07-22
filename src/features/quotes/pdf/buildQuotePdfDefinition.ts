@@ -7,6 +7,7 @@ import type {
 
 import type { QuotePdfData } from "./quotePdfTypes";
 import { formatDisplayDate } from "../../../lib/formatters";
+import { calculateItemsTotal } from "../utils/quoteTotals";
 
 // ─── Palettes ─────────────────────────────────────────────────────────────────
 
@@ -177,6 +178,7 @@ function makeRoomTable(
 ): Content {
   const padV     = aere ? 11 : 7;   // padding vertical en-tête + items
   const padVItem = aere ? 10 : 6;
+  const totalRowIndex = items.length + 2;
 
   return {
     table: {
@@ -221,12 +223,32 @@ function makeRoomTable(
           { text: euro(item.unit_price_ht), alignment: "right", color: p.TEXT_DARK },
           { text: euro(item.quantity * item.unit_price_ht), alignment: "right", color: p.TEXT_DARK },
         ]),
+        [
+          {
+            text: "Total de la pièce HTVA",
+            colSpan: 4,
+            alignment: "right",
+            bold: true,
+            color: p.TEXT_DARK,
+            fillColor: p.BG_SECTION,
+          },
+          {}, {}, {},
+          {
+            text: euro(calculateItemsTotal(items)),
+            alignment: "right",
+            bold: true,
+            color: p.ACCENT,
+            fillColor: p.BG_SECTION,
+            noWrap: true,
+          },
+        ],
       ],
     },
     layout: {
       fillColor: (rowIndex: number) => {
         if (rowIndex === 0) return p.BG_ROOM;
         if (rowIndex === 1) return p.BG_SECTION;
+        if (rowIndex === totalRowIndex) return p.BG_SECTION;
         return rowIndex % 2 === 0 ? p.BG_CARD : p.BG_ROW_ALT;
       },
       hLineColor: () => p.BORDER,

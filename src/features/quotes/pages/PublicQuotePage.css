@@ -1,0 +1,412 @@
+.public-quote-page {
+  min-height: 100vh;
+  padding: clamp(18px, 4vw, 48px) 16px;
+  background:
+    radial-gradient(circle at top left, rgba(177, 134, 82, 0.12), transparent 34%),
+    var(--app-bg);
+}
+
+.public-quote-page--centered {
+  display: grid;
+  place-items: center;
+}
+
+.public-quote-shell {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+}
+
+.public-quote-header,
+.public-quote-preview,
+.public-quote-response,
+.public-quote-state {
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.public-quote-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: clamp(22px, 4vw, 38px);
+  border-radius: var(--radius-xl);
+}
+
+.public-quote-eyebrow {
+  margin: 0 0 6px;
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.public-quote-header h1,
+.public-quote-section-heading h2,
+.public-quote-response h2,
+.public-quote-state h1 {
+  margin: 0;
+}
+
+.public-quote-header h1 {
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
+}
+
+.public-quote-header__title {
+  margin-top: 6px;
+  color: var(--text-soft);
+  font-size: 1rem;
+}
+
+.public-quote-header__company {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  text-align: right;
+}
+
+.public-quote-header__company span {
+  color: var(--text-soft);
+  font-size: 0.78rem;
+}
+
+.public-quote-header__company strong {
+  color: var(--text-strong);
+  font-size: 1rem;
+}
+
+.public-quote-preview,
+.public-quote-response {
+  margin-top: 20px;
+  border-radius: var(--radius-xl);
+}
+
+.public-quote-preview {
+  padding: clamp(16px, 3vw, 28px);
+}
+
+.public-quote-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.public-quote-section-heading h2,
+.public-quote-response h2 {
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+}
+
+.public-quote-download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 9px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.public-quote-download:hover {
+  background: var(--surface-muted);
+}
+
+.public-quote-preview__frame {
+  min-height: 680px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: #dedbd7;
+}
+
+.public-quote-preview__frame iframe {
+  display: block;
+  width: 100%;
+  height: 78vh;
+  min-height: 680px;
+  border: 0;
+  background: white;
+}
+
+.public-quote-preview__fallback {
+  display: grid;
+  min-height: 680px;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  color: var(--text-soft);
+  text-align: center;
+}
+
+.public-quote-response {
+  padding: clamp(24px, 5vw, 48px);
+}
+
+.public-quote-response form {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.public-quote-response__intro {
+  margin: 12px 0 24px;
+  color: var(--text-soft);
+  line-height: 1.65;
+}
+
+.public-quote-decision {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.public-quote-decision .ui-button {
+  width: 100%;
+}
+
+.public-quote-decision .ui-button--danger[aria-pressed="true"] {
+  border-color: var(--danger);
+  color: #fff;
+  background: var(--danger);
+}
+
+.public-quote-field {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+  color: var(--text-strong);
+  font-weight: 700;
+}
+
+.public-quote-field small {
+  color: var(--text-soft);
+  font-weight: 500;
+}
+
+.public-quote-field > small {
+  justify-self: end;
+}
+
+.public-quote-field textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 13px 14px;
+  color: var(--text-strong);
+  background: var(--surface);
+}
+
+.public-quote-field textarea:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.public-quote-confirmation {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin: 18px 0 22px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+  color: var(--text-strong);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.public-quote-confirmation input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--primary);
+  flex: 0 0 auto;
+}
+
+.public-quote-form-error {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.public-quote-response form > .ui-button--danger {
+  border-color: var(--danger);
+  color: #fff;
+  background: var(--danger);
+}
+
+.public-quote-response form > .ui-button--danger:hover:not(:disabled) {
+  border-color: #743a2f;
+  color: #fff;
+  background: #743a2f;
+}
+
+.public-quote-response__expiry {
+  margin-top: 14px;
+  color: var(--text-soft);
+  font-size: 0.8rem;
+}
+
+.public-quote-result {
+  display: flex;
+  max-width: 760px;
+  margin: 0 auto;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.public-quote-result__icon,
+.public-quote-state__icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.public-quote-result--success .public-quote-result__icon {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.public-quote-result--warning .public-quote-result__icon {
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.public-quote-result--rejected .public-quote-result__icon {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.public-quote-result h2 {
+  margin-bottom: 10px;
+}
+
+.public-quote-result p {
+  line-height: 1.65;
+}
+
+.public-quote-result blockquote {
+  margin: 18px 0 0;
+  padding: 14px 16px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--text);
+  background: var(--surface-muted);
+  white-space: pre-wrap;
+}
+
+.public-quote-result blockquote strong,
+.public-quote-result blockquote span {
+  display: block;
+}
+
+.public-quote-result blockquote strong {
+  margin-bottom: 5px;
+  color: var(--text-strong);
+  font-size: 0.82rem;
+}
+
+.public-quote-footer {
+  padding: 20px 12px 4px;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.public-quote-state {
+  width: min(520px, 100%);
+  padding: clamp(30px, 7vw, 52px);
+  border-radius: var(--radius-xl);
+  text-align: center;
+}
+
+.public-quote-state h1 {
+  margin-top: 14px;
+  font-size: 1.7rem;
+}
+
+.public-quote-state p {
+  margin-top: 8px;
+  color: var(--text-soft);
+}
+
+.public-quote-state__hint {
+  font-size: 0.86rem;
+}
+
+.public-quote-state--error .public-quote-state__icon {
+  margin: 0 auto;
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.public-quote-spinner {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--border-strong);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: public-quote-spin 0.8s linear infinite;
+}
+
+@keyframes public-quote-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 700px) {
+  .public-quote-page {
+    padding: 12px;
+  }
+
+  .public-quote-header {
+    display: grid;
+  }
+
+  .public-quote-header__company {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .public-quote-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .public-quote-download {
+    width: 100%;
+  }
+
+  .public-quote-preview__frame,
+  .public-quote-preview__frame iframe,
+  .public-quote-preview__fallback {
+    min-height: 520px;
+  }
+
+  .public-quote-preview__frame iframe {
+    height: 70vh;
+  }
+
+  .public-quote-result {
+    display: grid;
+  }
+
+  .public-quote-decision {
+    grid-template-columns: 1fr;
+  }
+}

@@ -7,6 +7,7 @@ import type {
 
 import type { QuotePdfData } from "./quotePdfTypes";
 import { formatDisplayDate } from "../../../lib/formatters";
+import { calculateItemsTotal } from "../utils/quoteTotals";
 import {
   ELEGANT_PAINT_TOP,
   ELEGANT_PAINT_TOP_RECT,
@@ -352,6 +353,27 @@ function buildItemsTable(
         },
       ]);
     }
+    body.push([
+      {
+        text: group.name ? "Total " + group.name + " (HTVA)" : "Total de la pièce (HTVA)",
+        colSpan: 3,
+        alignment: "right",
+        bold: true,
+        color: p.TEXT_DARK,
+        fillColor: p.BG_PANEL,
+        margin: [10, 7, 8, 7],
+      },
+      {}, {},
+      {
+        text: euro(calculateItemsTotal(group.items)),
+        alignment: "right",
+        bold: true,
+        color: p.ACCENT,
+        fillColor: p.BG_PANEL,
+        margin: [8, 7, 10, 7],
+        noWrap: true,
+      },
+    ]);
   }
 
   const lastRow = body.length;
@@ -510,14 +532,13 @@ export function buildElegantQuotePdfDefinition(data: QuotePdfData): TDocumentDef
     .filter((room) => room.items.length > 0);
   const unassignedItems = data.items.filter((i) => !i.room_id);
 
-  const onlyUnassigned = groupedRooms.length === 0;
   const groups: Array<{ name: string | null; items: ItemLite[] }> = [
     ...groupedRooms.map((r) => ({
-      name: groupedRooms.length === 1 && unassignedItems.length === 0 ? null : r.name,
+      name: r.name,
       items: r.items,
     })),
     ...(unassignedItems.length > 0
-      ? [{ name: onlyUnassigned ? null : "Sans pièce", items: unassignedItems }]
+      ? [{ name: "Sans pièce", items: unassignedItems }]
       : []),
   ];
 
