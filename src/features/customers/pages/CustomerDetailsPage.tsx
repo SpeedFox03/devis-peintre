@@ -122,7 +122,7 @@ export function CustomerDetailsPage() {
         </div>
 
         <div className="customer-details-premium-page__hero-actions">
-          <Link to={`/?new=1&customerId=${customer.id}`}>
+          <Link to={`/devis?new=1&customerId=${customer.id}`}>
             <Button type="button"><PlusIcon />Créer un devis</Button>
           </Link>
 

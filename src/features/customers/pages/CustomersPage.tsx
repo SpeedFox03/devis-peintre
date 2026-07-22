@@ -291,7 +291,7 @@ export function CustomersPage() {
                     </td>
                     <td style={{ textAlign: "right" }}>
                       <div className="customers-premium-page__row-actions">
-                        <Link to={`/?new=1&customerId=${customer.id}`}>
+                        <Link to={`/devis?new=1&customerId=${customer.id}`}>
                           <Button type="button" variant="secondary" size="sm">
                             <PlusIcon />
                             Nouveau devis
@@ -371,7 +371,7 @@ export function CustomersPage() {
                       </Button>
                     </Link>
 
-                    <Link to={`/?new=1&customerId=${customer.id}`} style={{ flex: "1 1 auto" }}>
+                    <Link to={`/devis?new=1&customerId=${customer.id}`} style={{ flex: "1 1 auto" }}>
                       <Button
                         type="button"
                         variant="secondary"
