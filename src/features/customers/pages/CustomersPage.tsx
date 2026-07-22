@@ -10,6 +10,11 @@ import { TextArea } from "../../../components/ui/TextArea/TextArea";
 import { DataTable } from "../../../components/ui/DataTable/DataTable";
 import { Select } from "../../../components/ui/Select/Select";
 import { LoadingBlock } from "../../../components/ui/LoadingBlock/LoadingBlock";
+import {
+  ArchiveIcon,
+  EyeIcon,
+  PlusIcon,
+} from "../../../components/ui/Icons/AppIcons";
 import { useCustomersPage, getCustomerName } from "../hooks/useCustomersPage";
 import "./CustomersPage.css";
 
@@ -46,10 +51,6 @@ export function CustomersPage() {
         <div className="customers-premium-page__hero-main">
           <p className="customers-premium-page__eyebrow">Relation client</p>
           <h1 className="customers-premium-page__title">Clients</h1>
-          <p className="customers-premium-page__description">
-            Gère tes clients actifs, prépare rapidement un nouveau devis et garde
-            une base commerciale claire et bien structurée.
-          </p>
         </div>
 
         <div className="customers-premium-page__hero-actions">
@@ -63,6 +64,7 @@ export function CustomersPage() {
             variant="primary"
             onClick={showForm ? closeForm : openForm}
           >
+            {showForm ? null : <PlusIcon />}
             {showForm ? "Fermer le formulaire" : "Nouveau client"}
           </Button>
         </div>
@@ -96,10 +98,6 @@ export function CustomersPage() {
             <div>
               <p className="customers-premium-page__section-eyebrow">Création</p>
               <h2 className="customers-premium-page__section-title">Créer un client</h2>
-              <p className="customers-premium-page__section-description">
-                Ajoute une nouvelle fiche client avec ses coordonnées principales
-                et une adresse de base pour la facturation et le chantier.
-              </p>
             </div>
           </div>
 
@@ -195,11 +193,6 @@ export function CustomersPage() {
       {!showForm && (
         <Card>
           <div className="customers-premium-page__filters">
-            <div className="customers-premium-page__filters-intro">
-              <p className="customers-premium-page__section-eyebrow">Liste</p>
-              <h2 className="customers-premium-page__section-title">Tous les clients</h2>
-            </div>
-
             <div className="customers-premium-page__filters-grid">
               <FormField label="Recherche">
                 <TextInput
@@ -299,18 +292,23 @@ export function CustomersPage() {
                     <td style={{ textAlign: "right" }}>
                       <div className="customers-premium-page__row-actions">
                         <Link to={`/?new=1&customerId=${customer.id}`}>
-                          <Button type="button" variant="secondary">
+                          <Button type="button" variant="secondary" size="sm">
+                            <PlusIcon />
                             Nouveau devis
                           </Button>
                         </Link>
 
                         <Button
                           type="button"
-                          variant="secondary"
+                          variant="danger"
+                          size="sm"
+                          iconOnly
                           onClick={() => handleArchiveCustomer(customer)}
                           disabled={archivingCustomerId === customer.id}
+                          aria-label={`Archiver ${name}`}
+                          title="Archiver le client"
                         >
-                          {archivingCustomerId === customer.id ? "Archivage..." : "Archiver"}
+                          <ArchiveIcon />
                         </Button>
                       </div>
                     </td>
@@ -368,6 +366,7 @@ export function CustomersPage() {
                         variant="secondary"
                         style={{ width: "100%", justifyContent: "center" }}
                       >
+                        <EyeIcon />
                         Voir la fiche
                       </Button>
                     </Link>
@@ -378,17 +377,21 @@ export function CustomersPage() {
                         variant="secondary"
                         style={{ width: "100%", justifyContent: "center" }}
                       >
+                        <PlusIcon />
                         Nouveau devis
                       </Button>
                     </Link>
 
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="danger"
+                      iconOnly
                       onClick={() => handleArchiveCustomer(customer)}
                       disabled={archivingCustomerId === customer.id}
+                      aria-label={`Archiver ${name}`}
+                      title="Archiver le client"
                     >
-                      {archivingCustomerId === customer.id ? "Archivage..." : "Archiver"}
+                      <ArchiveIcon />
                     </Button>
                   </div>
                 </article>

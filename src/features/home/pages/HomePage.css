@@ -2,8 +2,8 @@
 .home-page {
   display: flex;
   flex-direction: column;
-  gap: 36px;
-  max-width: 980px;
+  gap: 28px;
+  width: 100%;
 }
 
 /* ── Hero ── */
@@ -39,7 +39,7 @@
 /* ── Grid ── */
 .home-page__grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 16px;
 }
 
@@ -127,9 +127,13 @@
 }
 
 .home-page__card-icon {
-  font-size: 1.3rem;
   color: #6f523c;
   line-height: 1;
+}
+
+.home-page__card-icon svg {
+  width: 24px;
+  height: 24px;
 }
 
 .home-page__card--featured .home-page__card-icon {

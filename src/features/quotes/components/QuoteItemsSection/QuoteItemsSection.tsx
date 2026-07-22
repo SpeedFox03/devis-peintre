@@ -266,13 +266,14 @@ export function QuoteItemsSection({
 
           <div className="quote-items-premium__header-actions">
             {!showForm ? (
-              <Button type="button" onClick={onOpenCreateForm} aria-label="Ajouter une ligne" title="Ajouter une ligne">
+              <Button type="button" iconOnly onClick={onOpenCreateForm} aria-label="Ajouter une ligne" title="Ajouter une ligne">
                 <PlusIcon />
               </Button>
             ) : (
               <Button
                 type="button"
                 variant="secondary"
+                iconOnly
                 onClick={onCloseForm}
                 aria-label="Fermer la saisie"
                 title="Fermer la saisie"
@@ -289,6 +290,7 @@ export function QuoteItemsSection({
               <Button
                 type="button"
                 variant="secondary"
+                iconOnly
                 onClick={onCloseCatalogPicker}
                 aria-label="Fermer le catalogue"
                 title="Fermer le catalogue"
@@ -510,10 +512,10 @@ export function QuoteItemsSection({
                       <td>{formatCurrency(totalHt)}</td>
                       <td>
                         <div className="quote-items-premium__table-actions">
-                          <Button type="button" size="sm" variant="secondary" onClick={() => onEdit(item)} aria-label="Modifier" title="Modifier"><PencilIcon /></Button>
-                          <Button type="button" size="sm" variant="secondary" onClick={() => onDuplicate(item)} aria-label="Dupliquer" title="Dupliquer"><CopyIcon /></Button>
-                          <Button type="button" size="sm" variant="secondary" onClick={() => onOpenMove(item)} aria-label="Déplacer" title="Déplacer"><ArrowsLeftRightIcon /></Button>
-                          <Button type="button" size="sm" variant="danger" disabled={deletingItemId === item.id} onClick={() => onDelete(item.id)} aria-label="Supprimer" title="Supprimer"><TrashIcon /></Button>
+                          <Button type="button" size="sm" variant="secondary" iconOnly onClick={() => onEdit(item)} aria-label="Modifier" title="Modifier"><PencilIcon /></Button>
+                          <Button type="button" size="sm" variant="secondary" iconOnly onClick={() => onDuplicate(item)} aria-label="Dupliquer" title="Dupliquer"><CopyIcon /></Button>
+                          <Button type="button" size="sm" variant="secondary" iconOnly onClick={() => onOpenMove(item)} aria-label="Déplacer" title="Déplacer"><ArrowsLeftRightIcon /></Button>
+                          <Button type="button" size="sm" variant="danger" iconOnly disabled={deletingItemId === item.id} onClick={() => onDelete(item.id)} aria-label="Supprimer" title="Supprimer"><TrashIcon /></Button>
                         </div>
                       </td>
                     </tr>
@@ -547,10 +549,10 @@ export function QuoteItemsSection({
                     </div>
 
                     <div className="quote-items-premium__item-card-actions">
-                      <Button type="button" size="sm" variant="secondary" onClick={() => onEdit(item)} aria-label="Modifier" title="Modifier"><PencilIcon /></Button>
-                      <Button type="button" size="sm" variant="secondary" onClick={() => onDuplicate(item)} aria-label="Dupliquer" title="Dupliquer"><CopyIcon /></Button>
-                      <Button type="button" size="sm" variant="secondary" onClick={() => onOpenMove(item)} aria-label="Déplacer" title="Déplacer"><ArrowsLeftRightIcon /></Button>
-                      <Button type="button" size="sm" variant="danger" disabled={deletingItemId === item.id} onClick={() => onDelete(item.id)} aria-label="Supprimer" title="Supprimer"><TrashIcon /></Button>
+                      <Button type="button" size="sm" variant="secondary" iconOnly onClick={() => onEdit(item)} aria-label="Modifier" title="Modifier"><PencilIcon /></Button>
+                      <Button type="button" size="sm" variant="secondary" iconOnly onClick={() => onDuplicate(item)} aria-label="Dupliquer" title="Dupliquer"><CopyIcon /></Button>
+                      <Button type="button" size="sm" variant="secondary" iconOnly onClick={() => onOpenMove(item)} aria-label="Déplacer" title="Déplacer"><ArrowsLeftRightIcon /></Button>
+                      <Button type="button" size="sm" variant="danger" iconOnly disabled={deletingItemId === item.id} onClick={() => onDelete(item.id)} aria-label="Supprimer" title="Supprimer"><TrashIcon /></Button>
                     </div>
                   </article>
                 );

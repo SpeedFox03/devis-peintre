@@ -4,6 +4,7 @@ import { FormField } from "../../../components/ui/FormField/FormField";
 import { Select } from "../../../components/ui/Select/Select";
 import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import { Button } from "../../../components/ui/Button/Button";
+import { PlusIcon } from "../../../components/ui/Icons/AppIcons";
 import {
   PAINT_CATEGORIES,
   getCategoryLabel,
@@ -66,10 +67,6 @@ export function QuoteCatalogPicker({
           <h3 className="quote-catalog-picker-premium__title">
             Insérer une prestation type
           </h3>
-          <p className="quote-catalog-picker-premium__description">
-            Recherche une prestation récurrente, choisis une pièce cible puis ajoute-la
-            en un clic au devis.
-          </p>
         </div>
       </div>
 
@@ -153,6 +150,7 @@ export function QuoteCatalogPicker({
                       disabled={addingServiceId === service.id}
                       onClick={() => onAdd(service)}
                     >
+                      <PlusIcon />
                       {addingServiceId === service.id ? "Ajout..." : "Ajouter"}
                     </Button>
                   </td>
@@ -193,6 +191,7 @@ export function QuoteCatalogPicker({
                     disabled={addingServiceId === service.id}
                     onClick={() => onAdd(service)}
                   >
+                    <PlusIcon />
                     {addingServiceId === service.id ? "Ajout..." : "Ajouter"}
                   </Button>
                 </div>

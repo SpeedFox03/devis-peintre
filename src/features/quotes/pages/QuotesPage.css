@@ -150,6 +150,7 @@
 
 .quotes-premium-page__table-shell table {
   width: 100%;
+  min-width: 850px;
   table-layout: fixed;
 }
 
@@ -200,7 +201,7 @@
 .quotes-premium-page__row-actions {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
 }
 
@@ -275,13 +276,9 @@
 }
 
 .quotes-premium-page__quote-card-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   gap: 8px;
-  flex-wrap: wrap;
-}
-
-.quotes-premium-page__quote-card-actions > * {
-  flex: 1 1 auto;
 }
 
 /* ══════════════════════════════════════════
@@ -331,6 +328,9 @@
   .quotes-premium-page__filters-grid {
     grid-template-columns: 1fr;
   }
+
+  .quotes-premium-page__table-shell { display: none; }
+  .quotes-premium-page__card-list { display: grid; gap: 10px; }
 }
 
 @media (max-width: 640px) {
@@ -353,7 +353,4 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  /* Masquer le tableau, afficher les cartes */
-  .quotes-premium-page__table-shell { display: none; }
-  .quotes-premium-page__card-list   { display: grid; gap: 10px; }
 }

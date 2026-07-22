@@ -6,6 +6,7 @@ import type {
 } from "pdfmake/interfaces";
 
 import type { QuotePdfData } from "./quotePdfTypes";
+import { formatDisplayDate } from "../../../lib/formatters";
 import {
   ELEGANT_PAINT_TOP,
   ELEGANT_PAINT_BOTLEFT,
@@ -227,8 +228,8 @@ function makeHeaderRight(data: QuotePdfData, p: ElegantPalette): Content {
         layout: "noBorders",
         margin: [72, 0, 0, 12],
       },
-      iconMetaRow(p, ICON_CALENDAR, "Émise le", data.quote.issue_date),
-      ...(data.quote.valid_until ? [iconMetaRow(p, ICON_CLOCK, "Échéance", data.quote.valid_until)] : []),
+      iconMetaRow(p, ICON_CALENDAR, "Émise le", formatDisplayDate(data.quote.issue_date, "-")),
+      ...(data.quote.valid_until ? [iconMetaRow(p, ICON_CLOCK, "Échéance", formatDisplayDate(data.quote.valid_until, "-"))] : []),
     ],
   };
 }

@@ -13,6 +13,16 @@ import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import { TextArea } from "../../../components/ui/TextArea/TextArea";
 import { Select } from "../../../components/ui/Select/Select";
 import { FormGrid } from "../../../components/ui/FormGrid/FormGrid";
+import {
+  CopyIcon,
+  DownloadIcon,
+  EyeIcon,
+  PlusIcon,
+  TrashIcon,
+} from "../../../components/ui/Icons/AppIcons";
+import { formatDisplayDate } from "../../../lib/formatters";
+import { generateQuotePdf } from "../pdf/generateQuotePdf";
+import { loadQuotePdfData } from "../pdf/loadQuotePdfData";
 import "./QuotesPage.css";
 
 type QuoteStatus =
@@ -131,6 +141,7 @@ export function QuotesPage() {
   const [saving, setSaving] = useState(false);
   const [duplicatingQuoteId, setDuplicatingQuoteId] = useState<string | null>(null);
   const [deletingQuoteId, setDeletingQuoteId] = useState<string | null>(null);
+  const [downloadingQuoteId, setDownloadingQuoteId] = useState<string | null>(null);
   const [updatingStatusQuoteId, setUpdatingStatusQuoteId] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
@@ -348,6 +359,22 @@ export function QuotesPage() {
     await reloadQuotesOnly();
   }
 
+  async function handleDownloadQuote(quote: QuoteRow) {
+    setDownloadingQuoteId(quote.id);
+    setError(null);
+
+    try {
+      const { data, theme, colorMode, accentColor } = await loadQuotePdfData(quote.id);
+      const pdf = await generateQuotePdf(data, theme, colorMode, accentColor);
+      pdf.download(`${quote.quote_number}.pdf`);
+    } catch (downloadError) {
+      console.error(downloadError);
+      setError("Impossible de générer le PDF de ce devis.");
+    } finally {
+      setDownloadingQuoteId(null);
+    }
+  }
+
   async function handleStatusChange(quoteId: string, status: QuoteStatus) {
     setUpdatingStatusQuoteId(quoteId);
     setError(null);
@@ -413,10 +440,6 @@ export function QuotesPage() {
         <div className="quotes-premium-page__hero-main">
           <p className="quotes-premium-page__eyebrow">Pilotage commercial</p>
           <h1 className="quotes-premium-page__title">Devis</h1>
-          <p className="quotes-premium-page__description">
-            Crée, filtre et pilote tes devis dans une interface plus claire,
-            plus rapide et plus agréable sur desktop comme sur mobile.
-          </p>
         </div>
 
         <div className="quotes-premium-page__hero-actions">
@@ -424,6 +447,7 @@ export function QuotesPage() {
             variant="primary"
             onClick={showForm ? closeCreateForm : openCreateForm}
           >
+            {showForm ? null : <PlusIcon />}
             {showForm ? "Fermer le formulaire" : "Nouveau devis"}
           </Button>
         </div>
@@ -459,10 +483,6 @@ export function QuotesPage() {
             <div>
               <p className="quotes-premium-page__section-eyebrow">Création</p>
               <h2 className="quotes-premium-page__section-title">Créer un devis</h2>
-              <p className="quotes-premium-page__section-description">
-                Sélectionne l’entreprise, le client, puis prépare les informations
-                générales du document.
-              </p>
             </div>
           </div>
 
@@ -586,14 +606,6 @@ export function QuotesPage() {
       ) : (
         <Card className="quotes-premium-page__filters-card">
           <div className="quotes-premium-page__filters">
-            <div className="quotes-premium-page__filters-intro">
-              <p className="quotes-premium-page__section-eyebrow">Liste</p>
-              <h2 className="quotes-premium-page__section-title">Tous les devis</h2>
-              <p className="quotes-premium-page__section-description">
-                Recherche rapidement un devis par numéro ou titre et filtre son statut.
-              </p>
-            </div>
-
             <div className="quotes-premium-page__filters-grid">
               <FormField label="Recherche">
                 <TextInput
@@ -632,6 +644,8 @@ export function QuotesPage() {
               ? "Crée ton premier devis pour démarrer ton activité commerciale."
               : "Aucun devis ne correspond aux filtres actuellement sélectionnés."
           }
+          actionLabel={quotes.length === 0 ? "Créer un devis" : undefined}
+          onAction={quotes.length === 0 ? openCreateForm : undefined}
         />
       ) : null}
 
@@ -677,7 +691,8 @@ export function QuotesPage() {
                       disabled={
                         updatingStatusQuoteId === quote.id ||
                         duplicatingQuoteId === quote.id ||
-                        deletingQuoteId === quote.id
+                        deletingQuoteId === quote.id ||
+                        downloadingQuoteId === quote.id
                       }
                     >
                       <option value="draft">{getStatusLabel("draft")}</option>
@@ -689,7 +704,7 @@ export function QuotesPage() {
                     </Select>
                   </td>
 
-                  <td>{quote.issue_date}</td>
+                  <td>{formatDisplayDate(quote.issue_date)}</td>
 
                   <td style={{ textAlign: "right" }}>
                     <strong>{formatCurrency(quote.total_ttc)}</strong>
@@ -698,35 +713,74 @@ export function QuotesPage() {
                   <td style={{ textAlign: "right" }}>
                     <div className="quotes-premium-page__row-actions">
                       <Link to={`/devis/${quote.id}`} className="quotes-premium-page__row-link">
-                        <Button type="button" variant="secondary">
-                          Ouvrir
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          iconOnly
+                          aria-label={`Ouvrir ${quote.quote_number}`}
+                          title="Ouvrir"
+                        >
+                          <EyeIcon />
                         </Button>
                       </Link>
 
                       <Button
                         type="button"
                         variant="secondary"
-                        onClick={() => handleDuplicateQuote(quote.id)}
+                        size="sm"
+                        iconOnly
+                        onClick={() => void handleDownloadQuote(quote)}
                         disabled={
+                          downloadingQuoteId === quote.id ||
                           duplicatingQuoteId === quote.id ||
                           deletingQuoteId === quote.id ||
                           updatingStatusQuoteId === quote.id
                         }
+                        aria-label={
+                          downloadingQuoteId === quote.id
+                            ? `Génération du PDF ${quote.quote_number}`
+                            : `Télécharger le PDF ${quote.quote_number}`
+                        }
+                        title="Télécharger le PDF"
                       >
-                        {duplicatingQuoteId === quote.id ? "Duplication..." : "Dupliquer"}
+                        <DownloadIcon />
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        iconOnly
+                        onClick={() => handleDuplicateQuote(quote.id)}
+                        disabled={
+                          duplicatingQuoteId === quote.id ||
+                          deletingQuoteId === quote.id ||
+                          updatingStatusQuoteId === quote.id ||
+                          downloadingQuoteId === quote.id
+                        }
+                        aria-label={`Dupliquer ${quote.quote_number}`}
+                        title="Dupliquer"
+                      >
+                        <CopyIcon />
                       </Button>
 
                       <Button
                         type="button"
                         variant="danger"
+                        size="sm"
+                        iconOnly
                         onClick={() => handleDeleteQuote(quote.id)}
                         disabled={
                           deletingQuoteId === quote.id ||
                           duplicatingQuoteId === quote.id ||
-                          updatingStatusQuoteId === quote.id
+                          updatingStatusQuoteId === quote.id ||
+                          downloadingQuoteId === quote.id
                         }
+                        aria-label={`Supprimer ${quote.quote_number}`}
+                        title="Supprimer"
                       >
-                        {deletingQuoteId === quote.id ? "Suppression..." : "Supprimer"}
+                        <TrashIcon />
                       </Button>
                     </div>
                   </td>
@@ -758,7 +812,7 @@ export function QuotesPage() {
 
                 <div className="quotes-premium-page__quote-card-meta">
                   <span className="quotes-premium-page__quote-card-date">
-                    {quote.issue_date}
+                    {formatDisplayDate(quote.issue_date)}
                   </span>
                   <div className="quotes-premium-page__quote-card-status">
                     <Select
@@ -769,7 +823,8 @@ export function QuotesPage() {
                       disabled={
                         updatingStatusQuoteId === quote.id ||
                         duplicatingQuoteId === quote.id ||
-                        deletingQuoteId === quote.id
+                        deletingQuoteId === quote.id ||
+                        downloadingQuoteId === quote.id
                       }
                     >
                       <option value="draft">{getStatusLabel("draft")}</option>
@@ -785,6 +840,7 @@ export function QuotesPage() {
                 <div className="quotes-premium-page__quote-card-actions">
                   <Link to={`/devis/${quote.id}`} className="quotes-premium-page__row-link" style={{ flex: "1 1 auto" }}>
                     <Button type="button" variant="secondary" style={{ width: "100%", justifyContent: "center" }}>
+                      <EyeIcon />
                       Ouvrir
                     </Button>
                   </Link>
@@ -792,27 +848,56 @@ export function QuotesPage() {
                   <Button
                     type="button"
                     variant="secondary"
-                    onClick={() => handleDuplicateQuote(quote.id)}
+                    iconOnly
+                    onClick={() => void handleDownloadQuote(quote)}
                     disabled={
+                      downloadingQuoteId === quote.id ||
                       duplicatingQuoteId === quote.id ||
                       deletingQuoteId === quote.id ||
                       updatingStatusQuoteId === quote.id
                     }
+                    aria-label={
+                      downloadingQuoteId === quote.id
+                        ? `Génération du PDF ${quote.quote_number}`
+                        : `Télécharger le PDF ${quote.quote_number}`
+                    }
+                    title="Télécharger le PDF"
                   >
-                    {duplicatingQuoteId === quote.id ? "Duplication..." : "Dupliquer"}
+                    <DownloadIcon />
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    iconOnly
+                    onClick={() => handleDuplicateQuote(quote.id)}
+                    disabled={
+                      duplicatingQuoteId === quote.id ||
+                      deletingQuoteId === quote.id ||
+                      updatingStatusQuoteId === quote.id ||
+                      downloadingQuoteId === quote.id
+                    }
+                    aria-label={`Dupliquer ${quote.quote_number}`}
+                    title="Dupliquer"
+                  >
+                    <CopyIcon />
                   </Button>
 
                   <Button
                     type="button"
                     variant="danger"
+                    iconOnly
                     onClick={() => handleDeleteQuote(quote.id)}
                     disabled={
                       deletingQuoteId === quote.id ||
                       duplicatingQuoteId === quote.id ||
-                      updatingStatusQuoteId === quote.id
+                      updatingStatusQuoteId === quote.id ||
+                      downloadingQuoteId === quote.id
                     }
+                    aria-label={`Supprimer ${quote.quote_number}`}
+                    title="Supprimer"
                   >
-                    {deletingQuoteId === quote.id ? "Suppression..." : "Supprimer"}
+                    <TrashIcon />
                   </Button>
                 </div>
               </article>

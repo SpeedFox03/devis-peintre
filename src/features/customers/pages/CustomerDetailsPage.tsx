@@ -11,6 +11,8 @@ import { FormGrid } from "../../../components/ui/FormGrid/FormGrid";
 import { TextArea } from "../../../components/ui/TextArea/TextArea";
 import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import { LoadingBlock } from "../../../components/ui/LoadingBlock/LoadingBlock";
+import { ArchiveIcon, EyeIcon, PlusIcon } from "../../../components/ui/Icons/AppIcons";
+import { formatDisplayDate } from "../../../lib/formatters";
 import {
   useCustomerDetails,
   getCustomerName,
@@ -117,15 +119,11 @@ export function CustomerDetailsPage() {
           <h1 className="customer-details-premium-page__title">
             {getCustomerName(customer)}
           </h1>
-          <p className="customer-details-premium-page__description">
-            Consulte les coordonnées, mets à jour les informations principales
-            et retrouve rapidement l'historique des devis associés.
-          </p>
         </div>
 
         <div className="customer-details-premium-page__hero-actions">
           <Link to={`/?new=1&customerId=${customer.id}`}>
-            <Button type="button">Créer un devis</Button>
+            <Button type="button"><PlusIcon />Créer un devis</Button>
           </Link>
 
           <Button
@@ -134,6 +132,7 @@ export function CustomerDetailsPage() {
             onClick={handleArchiveCustomer}
             disabled={archiving}
           >
+            <ArchiveIcon />
             {archiving ? "Archivage..." : "Archiver"}
           </Button>
         </div>
@@ -164,7 +163,7 @@ export function CustomerDetailsPage() {
         <Card>
           <p className="customer-details-premium-page__stat-label">Créé le</p>
           <p className="customer-details-premium-page__stat-value customer-details-premium-page__stat-value--date">
-            {new Date(customer.created_at).toLocaleDateString("fr-BE")}
+            {formatDisplayDate(customer.created_at)}
           </p>
         </Card>
       </div>
@@ -209,13 +208,15 @@ export function CustomerDetailsPage() {
                       </td>
                       <td>{quote.title}</td>
                       <td>{getStatusLabel(quote.status)}</td>
-                      <td>{quote.issue_date}</td>
+                      <td>{formatDisplayDate(quote.issue_date)}</td>
                       <td style={{ textAlign: "right" }}>
                         <strong>{formatCurrency(quote.total_ttc)}</strong>
                       </td>
                       <td style={{ textAlign: "right" }}>
                         <Link to={`/devis/${quote.id}`}>
-                          <Button type="button" variant="secondary">Ouvrir</Button>
+                          <Button type="button" variant="secondary" size="sm">
+                            <EyeIcon />Ouvrir
+                          </Button>
                         </Link>
                       </td>
                     </tr>
@@ -249,7 +250,7 @@ export function CustomerDetailsPage() {
 
                     <div className="customer-details-premium-page__quote-card-meta">
                       <span className="customer-details-premium-page__quote-card-date">
-                        {quote.issue_date}
+                        {formatDisplayDate(quote.issue_date)}
                       </span>
                       <span className="customer-details-premium-page__quote-card-status">
                         {getStatusLabel(quote.status)}
@@ -263,6 +264,7 @@ export function CustomerDetailsPage() {
                           variant="secondary"
                           style={{ width: "100%", justifyContent: "center" }}
                         >
+                          <EyeIcon />
                           Ouvrir
                         </Button>
                       </Link>

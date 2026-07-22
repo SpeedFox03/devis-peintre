@@ -33,9 +33,32 @@
   min-width: 0;
 }
 
-.quote-rooms-premium__card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.quote-rooms-premium__card-main { min-width: 0; }
-.quote-rooms-premium__card-title { margin: 0; color: #111827; font-size: 1rem; line-height: 1.3; overflow-wrap: anywhere; }
+.quote-rooms-premium__card-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.quote-rooms-premium__card-main {
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.quote-rooms-premium__card-title {
+  margin: 0;
+  color: #111827;
+  font-size: 1rem;
+  line-height: 1.3;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.quote-rooms-premium__badges {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
 
 /* Badge brun */
 .quote-rooms-premium__badge {
@@ -52,14 +75,327 @@
   font-weight: 700;
 }
 
-.quote-rooms-premium__card-actions { display: flex; justify-content: flex-start; }
+.quote-rooms-premium__badge--photos {
+  background: var(--surface-muted);
+  color: var(--text-soft);
+  border-color: var(--border);
+}
+
+.quote-rooms-premium__card-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.quote-rooms-premium__card-actions .ui-button {
+  width: 100%;
+}
+
+.quote-rooms-premium__file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.quote-room-gallery__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(47, 33, 24, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.quote-room-gallery {
+  width: min(960px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.quote-room-gallery:focus {
+  outline: none;
+}
+
+.quote-room-gallery__header,
+.quote-room-gallery__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.quote-room-gallery__eyebrow,
+.quote-room-gallery__counter {
+  margin: 0 0 4px;
+  color: var(--text-soft);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.quote-room-gallery__title {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 1.25rem;
+}
+
+.quote-room-gallery__viewer {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 42px;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: var(--primary-strong);
+}
+
+.quote-room-gallery__figure {
+  min-width: 0;
+  min-height: 300px;
+  max-height: 58vh;
+  margin: 0;
+  display: grid;
+  place-items: center;
+}
+
+.quote-room-gallery__image {
+  width: 100%;
+  height: 100%;
+  max-height: 58vh;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+}
+
+:root .quote-room-gallery__nav.ui-button.ui-button--secondary {
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  padding: 0;
+  border-color: rgba(255, 248, 242, 0.2);
+  background: rgba(255, 248, 242, 0.12);
+  color: #fff8f2;
+  font-size: 1.7rem;
+}
+
+:root .quote-room-gallery__nav.ui-button.ui-button--secondary:hover:not(:disabled) {
+  border-color: rgba(255, 248, 242, 0.36);
+  background: rgba(255, 248, 242, 0.2);
+  color: #fff8f2;
+}
+
+.quote-room-gallery__filename {
+  margin: 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.quote-room-gallery__meta-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.quote-room-gallery__status {
+  min-height: 240px;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+  color: var(--text-soft);
+  text-align: center;
+}
+
+.quote-room-gallery__thumbnails {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 2px 2px 8px;
+}
+
+.quote-room-gallery__thumbnail {
+  width: 82px;
+  height: 64px;
+  flex: 0 0 auto;
+  padding: 3px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  cursor: pointer;
+}
+
+.quote-room-gallery__thumbnail:hover,
+.quote-room-gallery__thumbnail--active {
+  border-color: var(--primary);
+}
+
+.quote-room-gallery__thumbnail-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+  object-fit: cover;
+}
 
 @media (max-width: 720px) {
   .quote-rooms-premium__shell { padding: 16px; }
-  .quote-rooms-premium__header, .quote-rooms-premium__card-top { flex-direction: column; align-items: flex-start; }
-  .quote-rooms-premium__header-actions { width: 100%; }
-  .quote-rooms-premium__header-actions > * { flex: 1 1 100%; }
+  .quote-rooms-premium__header { align-items: center; }
+  .quote-rooms-premium__header-actions { flex: 0 0 auto; }
+  .quote-rooms-premium__card-top { align-items: flex-start; }
   .quote-rooms-premium__grid { grid-template-columns: 1fr; }
+
+  .quote-room-gallery__backdrop {
+    padding: 0;
+    place-items: stretch;
+  }
+
+  .quote-room-gallery {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    gap: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    overflow: hidden;
+  }
+
+  .quote-room-gallery__header {
+    min-height: 68px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .quote-room-gallery__viewer {
+    position: relative;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    min-height: 0;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  .quote-room-gallery__figure {
+    width: 100%;
+    min-height: 0;
+    height: 100%;
+    touch-action: pan-y;
+  }
+
+  .quote-room-gallery__image {
+    max-height: none;
+    border-radius: 0;
+  }
+
+  :root .quote-room-gallery__nav.ui-button.ui-button--secondary {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    transform: translateY(-50%);
+    border-radius: var(--radius-pill);
+    background: rgba(47, 33, 24, 0.58);
+    backdrop-filter: blur(5px);
+  }
+
+  :root .quote-room-gallery__nav.ui-button.ui-button--secondary:first-child {
+    left: 10px;
+  }
+
+  :root .quote-room-gallery__nav.ui-button.ui-button--secondary:last-child {
+    right: 10px;
+  }
+
+  .quote-room-gallery__meta {
+    align-items: center;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .quote-room-gallery__meta > :first-child {
+    min-width: 0;
+  }
+
+  .quote-room-gallery__filename {
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .quote-room-gallery__meta-actions {
+    flex-wrap: nowrap;
+  }
+
+  .quote-room-gallery__meta-actions .ui-button {
+    width: auto;
+  }
+
+  .quote-room-gallery__thumbnails {
+    min-height: 72px;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border);
+    background: var(--surface-muted);
+  }
+
+  .quote-room-gallery__thumbnail {
+    width: 72px;
+    height: 54px;
+  }
+}
+
+@media (max-width: 430px) {
+  .quote-rooms-premium__card {
+    padding: 14px;
+  }
+
+  .quote-rooms-premium__badges {
+    justify-content: flex-start;
+  }
+
+  .quote-rooms-premium__card-top {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .quote-room-gallery__meta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .quote-room-gallery__filename {
+    max-width: calc(100vw - 28px);
+  }
+
+  .quote-room-gallery__meta-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .quote-rooms-premium__header-actions .ui-button--primary,

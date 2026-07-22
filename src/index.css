@@ -37,8 +37,11 @@
   --accent: #b18652;
 
   --danger: #8f4a3b;
+  --danger-soft: rgba(143, 74, 59, 0.1);
   --success: #5f7551;
+  --success-soft: rgba(95, 117, 81, 0.12);
   --warning: #b18652;
+  --warning-soft: rgba(177, 134, 82, 0.14);
 
   --shadow-xs: 0 1px 2px rgba(88, 62, 43, 0.05);
   --shadow-sm:

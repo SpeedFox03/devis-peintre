@@ -83,7 +83,54 @@
 
 .archived-customers-premium-page__table-shell table {
   width: 100%;
+  min-width: 860px;
   table-layout: fixed;
+}
+
+.archived-customers-premium-page__card-list {
+  display: none;
+}
+
+.archived-customers-premium-page__customer-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.archived-customers-premium-page__customer-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.archived-customers-premium-page__customer-card-name {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.archived-customers-premium-page__customer-card-date,
+.archived-customers-premium-page__customer-card-contact {
+  color: var(--text-soft);
+  font-size: 0.84rem;
+}
+
+.archived-customers-premium-page__customer-card-contact {
+  display: grid;
+  gap: 3px;
+}
+
+.archived-customers-premium-page__city-chip {
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 .archived-customers-premium-page__table-shell th:nth-child(1),
@@ -116,5 +163,18 @@
 
   .archived-customers-premium-page__hero-actions {
     justify-content: flex-start;
+  }
+
+  .archived-customers-premium-page__table-shell { display: none; }
+  .archived-customers-premium-page__card-list { display: grid; gap: 10px; }
+}
+
+@media (max-width: 640px) {
+  .archived-customers-premium-page {
+    gap: 14px;
+  }
+
+  .archived-customers-premium-page__title {
+    font-size: 1.65rem;
   }
 }

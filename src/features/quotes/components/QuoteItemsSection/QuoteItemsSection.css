@@ -276,6 +276,8 @@
 
 @media (max-width: 960px) {
   .quote-items-premium__filters { grid-template-columns: 1fr 1fr; }
+  .quote-items-premium__table-wrap { display: none; }
+  .quote-items-premium__card-list { display: grid; gap: 10px; }
 }
 
 @media (max-width: 720px) {
@@ -289,8 +291,6 @@
   .quote-items-premium__header-actions,
   .quote-items-premium__move-actions { width: 100%; }
 
-  .quote-items-premium__table-wrap { display: none; }
-  .quote-items-premium__card-list  { display: grid; gap: 10px; }
 }
 
 @media (max-width: 480px) {

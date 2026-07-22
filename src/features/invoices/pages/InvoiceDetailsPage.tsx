@@ -15,6 +15,8 @@ import { TextArea } from "../../../components/ui/TextArea/TextArea";
 import { Select } from "../../../components/ui/Select/Select";
 import { exportPeppolInvoiceXml } from "../peppol/exportPeppolInvoiceXml";
 import { sendPeppolInvoice } from "../peppol/sendPeppolInvoice";
+import { TrashIcon } from "../../../components/ui/Icons/AppIcons";
+import { formatDisplayDate } from "../../../lib/formatters";
 import "./InvoiceDetailsPage.css";
 
 type InvoiceStatus =
@@ -678,8 +680,8 @@ export function InvoiceDetailsPage() {
             {[
               ["Numéro", invoice.invoice_number],
               ["Type", getInvoiceTypeLabel(invoice.invoice_type)],
-              ["Date", invoice.issue_date],
-              ["Échéance", invoice.due_date || "—"],
+              ["Date", formatDisplayDate(invoice.issue_date)],
+              ["Échéance", formatDisplayDate(invoice.due_date)],
               ["Devise", invoice.currency_code],
             ].map(([label, value]) => (
               <div key={label} className="invoice-details-premium__info-row">
@@ -950,7 +952,12 @@ export function InvoiceDetailsPage() {
       <Card className="invoice-details-premium__section">
         <h2 className="invoice-details-premium__section-title">Paiements ({payments.length})</h2>
         {payments.length === 0 ? (
-          <EmptyState title="Aucun paiement" description="Ajoute un paiement pour suivre le règlement de cette facture." />
+          <EmptyState
+            title="Aucun paiement"
+            description="Ajoute un paiement pour suivre le règlement de cette facture."
+            actionLabel="Ajouter un paiement"
+            onAction={openPaymentForm}
+          />
         ) : (
           <>
             {/* Tableau desktop */}
@@ -969,15 +976,24 @@ export function InvoiceDetailsPage() {
               >
                 {payments.map((payment) => (
                   <tr key={payment.id}>
-                    <td>{payment.payment_date}</td>
+                    <td>{formatDisplayDate(payment.payment_date)}</td>
                     <td><strong>{Number(payment.amount).toFixed(2)} €</strong></td>
                     <td>{getPaymentMethodLabel(payment.payment_method)}</td>
                     <td>{payment.reference || "—"}</td>
                     <td>{payment.notes || "—"}</td>
                     <td>
                       <div className="invoice-details-premium__payment-actions">
-                        <Button type="button" size="sm" variant="danger" disabled={deletingPaymentId === payment.id} onClick={() => handleDeletePayment(payment.id)}>
-                          {deletingPaymentId === payment.id ? "Suppression..." : "Supprimer"}
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="danger"
+                          iconOnly
+                          disabled={deletingPaymentId === payment.id}
+                          onClick={() => handleDeletePayment(payment.id)}
+                          aria-label="Supprimer le paiement"
+                          title="Supprimer"
+                        >
+                          <TrashIcon />
                         </Button>
                       </div>
                     </td>
@@ -993,7 +1009,7 @@ export function InvoiceDetailsPage() {
                   <div className="invoice-details-premium__payment-card-header">
                     <div style={{ display: "grid", gap: 4 }}>
                       <span className="invoice-details-premium__payment-card-amount">{Number(payment.amount).toFixed(2)} €</span>
-                      <span style={{ color: "#6b7280", fontSize: "0.82rem" }}>{payment.payment_date}</span>
+                      <span style={{ color: "var(--text-soft)", fontSize: "0.82rem" }}>{formatDisplayDate(payment.payment_date)}</span>
                     </div>
                   </div>
                   <div className="invoice-details-premium__payment-card-meta">
@@ -1003,6 +1019,7 @@ export function InvoiceDetailsPage() {
                   {payment.notes && <p style={{ margin: 0, color: "#6b7280", fontSize: "0.85rem" }}>{payment.notes}</p>}
                   <div className="invoice-details-premium__payment-card-actions">
                     <Button type="button" variant="danger" disabled={deletingPaymentId === payment.id} onClick={() => handleDeletePayment(payment.id)}>
+                      <TrashIcon />
                       {deletingPaymentId === payment.id ? "Suppression..." : "Supprimer"}
                     </Button>
                   </div>

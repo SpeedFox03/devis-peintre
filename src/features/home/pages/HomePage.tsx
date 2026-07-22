@@ -1,10 +1,18 @@
 import { Link } from "react-router-dom";
+import type { ReactNode } from "react";
 import { useAuth } from "../../auth/hooks/useAuth";
+import {
+  CatalogIcon,
+  InvoiceIcon,
+  QuoteIcon,
+  SettingsIcon,
+  UsersIcon,
+} from "../../../components/ui/Icons/AppIcons";
 import "./HomePage.css";
 
 type NavCard = {
   to: string;
-  icon: string;
+  icon: ReactNode;
   eyebrow: string;
   label: string;
   description: string;
@@ -14,7 +22,7 @@ type NavCard = {
 const NAV_CARDS: NavCard[] = [
   {
     to: "/devis",
-    icon: "▦",
+    icon: <QuoteIcon />,
     eyebrow: "Pilotage",
     label: "Devis",
     description: "Créez, modifiez et envoyez vos devis. Suivez leur statut jusqu'à l'acceptation.",
@@ -22,7 +30,7 @@ const NAV_CARDS: NavCard[] = [
   },
   {
     to: "/clients",
-    icon: "◌",
+    icon: <UsersIcon />,
     eyebrow: "Pilotage",
     label: "Clients",
     description: "Gérez votre portefeuille clients, leurs coordonnées et leur historique.",
@@ -30,21 +38,21 @@ const NAV_CARDS: NavCard[] = [
   },
   {
     to: "/factures",
-    icon: "▤",
+    icon: <InvoiceIcon />,
     eyebrow: "Comptabilité",
     label: "Factures",
     description: "Transformez vos devis acceptés en factures et suivez les règlements.",
   },
   {
     to: "/catalogue",
-    icon: "◇",
+    icon: <CatalogIcon />,
     eyebrow: "Configuration",
     label: "Catalogue",
     description: "Gérez vos prestations types, unités et tarifs pour accélérer la saisie.",
   },
   {
     to: "/parametres",
-    icon: "⚙",
+    icon: <SettingsIcon />,
     eyebrow: "Configuration",
     label: "Paramètres",
     description: "Coordonnées entreprise, logo, TVA par défaut et mise en page PDF.",
@@ -68,9 +76,6 @@ export function HomePage() {
         <h1 className="home-page__title">
           {firstName ? `Bonjour, ${firstName} !` : "Bonjour !"}
         </h1>
-        <p className="home-page__subtitle">
-          Que souhaitez-vous faire aujourd'hui ?
-        </p>
       </header>
 
       <nav className="home-page__grid" aria-label="Navigation principale">

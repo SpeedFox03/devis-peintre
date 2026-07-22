@@ -10,6 +10,8 @@ import { Button } from "../../../components/ui/Button/Button";
 import { FormField } from "../../../components/ui/FormField/FormField";
 import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import { Select } from "../../../components/ui/Select/Select";
+import { EyeIcon } from "../../../components/ui/Icons/AppIcons";
+import { formatDisplayDate } from "../../../lib/formatters";
 import "./InvoicesPage.css";
 
 type InvoiceStatus =
@@ -118,9 +120,6 @@ export function InvoicesPage() {
         <div className="invoices-premium-page__hero-main">
           <p className="invoices-premium-page__eyebrow">Comptabilité</p>
           <h1 className="invoices-premium-page__title">Factures</h1>
-          <p className="invoices-premium-page__description">
-            Consulte et filtre les factures générées depuis les devis.
-          </p>
         </div>
       </header>
 
@@ -202,15 +201,15 @@ export function InvoicesPage() {
                       {getInvoiceStatusLabel(invoice.status)}
                     </span>
                   </td>
-                  <td>{invoice.issue_date}</td>
-                  <td>{invoice.due_date || "—"}</td>
+                  <td>{formatDisplayDate(invoice.issue_date)}</td>
+                  <td>{formatDisplayDate(invoice.due_date)}</td>
                   <td><strong>{formatCurrency(invoice.total_ttc)}</strong></td>
                   <td>{formatCurrency(invoice.amount_paid)}</td>
                   <td>{formatCurrency(invoice.balance_due)}</td>
                   <td>
                     <div className="invoices-premium-page__row-actions">
                       <Link to={`/factures/${invoice.id}`}>
-                        <Button size="sm" type="button">Voir</Button>
+                        <Button size="sm" type="button"><EyeIcon />Voir</Button>
                       </Link>
                       {invoice.source_quote_id && (
                         <Link to={`/devis/${invoice.source_quote_id}`}>
@@ -250,8 +249,8 @@ export function InvoicesPage() {
                     {getInvoiceStatusLabel(invoice.status)}
                   </span>
                   <span className="invoices-premium-page__invoice-card-date">
-                    {invoice.issue_date}
-                    {invoice.due_date ? ` · éch. ${invoice.due_date}` : ""}
+                    {formatDisplayDate(invoice.issue_date)}
+                    {invoice.due_date ? ` · éch. ${formatDisplayDate(invoice.due_date)}` : ""}
                   </span>
                 </div>
 
@@ -268,7 +267,7 @@ export function InvoicesPage() {
 
                 <div className="invoices-premium-page__invoice-card-actions">
                   <Link to={`/factures/${invoice.id}`} style={{ flex: "1 1 auto" }}>
-                    <Button type="button" style={{ width: "100%", justifyContent: "center" }}>Voir</Button>
+                    <Button type="button" style={{ width: "100%", justifyContent: "center" }}><EyeIcon />Voir</Button>
                   </Link>
                   {invoice.source_quote_id && (
                     <Link to={`/devis/${invoice.source_quote_id}`} style={{ flex: "1 1 auto" }}>

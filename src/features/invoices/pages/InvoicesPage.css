@@ -79,6 +79,7 @@
 
 .invoices-premium-page__table-shell table {
   width: 100%;
+  min-width: 1180px;
   table-layout: fixed;
 }
 
@@ -272,6 +273,9 @@
     align-items: flex-start;
     padding: 18px 20px;
   }
+
+  .invoices-premium-page__table-shell { display: none; }
+  .invoices-premium-page__card-list { display: grid; gap: 10px; }
 }
 
 @media (max-width: 640px) {
@@ -288,7 +292,4 @@
     grid-template-columns: 1fr;
   }
 
-  /* Masquer tableau, afficher cartes */
-  .invoices-premium-page__table-shell { display: none; }
-  .invoices-premium-page__card-list   { display: grid; gap: 10px; }
 }

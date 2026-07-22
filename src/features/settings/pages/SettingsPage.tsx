@@ -859,16 +859,17 @@ export function SettingsPage() {
   const tabNav = (
     <nav className="quote-topbar-nav" aria-label="Pages des paramètres">
       {settingsPages.map((page) => (
-        <button
+        <Button
           key={page.id}
           type="button"
+          variant={activePage === page.id ? "primary" : "secondary"}
           className={`quote-topbar-nav__tab ${
             activePage === page.id ? "quote-topbar-nav__tab--active" : ""
           }`}
           onClick={() => setActivePage(page.id)}
         >
           {page.label}
-        </button>
+        </Button>
       ))}
     </nav>
   );
@@ -876,16 +877,17 @@ export function SettingsPage() {
   const tabNavMobile = (
     <div className="quote-page-tabs-mobile" aria-label="Pages des paramètres">
       {settingsPages.map((page) => (
-        <button
+        <Button
           key={page.id}
           type="button"
+          variant={activePage === page.id ? "primary" : "secondary"}
           className={`quote-topbar-nav__tab ${
             activePage === page.id ? "quote-topbar-nav__tab--active" : ""
           }`}
           onClick={() => setActivePage(page.id)}
         >
           {page.label}
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -948,10 +950,6 @@ export function SettingsPage() {
         <div className="settings-premium-page__hero-main">
           <p className="settings-premium-page__eyebrow">Configuration</p>
           <h1 className="settings-premium-page__title">Paramètres entreprise</h1>
-          <p className="settings-premium-page__description">
-            Centralise les informations de ton entreprise et définis les valeurs
-            par défaut utilisées dans tes devis et tes futurs documents.
-          </p>
         </div>
         <div className="settings-premium-page__hero-actions">
           <Button variant="secondary" onClick={resetForm}>

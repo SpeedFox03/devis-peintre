@@ -229,6 +229,10 @@
   overflow: hidden;
 }
 
+.customer-details-premium-page__table-shell table {
+  min-width: 760px;
+}
+
 .customer-details-premium-page__quote-card-list {
   display: none;
 }
@@ -358,6 +362,9 @@
   .customer-details-premium-page__stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .customer-details-premium-page__table-shell { display: none; }
+  .customer-details-premium-page__quote-card-list { display: grid; gap: 10px; }
 }
 
 @media (max-width: 640px) {
@@ -387,7 +394,4 @@
     justify-content: center;
   }
 
-  /* Basculer tableau → cartes pour les devis liés */
-  .customer-details-premium-page__table-shell { display: none; }
-  .customer-details-premium-page__quote-card-list { display: grid; gap: 10px; }
 }

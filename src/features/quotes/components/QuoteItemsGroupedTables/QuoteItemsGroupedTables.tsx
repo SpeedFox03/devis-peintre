@@ -69,6 +69,7 @@ function renderRows(
         <div className="quote-items-grouped-premium__actions">
           <Button
             size="sm"
+            iconOnly
             onClick={() => onEdit(item)}
             aria-label="Modifier"
             title="Modifier"
@@ -79,6 +80,7 @@ function renderRows(
           <Button
             size="sm"
             variant="secondary"
+            iconOnly
             onClick={() => onDuplicate(item)}
             aria-label="Dupliquer"
             title="Dupliquer"
@@ -89,6 +91,7 @@ function renderRows(
           <Button
             size="sm"
             variant="secondary"
+            iconOnly
             onClick={() => onOpenMove(item)}
             aria-label="Déplacer"
             title="Déplacer"
@@ -99,6 +102,7 @@ function renderRows(
           <Button
             size="sm"
             variant="danger"
+            iconOnly
             disabled={deletingItemId === item.id}
             onClick={() => onDelete(item.id)}
             aria-label="Supprimer"

@@ -5,6 +5,7 @@ import type {
 } from "pdfmake/interfaces";
 
 import type { QuotePdfData } from "./quotePdfTypes";
+import { formatDisplayDate } from "../../../lib/formatters";
 
 // ─── Palettes ─────────────────────────────────────────────────────────────────
 
@@ -121,9 +122,9 @@ function makeHeader(data: QuotePdfData, cp: CompactPalette): Content {
         stack: [
           { text: "DEVIS", fontSize: 8, characterSpacing: 2, color: cp.ACCENT, margin: [0, 0, 0, 3] },
           { text: data.quote.quote_number, bold: true, fontSize: 14, color: cp.TEXT_DARK, margin: [0, 0, 0, 4] },
-          { text: `Date : ${data.quote.issue_date}`, fontSize: 8, color: cp.ACCENT_SOFT, margin: [0, 0, 0, 2] },
+          { text: `Date : ${formatDisplayDate(data.quote.issue_date, "-")}`, fontSize: 8, color: cp.ACCENT_SOFT, margin: [0, 0, 0, 2] },
           data.quote.valid_until
-            ? { text: `Validité : ${data.quote.valid_until}`, fontSize: 8, color: cp.ACCENT_SOFT }
+            ? { text: `Validité : ${formatDisplayDate(data.quote.valid_until, "-")}`, fontSize: 8, color: cp.ACCENT_SOFT }
             : { text: "" },
         ],
       },

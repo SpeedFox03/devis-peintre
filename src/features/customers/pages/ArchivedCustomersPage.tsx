@@ -9,6 +9,8 @@ import { Card } from "../../../components/ui/Card/Card";
 import { DataTable } from "../../../components/ui/DataTable/DataTable";
 import { FormField } from "../../../components/ui/FormField/FormField";
 import { TextInput } from "../../../components/ui/TextInput/TextInput";
+import { RestoreIcon } from "../../../components/ui/Icons/AppIcons";
+import { formatDisplayDate } from "../../../lib/formatters";
 import "./ArchivedCustomersPage.css";
 
 type ArchivedCustomer = {
@@ -134,9 +136,6 @@ export function ArchivedCustomersPage() {
           <h1 className="archived-customers-premium-page__title">
             Clients archivés
           </h1>
-          <p className="archived-customers-premium-page__description">
-            Retrouve les clients mis de côté et restaure-les rapidement si besoin.
-          </p>
         </div>
 
         <div className="archived-customers-premium-page__hero-actions">
@@ -148,15 +147,6 @@ export function ArchivedCustomersPage() {
 
       <Card>
         <div className="archived-customers-premium-page__filters">
-          <div className="archived-customers-premium-page__filters-intro">
-            <p className="archived-customers-premium-page__section-eyebrow">
-              Recherche
-            </p>
-            <h2 className="archived-customers-premium-page__section-title">
-              Parcourir les archives
-            </h2>
-          </div>
-
           <FormField label="Recherche">
             <TextInput
               value={search}
@@ -179,8 +169,9 @@ export function ArchivedCustomersPage() {
           }
         />
       ) : (
-        <div className="archived-customers-premium-page__table-shell">
-          <DataTable
+        <>
+          <div className="archived-customers-premium-page__table-shell">
+            <DataTable
             headers={
               <tr>
                 <th>Nom</th>
@@ -199,9 +190,7 @@ export function ArchivedCustomersPage() {
                 <td>{customer.phone || "-"}</td>
                 <td>{customer.billing_city || "-"}</td>
                 <td>
-                  {customer.archived_at
-                    ? new Date(customer.archived_at).toLocaleDateString("fr-BE")
-                    : "-"}
+                  {formatDisplayDate(customer.archived_at)}
                 </td>
                 <td style={{ textAlign: "right" }}>
                   <Button
@@ -210,6 +199,7 @@ export function ArchivedCustomersPage() {
                     onClick={() => handleRestore(customer.id)}
                     disabled={restoringCustomerId === customer.id}
                   >
+                    <RestoreIcon />
                     {restoringCustomerId === customer.id
                       ? "Restauration..."
                       : "Restaurer"}
@@ -217,8 +207,51 @@ export function ArchivedCustomersPage() {
                 </td>
               </tr>
             ))}
-          </DataTable>
-        </div>
+            </DataTable>
+          </div>
+
+          <div className="archived-customers-premium-page__card-list">
+            {filteredCustomers.map((customer) => (
+              <article
+                key={customer.id}
+                className="archived-customers-premium-page__customer-card"
+              >
+                <div className="archived-customers-premium-page__customer-card-header">
+                  <div>
+                    <h2 className="archived-customers-premium-page__customer-card-name">
+                      {getCustomerName(customer)}
+                    </h2>
+                    <p className="archived-customers-premium-page__customer-card-date">
+                      Archivé le {formatDisplayDate(customer.archived_at)}
+                    </p>
+                  </div>
+                  {customer.billing_city ? (
+                    <span className="archived-customers-premium-page__city-chip">
+                      {customer.billing_city}
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="archived-customers-premium-page__customer-card-contact">
+                  {customer.email ? <span>{customer.email}</span> : null}
+                  {customer.phone ? <span>{customer.phone}</span> : null}
+                </div>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => handleRestore(customer.id)}
+                  disabled={restoringCustomerId === customer.id}
+                >
+                  <RestoreIcon />
+                  {restoringCustomerId === customer.id
+                    ? "Restauration..."
+                    : "Restaurer"}
+                </Button>
+              </article>
+            ))}
+          </div>
+        </>
       )}
     </section>
   );

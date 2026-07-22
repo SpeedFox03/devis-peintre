@@ -168,6 +168,10 @@
   text-decoration: underline;
 }
 
+.auth-premium-page__form-mobile-brand {
+  display: none;
+}
+
 @media (max-width: 1100px) {
   .auth-premium-page {
     grid-template-columns: 1fr;

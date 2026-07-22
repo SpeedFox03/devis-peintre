@@ -13,6 +13,13 @@ import { Select } from "../../../components/ui/Select/Select";
 import { TextArea } from "../../../components/ui/TextArea/TextArea";
 import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import {
+  EyeIcon,
+  EyeOffIcon,
+  PencilIcon,
+  PlusIcon,
+  TrashIcon,
+} from "../../../components/ui/Icons/AppIcons";
+import {
   PAINT_CATEGORIES,
   PAINT_UNITS,
   getCategoryLabel,
@@ -281,10 +288,6 @@ export function ServiceCatalogPage() {
         <div className="catalog-premium-page__hero-main">
           <p className="catalog-premium-page__eyebrow">Bibliothèque métier</p>
           <h1 className="catalog-premium-page__title">Catalogue de prestations</h1>
-          <p className="catalog-premium-page__description">
-            Structure tes prestations récurrentes pour accélérer la création des devis
-            et uniformiser tes intitulés, unités et prix par défaut.
-          </p>
         </div>
 
         <div className="catalog-premium-page__hero-actions">
@@ -292,6 +295,7 @@ export function ServiceCatalogPage() {
             variant="primary"
             onClick={showForm ? closeCreateForm : openCreateForm}
           >
+            {showForm ? null : <PlusIcon />}
             {showForm ? "Fermer le formulaire" : "Nouvelle prestation"}
           </Button>
         </div>
@@ -333,10 +337,6 @@ export function ServiceCatalogPage() {
                   ? "Modifier la prestation"
                   : "Créer une prestation type"}
               </h2>
-              <p className="catalog-premium-page__section-description">
-                Enregistre une prestation métier standard pour la réutiliser ensuite
-                dans tes devis en un clic.
-              </p>
             </div>
           </div>
 
@@ -431,13 +431,6 @@ export function ServiceCatalogPage() {
       {!showForm && (
         <Card>
           <div className="catalog-premium-page__filters">
-            <div className="catalog-premium-page__filters-intro">
-              <p className="catalog-premium-page__section-eyebrow">Liste</p>
-              <h2 className="catalog-premium-page__section-title">
-                Prestations enregistrées
-              </h2>
-            </div>
-
             <div className="catalog-premium-page__filters-grid">
               <FormField label="Recherche">
                 <TextInput
@@ -535,24 +528,40 @@ export function ServiceCatalogPage() {
                   </td>
                   <td style={{ textAlign: "right" }}>
                     <div className="catalog-premium-page__row-actions">
-                      <Button type="button" variant="secondary" onClick={() => openEditForm(service)}>
-                        Modifier
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        iconOnly
+                        onClick={() => openEditForm(service)}
+                        aria-label={`Modifier ${service.name}`}
+                        title="Modifier"
+                      >
+                        <PencilIcon />
                       </Button>
                       <Button
                         type="button"
                         variant="secondary"
+                        size="sm"
+                        iconOnly
                         onClick={() => handleToggleActive(service)}
                         disabled={updatingServiceId === service.id}
+                        aria-label={service.is_active ? `Désactiver ${service.name}` : `Activer ${service.name}`}
+                        title={service.is_active ? "Désactiver" : "Activer"}
                       >
-                        {updatingServiceId === service.id ? "Mise à jour..." : service.is_active ? "Désactiver" : "Activer"}
+                        {service.is_active ? <EyeOffIcon /> : <EyeIcon />}
                       </Button>
                       <Button
                         type="button"
                         variant="danger"
+                        size="sm"
+                        iconOnly
                         onClick={() => handleDelete(service.id)}
                         disabled={deletingServiceId === service.id}
+                        aria-label={`Supprimer ${service.name}`}
+                        title="Supprimer"
                       >
-                        {deletingServiceId === service.id ? "Suppression..." : "Supprimer"}
+                        <TrashIcon />
                       </Button>
                     </div>
                   </td>
@@ -601,24 +610,37 @@ export function ServiceCatalogPage() {
                 </div>
 
                 <div className="catalog-premium-page__service-card-actions">
-                  <Button type="button" variant="secondary" onClick={() => openEditForm(service)}>
-                    Modifier
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    iconOnly
+                    onClick={() => openEditForm(service)}
+                    aria-label={`Modifier ${service.name}`}
+                    title="Modifier"
+                  >
+                    <PencilIcon />
                   </Button>
                   <Button
                     type="button"
                     variant="secondary"
+                    iconOnly
                     onClick={() => handleToggleActive(service)}
                     disabled={updatingServiceId === service.id}
+                    aria-label={service.is_active ? `Désactiver ${service.name}` : `Activer ${service.name}`}
+                    title={service.is_active ? "Désactiver" : "Activer"}
                   >
-                    {updatingServiceId === service.id ? "Mise à jour..." : service.is_active ? "Désactiver" : "Activer"}
+                    {service.is_active ? <EyeOffIcon /> : <EyeIcon />}
                   </Button>
                   <Button
                     type="button"
                     variant="danger"
+                    iconOnly
                     onClick={() => handleDelete(service.id)}
                     disabled={deletingServiceId === service.id}
+                    aria-label={`Supprimer ${service.name}`}
+                    title="Supprimer"
                   >
-                    {deletingServiceId === service.id ? "Suppression..." : "Supprimer"}
+                    <TrashIcon />
                   </Button>
                 </div>
               </article>

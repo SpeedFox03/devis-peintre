@@ -3,6 +3,15 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { Button } from "../../components/ui/Button/Button";
+import {
+  CatalogIcon,
+  CloseIcon,
+  InvoiceIcon,
+  MenuIcon,
+  QuoteIcon,
+  SettingsIcon,
+  UsersIcon,
+} from "../../components/ui/Icons/AppIcons";
 import "./Sidebar.css";
 
 function getNavLinkClassName({ isActive }: { isActive: boolean }) {
@@ -32,11 +41,12 @@ export function Sidebar() {
         <span className="app-sidebar__mobile-title">Devis Peintre</span>
         <Button
           className="app-sidebar__hamburger"
+          iconOnly
           aria-label={mobileOpen ? "Fermer le menu" : "Ouvrir le menu"}
           aria-expanded={mobileOpen}
           onClick={() => setMobileOpen((v) => !v)}
         >
-          {mobileOpen ? "✕" : "☰"}
+          {mobileOpen ? <CloseIcon /> : <MenuIcon />}
         </Button>
       </div>
 
@@ -68,22 +78,22 @@ export function Sidebar() {
             <p className="app-sidebar__section-title">Pilotage</p>
 
             <NavLink to="/devis" className={getNavLinkClassName} onClick={() => setMobileOpen(false)}>
-              <span className="app-sidebar__link-icon">▦</span>
+              <span className="app-sidebar__link-icon"><QuoteIcon /></span>
               <span>Devis</span>
             </NavLink>
 
             <NavLink to="/clients" className={getNavLinkClassName} onClick={() => setMobileOpen(false)}>
-              <span className="app-sidebar__link-icon">◌</span>
+              <span className="app-sidebar__link-icon"><UsersIcon /></span>
               <span>Clients</span>
             </NavLink>
 
             <NavLink to="/catalogue" className={getNavLinkClassName} onClick={() => setMobileOpen(false)}>
-              <span className="app-sidebar__link-icon">◇</span>
+              <span className="app-sidebar__link-icon"><CatalogIcon /></span>
               <span>Catalogue</span>
             </NavLink>
 
             <NavLink to="/factures" className={getNavLinkClassName} onClick={() => setMobileOpen(false)}>
-              <span className="app-sidebar__link-icon">▤</span>
+              <span className="app-sidebar__link-icon"><InvoiceIcon /></span>
               <span>Factures</span>
             </NavLink>
           </div>
@@ -92,7 +102,7 @@ export function Sidebar() {
             <p className="app-sidebar__section-title">Configuration</p>
 
             <NavLink to="/parametres" className={getNavLinkClassName} onClick={() => setMobileOpen(false)}>
-              <span className="app-sidebar__link-icon">⚙</span>
+              <span className="app-sidebar__link-icon"><SettingsIcon /></span>
               <span>Paramètres</span>
             </NavLink>
           </div>

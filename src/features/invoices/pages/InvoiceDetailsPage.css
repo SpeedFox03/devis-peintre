@@ -411,6 +411,10 @@
     flex: 1 1 auto;
     justify-content: center;
   }
+
+  .invoice-details-premium__table-shell { display: none; }
+  .invoice-details-premium__item-card-list,
+  .invoice-details-premium__payment-card-list { display: grid; gap: 8px; }
 }
 
 @media (max-width: 640px) {
@@ -427,8 +431,4 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  /* Masquer tableaux, afficher cartes */
-  .invoice-details-premium__table-shell { display: none; }
-  .invoice-details-premium__item-card-list    { display: grid; gap: 8px; }
-  .invoice-details-premium__payment-card-list { display: grid; gap: 8px; }
 }

@@ -8,9 +8,11 @@ type DataTableProps = {
 
 export function DataTable({ headers, children }: DataTableProps) {
   return (
-    <table className="ui-data-table">
-      <thead>{headers}</thead>
-      <tbody>{children}</tbody>
-    </table>
+    <div className="ui-data-table__scroll">
+      <table className="ui-data-table">
+        <thead>{headers}</thead>
+        <tbody>{children}</tbody>
+      </table>
+    </div>
   );
 }

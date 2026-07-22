@@ -15,6 +15,8 @@ import type {
   QuoteItemFormState,
   Room,
   RoomFormState,
+  RoomPhoto,
+  RoomPhotoWithUrl,
 } from "../types";
 import {
   createInitialItemForm,
@@ -25,12 +27,41 @@ import {
   mapItemToForm,
 } from "../utils/quoteDetailsForm";
 
+const ROOM_PHOTOS_BUCKET = "quote-room-photos";
+const MAX_ROOM_PHOTO_SIZE = 10 * 1024 * 1024;
+const ROOM_PHOTO_MIME_TYPES = new Map([
+  ["image/jpeg", "jpg"],
+  ["image/png", "png"],
+  ["image/webp", "webp"],
+]);
+
+async function fetchRoomPhotos(roomIds: string[]) {
+  if (roomIds.length === 0) {
+    return { photos: [] as RoomPhoto[], error: null as string | null };
+  }
+
+  const { data, error } = await supabase
+    .from("quote_room_photos")
+    .select(
+      "id, room_id, uploaded_by, storage_path, original_name, mime_type, size_bytes, caption, sort_order, created_at",
+    )
+    .in("room_id", roomIds)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  return {
+    photos: (data ?? []) as RoomPhoto[],
+    error: error?.message ?? null,
+  };
+}
+
 export function useQuoteDetailsPage() {
   const { quoteId } = useParams();
 
   const [quote, setQuote] = useState<QuoteDetails | null>(null);
   const [items, setItems] = useState<QuoteItem[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [roomPhotos, setRoomPhotos] = useState<RoomPhoto[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [customerOptions, setCustomerOptions] = useState<CustomerOption[]>([]);
@@ -42,6 +73,8 @@ export function useQuoteDetailsPage() {
   const [savingRoom, setSavingRoom] = useState(false);
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
   const [deletingRoomId, setDeletingRoomId] = useState<string | null>(null);
+  const [uploadingPhotoRoomId, setUploadingPhotoRoomId] = useState<string | null>(null);
+  const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [creatingInvoice, setCreatingInvoice] = useState(false);
   const [addingCatalogServiceId, setAddingCatalogServiceId] = useState<string | null>(null);
@@ -161,6 +194,16 @@ export function useQuoteDetailsPage() {
       if (companyCoreRes.error) { setError(companyCoreRes.error.message); setLoading(false); return; }
       if (customerCoreRes.error) { setError(customerCoreRes.error.message); setLoading(false); return; }
 
+      const loadedRooms = (roomsRes.data ?? []) as Room[];
+      const photosResult = await fetchRoomPhotos(loadedRooms.map((room) => room.id));
+
+      if (cancelled) return;
+      if (photosResult.error) {
+        setError(photosResult.error);
+        setLoading(false);
+        return;
+      }
+
       const companyAddr = companyAddrRes.data;
       const mergedCompany: Company = {
         ...companyCoreRes.data,
@@ -207,7 +250,8 @@ export function useQuoteDetailsPage() {
       setQuote(loadedQuote);
       setQuoteGeneralForm(createInitialQuoteGeneralForm(loadedQuote));
       setItems((itemsRes.data ?? []) as QuoteItem[]);
-      setRooms((roomsRes.data ?? []) as Room[]);
+      setRooms(loadedRooms);
+      setRoomPhotos(photosResult.photos);
       setCompany(mergedCompany);
       setCustomer(mergedCustomer);
       setCustomerOptions(availableCustomers);
@@ -300,6 +344,10 @@ export function useQuoteDetailsPage() {
     if (companyCoreRes.error) { setError(companyCoreRes.error.message); return; }
     if (customerCoreRes.error) { setError(customerCoreRes.error.message); return; }
 
+    const loadedRooms = (roomsRes.data ?? []) as Room[];
+    const photosResult = await fetchRoomPhotos(loadedRooms.map((room) => room.id));
+    if (photosResult.error) { setError(photosResult.error); return; }
+
     const companyAddr = companyAddrRes.data;
     const mergedCompany: Company = {
       ...companyCoreRes.data,
@@ -331,11 +379,24 @@ export function useQuoteDetailsPage() {
     setQuote(loadedQuote);
     setQuoteGeneralForm(createInitialQuoteGeneralForm(loadedQuote));
     setItems((itemsRes.data ?? []) as QuoteItem[]);
-    setRooms((roomsRes.data ?? []) as Room[]);
+    setRooms(loadedRooms);
+    setRoomPhotos(photosResult.photos);
     setCompany(mergedCompany);
     setCustomer(mergedCustomer);
     setServices((servicesRes.data ?? []) as ServiceCatalogItem[]);
     setError(null);
+  }
+
+  async function reloadRoomPhotos() {
+    const photosResult = await fetchRoomPhotos(rooms.map((room) => room.id));
+
+    if (photosResult.error) {
+      setError(photosResult.error);
+      return false;
+    }
+
+    setRoomPhotos(photosResult.photos);
+    return true;
   }
 
   function updateQuoteGeneralField<K extends keyof QuoteGeneralFormState>(
@@ -834,12 +895,180 @@ export function useQuoteDetailsPage() {
     await reloadQuoteData();
   }
 
+  async function handleUploadRoomPhotos(roomId: string, selectedFiles: File[]) {
+    if (!quoteId || !quote) {
+      setError("Devis introuvable.");
+      return false;
+    }
+
+    if (selectedFiles.length === 0) return false;
+
+    const unsupportedFile = selectedFiles.find(
+      (file) => !ROOM_PHOTO_MIME_TYPES.has(file.type),
+    );
+    if (unsupportedFile) {
+      setError(
+        `Le fichier « ${unsupportedFile.name} » n'est pas au format JPG, PNG ou WebP.`,
+      );
+      return false;
+    }
+
+    const oversizedFile = selectedFiles.find(
+      (file) => file.size > MAX_ROOM_PHOTO_SIZE,
+    );
+    if (oversizedFile) {
+      setError(`Le fichier « ${oversizedFile.name} » dépasse la limite de 10 Mo.`);
+      return false;
+    }
+
+    setUploadingPhotoRoomId(roomId);
+    setError(null);
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      setError("Utilisateur non connecté.");
+      setUploadingPhotoRoomId(null);
+      return false;
+    }
+
+    const roomPhotoOrders = roomPhotos
+      .filter((photo) => photo.room_id === roomId)
+      .map((photo) => photo.sort_order);
+    const firstSortOrder = getNextSortOrder(roomPhotoOrders);
+
+    try {
+      for (const [index, file] of selectedFiles.entries()) {
+        const extension = ROOM_PHOTO_MIME_TYPES.get(file.type);
+        if (!extension) continue;
+
+        const storagePath = `${user.id}/${quoteId}/${roomId}/${crypto.randomUUID()}.${extension}`;
+        const { error: uploadError } = await supabase.storage
+          .from(ROOM_PHOTOS_BUCKET)
+          .upload(storagePath, file, {
+            cacheControl: "3600",
+            contentType: file.type,
+            upsert: false,
+          });
+
+        if (uploadError) {
+          throw new Error(`Stockage Supabase : ${uploadError.message}`);
+        }
+
+        const { error: metadataError } = await supabase
+          .from("quote_room_photos")
+          .insert({
+            room_id: roomId,
+            uploaded_by: user.id,
+            storage_path: storagePath,
+            original_name: file.name,
+            mime_type: file.type,
+            size_bytes: file.size,
+            caption: null,
+            sort_order: firstSortOrder + index,
+          });
+
+        if (metadataError) {
+          await supabase.storage.from(ROOM_PHOTOS_BUCKET).remove([storagePath]);
+          throw new Error(`Enregistrement de la photo : ${metadataError.message}`);
+        }
+      }
+
+      return await reloadRoomPhotos();
+    } catch (uploadError) {
+      setError(
+        uploadError instanceof Error
+          ? uploadError.message
+          : "Impossible d'importer les photos.",
+      );
+      await reloadRoomPhotos();
+      return false;
+    } finally {
+      setUploadingPhotoRoomId(null);
+    }
+  }
+
+  async function handleLoadRoomGallery(roomId: string) {
+    const photos = roomPhotos.filter((photo) => photo.room_id === roomId);
+    if (photos.length === 0) return [] as RoomPhotoWithUrl[];
+
+    setError(null);
+
+    const { data, error: signedUrlError } = await supabase.storage
+      .from(ROOM_PHOTOS_BUCKET)
+      .createSignedUrls(
+        photos.map((photo) => photo.storage_path),
+        60 * 60,
+      );
+
+    if (signedUrlError || !data) {
+      setError(signedUrlError?.message ?? "Impossible d'ouvrir la galerie.");
+      return [] as RoomPhotoWithUrl[];
+    }
+
+    const signedUrls = new Map(
+      data
+        .filter((item) => item.path && item.signedUrl && !item.error)
+        .map((item) => [item.path as string, item.signedUrl]),
+    );
+
+    return photos.flatMap((photo) => {
+      const signedUrl = signedUrls.get(photo.storage_path);
+      return signedUrl ? [{ ...photo, signed_url: signedUrl }] : [];
+    });
+  }
+
+  async function handleDeleteRoomPhoto(photo: RoomPhoto) {
+    const confirmed = window.confirm("Supprimer cette photo ?");
+    if (!confirmed) return false;
+
+    setDeletingPhotoId(photo.id);
+    setError(null);
+
+    const { error: storageError } = await supabase.storage
+      .from(ROOM_PHOTOS_BUCKET)
+      .remove([photo.storage_path]);
+
+    if (storageError) {
+      setError(storageError.message);
+      setDeletingPhotoId(null);
+      return false;
+    }
+
+    const { error: metadataError } = await supabase
+      .from("quote_room_photos")
+      .delete()
+      .eq("id", photo.id);
+
+    if (metadataError) {
+      setError(metadataError.message);
+      setDeletingPhotoId(null);
+      return false;
+    }
+
+    setRoomPhotos((current) => current.filter((item) => item.id !== photo.id));
+    setDeletingPhotoId(null);
+    return true;
+  }
+
   async function handleDeleteRoom(roomId: string) {
     const roomHasItems = items.some((item) => item.room_id === roomId);
 
     if (roomHasItems) {
       setError(
         "Impossible de supprimer une pièce qui contient encore des lignes."
+      );
+      return;
+    }
+
+    const roomHasPhotos = roomPhotos.some((photo) => photo.room_id === roomId);
+
+    if (roomHasPhotos) {
+      setError(
+        "Impossible de supprimer une pièce qui contient encore des photos. Supprimez d'abord les photos depuis la galerie.",
       );
       return;
     }
@@ -919,6 +1148,7 @@ export function useQuoteDetailsPage() {
     quote,
     items,
     rooms,
+    roomPhotos,
     company,
     customer,
     customerOptions,
@@ -930,6 +1160,8 @@ export function useQuoteDetailsPage() {
     savingRoom,
     deletingItemId,
     deletingRoomId,
+    uploadingPhotoRoomId,
+    deletingPhotoId,
     downloadingPdf,
     creatingInvoice,
     addingCatalogServiceId,
@@ -984,6 +1216,9 @@ export function useQuoteDetailsPage() {
     handleDuplicateItem,
     handleDeleteItem,
     handleDeleteRoom,
+    handleUploadRoomPhotos,
+    handleLoadRoomGallery,
+    handleDeleteRoomPhoto,
     handleDownloadPdf,
 
     setCatalogSearch,

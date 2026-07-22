@@ -91,6 +91,7 @@ export function QuoteDetailsPage() {
     quote,
     items,
     rooms,
+    roomPhotos,
     customerOptions,
     services,
 
@@ -100,6 +101,8 @@ export function QuoteDetailsPage() {
     savingRoom,
     deletingItemId,
     deletingRoomId,
+    uploadingPhotoRoomId,
+    deletingPhotoId,
     downloadingPdf,
     creatingInvoice,
     addingCatalogServiceId,
@@ -152,6 +155,9 @@ export function QuoteDetailsPage() {
     handleDuplicateItem,
     handleDeleteItem,
     handleDeleteRoom,
+    handleUploadRoomPhotos,
+    handleLoadRoomGallery,
+    handleDeleteRoomPhoto,
     handleDownloadPdf,
 
     setCatalogSearch,
@@ -269,16 +275,22 @@ export function QuoteDetailsPage() {
                 <QuoteRoomsSection
                   rooms={rooms}
                   items={items}
+                  roomPhotos={roomPhotos}
                   showForm={showRoomForm}
                   form={roomForm}
                   saving={savingRoom}
                   error={error}
                   deletingRoomId={deletingRoomId}
+                  uploadingPhotoRoomId={uploadingPhotoRoomId}
+                  deletingPhotoId={deletingPhotoId}
                   onOpenForm={openRoomForm}
                   onCloseForm={closeRoomForm}
                   onSubmit={handleAddRoom}
                   onChange={updateRoomField}
                   onDelete={handleDeleteRoom}
+                  onUploadPhotos={handleUploadRoomPhotos}
+                  onLoadGallery={handleLoadRoomGallery}
+                  onDeletePhoto={handleDeleteRoomPhoto}
                 />
               </section>
 

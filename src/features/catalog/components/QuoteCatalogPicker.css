@@ -64,6 +64,7 @@
 
 .quote-catalog-picker-premium__table-shell table {
   width: 100%;
+  min-width: 760px;
   table-layout: fixed;
 }
 
@@ -147,7 +148,9 @@
     grid-template-columns: 1fr;
   }
 
-  /* Masquer tableau, afficher cartes */
+}
+
+@media (max-width: 820px) {
   .quote-catalog-picker-premium__table-shell { display: none; }
-  .quote-catalog-picker-premium__card-list   { display: grid; gap: 8px; }
+  .quote-catalog-picker-premium__card-list { display: grid; gap: 8px; }
 }

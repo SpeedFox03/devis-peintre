@@ -168,6 +168,10 @@
   text-decoration: underline;
 }
 
+.auth-premium-page__form-mobile-brand {
+  display: none;
+}
+
 @media (max-width: 1100px) {
   .auth-premium-page {
     grid-template-columns: 1fr;
@@ -253,8 +257,4 @@
     color: #2f2118;
     letter-spacing: -0.02em;
   }
-}
-
-.auth-premium-page__form-mobile-brand {
-  display: none;
 }

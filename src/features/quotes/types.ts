@@ -45,6 +45,23 @@ export type Room = {
   sort_order: number;
 };
 
+export type RoomPhoto = {
+  id: string;
+  room_id: string;
+  uploaded_by: string;
+  storage_path: string;
+  original_name: string | null;
+  mime_type: string | null;
+  size_bytes: number | null;
+  caption: string | null;
+  sort_order: number;
+  created_at: string;
+};
+
+export type RoomPhotoWithUrl = RoomPhoto & {
+  signed_url: string;
+};
+
 export type Company = {
   id: string;
   name: string;

@@ -6,6 +6,7 @@ import type {
 } from "pdfmake/interfaces";
 
 import type { QuotePdfData } from "./quotePdfTypes";
+import { formatDisplayDate } from "../../../lib/formatters";
 
 // ─── Palettes ─────────────────────────────────────────────────────────────────
 
@@ -301,8 +302,8 @@ export function buildQuotePdfDefinition(
               stack: [
                 { text: "DEVIS", color: p.ACCENT, fontSize: 9, characterSpacing: 1.2, margin: [0, 0, 0, 6] },
                 { text: data.quote.quote_number, bold: true, fontSize: 16, color: p.TEXT_DARK, margin: [0, 0, 0, 10] },
-                { columns: [{ text: "Date", color: p.TEXT_MUTED, width: "*" }, { text: data.quote.issue_date, bold: true, width: "auto" }], margin: [0, 0, 0, 4] },
-                { columns: [{ text: "Validité", color: p.TEXT_MUTED, width: "*" }, { text: data.quote.valid_until || "-", bold: true, width: "auto" }] },
+                { columns: [{ text: "Date", color: p.TEXT_MUTED, width: "*" }, { text: formatDisplayDate(data.quote.issue_date, "-"), bold: true, width: "auto" }], margin: [0, 0, 0, 4] },
+                { columns: [{ text: "Validité", color: p.TEXT_MUTED, width: "*" }, { text: formatDisplayDate(data.quote.valid_until, "-"), bold: true, width: "auto" }] },
               ],
               fillColor: p.BG_SECTION,
               border: [true, true, true, true],
