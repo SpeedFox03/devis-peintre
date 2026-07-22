@@ -17,6 +17,7 @@ import {
   EyeOffIcon,
   PencilIcon,
   PlusIcon,
+  RestoreIcon,
   TrashIcon,
 } from "../../../components/ui/Icons/AppIcons";
 import {
@@ -67,9 +68,11 @@ export function ServiceCatalogPage() {
   const [saving, setSaving] = useState(false);
   const [updatingServiceId, setUpdatingServiceId] = useState<string | null>(null);
   const [deletingServiceId, setDeletingServiceId] = useState<string | null>(null);
+  const [restoringDefaults, setRestoringDefaults] = useState(false);
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const [form, setForm] = useState<ServiceCatalogFormState>(initialForm);
 
@@ -91,11 +94,12 @@ export function ServiceCatalogPage() {
     if (error) {
       setError(error.message);
       setLoading(false);
-      return;
+      return false;
     }
 
     setServices((data ?? []) as ServiceCatalogItem[]);
     setLoading(false);
+    return true;
   }
 
   useEffect(() => {
@@ -137,6 +141,7 @@ export function ServiceCatalogPage() {
     setForm(initialForm);
     setEditingServiceId(null);
     setError(null);
+    setSuccessMessage(null);
   }
 
   function openCreateForm() {
@@ -229,6 +234,7 @@ export function ServiceCatalogPage() {
   async function handleToggleActive(service: ServiceCatalogItem) {
     setUpdatingServiceId(service.id);
     setError(null);
+    setSuccessMessage(null);
 
     const { error } = await supabase
       .from("service_catalog")
@@ -251,6 +257,7 @@ export function ServiceCatalogPage() {
 
     setDeletingServiceId(serviceId);
     setError(null);
+    setSuccessMessage(null);
 
     const { error } = await supabase
       .from("service_catalog")
@@ -265,6 +272,46 @@ export function ServiceCatalogPage() {
 
     setDeletingServiceId(null);
     await loadServices();
+  }
+
+  async function handleRestoreDefaults() {
+    const confirmed = window.confirm(
+      "Charger le catalogue par défaut ? Cette action remplacera toutes vos prestations actuelles par les 40 prestations du catalogue recommandé. Vos modifications et prestations personnalisées seront supprimées."
+    );
+
+    if (!confirmed) return;
+
+    setRestoringDefaults(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const { data, error: restoreError } = await supabase.rpc(
+        "reset_service_catalog_to_defaults"
+      );
+
+      if (restoreError) {
+        setError(restoreError.message);
+        return;
+      }
+
+      setShowForm(false);
+      resetForm();
+      const reloaded = await loadServices();
+      if (reloaded) {
+        setSuccessMessage(
+          `${Number(data ?? 40)} prestations par défaut ont été chargées avec les derniers tarifs.`
+        );
+      }
+    } catch (restoreError) {
+      setError(
+        restoreError instanceof Error
+          ? restoreError.message
+          : "Le catalogue par défaut n’a pas pu être chargé."
+      );
+    } finally {
+      setRestoringDefaults(false);
+    }
   }
 
   const totalServices = services.length;
@@ -288,18 +335,39 @@ export function ServiceCatalogPage() {
         <div className="catalog-premium-page__hero-main">
           <p className="catalog-premium-page__eyebrow">Bibliothèque métier</p>
           <h1 className="catalog-premium-page__title">Catalogue de prestations</h1>
+          <p className="catalog-premium-page__description">
+            Personnalisez vos prestations ou rechargez les 40 paramètres par défaut
+            basés sur la grille de prix moyenne recommandée.
+          </p>
         </div>
 
         <div className="catalog-premium-page__hero-actions">
           <Button
+            type="button"
+            variant="secondary"
+            onClick={handleRestoreDefaults}
+            disabled={restoringDefaults}
+          >
+            <RestoreIcon />
+            {restoringDefaults ? "Chargement..." : "Paramètres par défaut"}
+          </Button>
+
+          <Button
             variant="primary"
             onClick={showForm ? closeCreateForm : openCreateForm}
+            disabled={restoringDefaults}
           >
             {showForm ? null : <PlusIcon />}
             {showForm ? "Fermer le formulaire" : "Nouvelle prestation"}
           </Button>
         </div>
       </header>
+
+      {successMessage && (
+        <p className="catalog-premium-page__success" role="status">
+          {successMessage}
+        </p>
+      )}
 
       <div className="catalog-premium-page__stats">
         <Card>

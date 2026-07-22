@@ -48,6 +48,17 @@
   line-height: 1.55;
 }
 
+.catalog-premium-page__success {
+  margin: 0;
+  padding: 14px 18px;
+  border: 1px solid rgba(95, 117, 81, 0.24);
+  border-radius: 16px;
+  background: rgba(95, 117, 81, 0.1);
+  color: #405337;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .catalog-premium-page__hero-actions {
   display: flex;
   gap: 12px;
