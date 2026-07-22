@@ -9,9 +9,7 @@ import type { QuotePdfData } from "./quotePdfTypes";
 import { formatDisplayDate } from "../../../lib/formatters";
 import {
   ELEGANT_PAINT_TOP,
-  ELEGANT_PAINT_BOTLEFT,
   ELEGANT_PAINT_TOP_RECT,
-  ELEGANT_PAINT_BOTLEFT_RECT,
 } from "./elegantPaintAssets";
 import { ELEGANT_FONT_SERIF, ELEGANT_FONT_SCRIPT } from "./elegantFontAssets";
 
@@ -177,7 +175,7 @@ function makeHeaderLeft(data: QuotePdfData, p: ElegantPalette): Content {
         alignment: "left",
         // Compense la marge transparente du logo afin de centrer son contenu
         // visible entre le bord de page et le coup de pinceau.
-        relativePosition: { x: -55, y: -25 },
+        relativePosition: { x: -30, y: -25 },
       }],
     };
   }
@@ -502,15 +500,6 @@ function makeBackground(p: ElegantPalette, withTopPaint: boolean): Content {
   return layers as unknown as Content;
 }
 
-/** Coup de pinceau du coin bas-gauche, positionné en absolu (placé depuis le footer). */
-function bottomPaintLayer(): Content {
-  return {
-    image: ELEGANT_PAINT_BOTLEFT,
-    width: ELEGANT_PAINT_BOTLEFT_RECT.w,
-    absolutePosition: { x: ELEGANT_PAINT_BOTLEFT_RECT.x, y: ELEGANT_PAINT_BOTLEFT_RECT.y },
-  };
-}
-
 // ─── Export principal ─────────────────────────────────────────────────────────
 
 export function buildElegantQuotePdfDefinition(data: QuotePdfData): TDocumentDefinitions {
@@ -570,9 +559,6 @@ export function buildElegantQuotePdfDefinition(data: QuotePdfData): TDocumentDef
 
     ...makeNotesTerms(data, p),
 
-    // Peinture du bas : placée en absolu (coin bas-gauche), en dernier élément → elle
-    // se pose sur la dernière page uniquement, sans consommer d'espace ni sur le texte.
-    ...(p.PAINT ? [bottomPaintLayer()] : []),
   ];
 
   const styles: StyleDictionary = {
