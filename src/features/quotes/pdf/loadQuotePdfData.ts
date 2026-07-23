@@ -22,7 +22,7 @@ export async function loadQuotePdfData(quoteId: string): Promise<LoadedQuotePdfD
   const quoteRes = await supabase
     .from("quotes")
     .select(
-      "quote_number, title, description, issue_date, valid_until, notes, terms, subtotal_ht, total_tva, total_ttc, tva_rate, customer_id, company_id",
+      "quote_number, title, description, issue_date, valid_until, notes, terms, subtotal_ht, total_tva, total_ttc, tva_rate, pdf_font_size_adjustment, pdf_other_section_position, customer_id, company_id",
     )
     .eq("id", quoteId)
     .single();
@@ -40,12 +40,13 @@ export async function loadQuotePdfData(quoteId: string): Promise<LoadedQuotePdfD
   ] = await Promise.all([
     supabase
       .from("quote_items")
-      .select("id, room_id, label, description, unit, quantity, unit_price_ht")
+      .select("id, room_id, sort_order, label, description, unit, quantity, unit_price_ht, tva_rate")
       .eq("quote_id", quoteId)
-      .order("sort_order", { ascending: true }),
+      .order("sort_order", { ascending: true })
+      .order("id", { ascending: true }),
     supabase
       .from("quote_rooms")
-      .select("id, name, sort_order")
+      .select("id, name, sort_order, pdf_page_break")
       .eq("quote_id", quoteId)
       .order("sort_order", { ascending: true }),
     supabase
@@ -129,6 +130,8 @@ export async function loadQuotePdfData(quoteId: string): Promise<LoadedQuotePdfD
         total_tva: quote.total_tva,
         total_ttc: quote.total_ttc,
         tva_rate: quote.tva_rate,
+        pdf_font_size_adjustment: quote.pdf_font_size_adjustment,
+        pdf_other_section_position: quote.pdf_other_section_position,
       },
       rooms: roomsRes.data ?? [],
       items: itemsRes.data ?? [],

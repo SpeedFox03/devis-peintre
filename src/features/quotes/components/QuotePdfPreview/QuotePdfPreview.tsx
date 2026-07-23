@@ -9,11 +9,35 @@ import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 import { Button } from "../../../../components/ui/Button/Button";
 import { generateQuotePdf } from "../../pdf/generateQuotePdf";
 import { loadQuotePdfData } from "../../pdf/loadQuotePdfData";
+import type {
+  QuoteItemInlineEdit,
+  QuotePdfData,
+  QuoteRoomPageBreak,
+} from "../../pdf/quotePdfTypes";
+import { QuoteOrderEditor } from "../QuoteOrderEditor/QuoteOrderEditor";
 import "./QuotePdfPreview.css";
+
+type LoadedPreviewData = {
+  data: Omit<QuotePdfData, "logoBase64">;
+  theme: string | null;
+  colorMode: boolean | null;
+  accentColor: string | null;
+};
 
 type QuotePdfPreviewProps = {
   quoteId: string;
   quoteNumber: string;
+  fontSizeAdjustment: number;
+  savingFontSize: boolean;
+  savingOrder: boolean;
+  onSetFontSize: (adjustment: -1 | 0 | 1) => void;
+  onSaveOrder: (
+    roomOrder: string[],
+    itemOrder: string[],
+    roomPageBreaks: Record<string, QuoteRoomPageBreak>,
+    itemEdits: Record<string, QuoteItemInlineEdit>,
+    otherSectionPosition: number | null,
+  ) => Promise<string | null>;
 };
 
 type QuotePdfCanvasPageProps = {
@@ -123,10 +147,21 @@ function QuotePdfCanvasPage({ document, pageNumber }: QuotePdfCanvasPageProps) {
   );
 }
 
-export function QuotePdfPreview({ quoteId, quoteNumber }: QuotePdfPreviewProps) {
+export function QuotePdfPreview({
+  quoteId,
+  quoteNumber,
+  fontSizeAdjustment,
+  savingFontSize,
+  savingOrder,
+  onSetFontSize,
+  onSaveOrder,
+}: QuotePdfPreviewProps) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy | null>(null);
+  const [previewData, setPreviewData] = useState<LoadedPreviewData | null>(null);
+  const [organizing, setOrganizing] = useState(false);
+  const [orderSaveError, setOrderSaveError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -142,7 +177,11 @@ export function QuotePdfPreview({ quoteId, quoteNumber }: QuotePdfPreviewProps) 
       setPdfDocument(null);
 
       try {
-        const { data, theme, colorMode, accentColor } = await loadQuotePdfData(quoteId);
+        const loadedPreview = await loadQuotePdfData(quoteId);
+        if (cancelled) return;
+
+        const { data, theme, colorMode, accentColor } = loadedPreview;
+        setPreviewData(loadedPreview);
         const pdf = await generateQuotePdf(data, theme, colorMode, accentColor);
         const blob = await pdf.getBlob();
         createdUrl = URL.createObjectURL(blob);
@@ -189,7 +228,64 @@ export function QuotePdfPreview({ quoteId, quoteNumber }: QuotePdfPreviewProps) 
       if (loadingTask) void loadingTask.destroy();
       if (createdUrl) URL.revokeObjectURL(createdUrl);
     };
-  }, [quoteId, refreshKey]);
+  }, [fontSizeAdjustment, quoteId, refreshKey]);
+
+  async function saveOrder(
+    roomOrder: string[],
+    itemOrder: string[],
+    roomPageBreaks: Record<string, QuoteRoomPageBreak>,
+    itemEdits: Record<string, QuoteItemInlineEdit>,
+    otherSectionPosition: number | null,
+  ) {
+    setOrderSaveError(null);
+    const saveError = await onSaveOrder(
+      roomOrder,
+      itemOrder,
+      roomPageBreaks,
+      itemEdits,
+      otherSectionPosition,
+    );
+
+    if (saveError) {
+      setOrderSaveError(saveError);
+      return;
+    }
+
+    setOrganizing(false);
+    setRefreshKey((current) => current + 1);
+  }
+
+  if (organizing && previewData) {
+    return (
+      <QuoteOrderEditor
+        data={previewData.data}
+        theme={previewData.theme}
+        colorMode={previewData.colorMode}
+        accentColor={previewData.accentColor}
+        saving={savingOrder}
+        saveError={orderSaveError}
+        onCancel={() => {
+          setOrderSaveError(null);
+          setOrganizing(false);
+        }}
+        onSave={(
+          roomOrder,
+          itemOrder,
+          roomPageBreaks,
+          itemEdits,
+          otherSectionPosition,
+        ) => {
+          void saveOrder(
+            roomOrder,
+            itemOrder,
+            roomPageBreaks,
+            itemEdits,
+            otherSectionPosition,
+          );
+        }}
+      />
+    );
+  }
 
   return (
     <section className="quote-pdf-preview" aria-labelledby="quote-pdf-preview-title">
@@ -201,6 +297,43 @@ export function QuotePdfPreview({ quoteId, quoteNumber }: QuotePdfPreviewProps) 
         </div>
 
         <div className="quote-pdf-preview__actions">
+          <Button
+            type="button"
+            onClick={() => {
+              setOrderSaveError(null);
+              setOrganizing(true);
+            }}
+            disabled={loading || !previewData}
+          >
+            Organiser le devis
+          </Button>
+          <div
+            className="quote-pdf-preview__font-size-control"
+            role="group"
+            aria-label="Taille du texte du PDF"
+          >
+            <span>{savingFontSize ? "Enregistrement…" : "Taille du texte"}</span>
+            {([-1, 0, 1] as const).map((adjustment) => (
+              <Button
+                key={adjustment}
+                type="button"
+                size="sm"
+                variant={fontSizeAdjustment === adjustment ? "primary" : "secondary"}
+                onClick={() => onSetFontSize(adjustment)}
+                disabled={savingFontSize || loading}
+                aria-pressed={fontSizeAdjustment === adjustment}
+                title={
+                  adjustment === -1
+                    ? "Réduire tous les caractères de ce devis d’un point"
+                    : adjustment === 1
+                      ? "Augmenter tous les caractères de ce devis d’un point"
+                      : "Utiliser la taille normale"
+                }
+              >
+                {adjustment === -1 ? "−1 pt" : adjustment === 1 ? "+1 pt" : "Normal"}
+              </Button>
+            ))}
+          </div>
           {pdfUrl ? (
             <a
               className="ui-button ui-button--secondary ui-button--md"

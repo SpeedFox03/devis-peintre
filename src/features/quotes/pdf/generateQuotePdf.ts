@@ -5,6 +5,7 @@ import { buildCompactQuotePdfDefinition } from "./buildCompactQuotePdfDefinition
 import { buildElegantQuotePdfDefinition } from "./buildElegantQuotePdfDefinition";
 import { registerElegantFonts } from "./elegantFontAssets";
 import { fetchImageAsBase64 } from "./fetchImageAsBase64";
+import { applyPdfFontSizeAdjustment } from "./applyPdfFontSizeAdjustment";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
 
@@ -41,11 +42,11 @@ export async function generateQuotePdf(
     accentColor: accentColor ?? data.accentColor ?? null,
   };
 
-  if (resolvedTheme === "compact") {
-    return pdfMake.createPdf(buildCompactQuotePdfDefinition(fullData));
-  }
+  let definition;
 
-  if (resolvedTheme === "elegant") {
+  if (resolvedTheme === "compact") {
+    definition = buildCompactQuotePdfDefinition(fullData);
+  } else if (resolvedTheme === "elegant") {
     // Le thème Élégant s'appuie sur des polices embarquées (Playfair Display + Great
     // Vibes). Elles doivent être déclarées dans pdfmake avant createPdf.
     if (pdfMakeWithVfs.addVirtualFileSystem && pdfMakeWithVfs.addFonts) {
@@ -54,9 +55,16 @@ export async function generateQuotePdf(
         addFonts: pdfMakeWithVfs.addFonts.bind(pdfMake),
       });
     }
-    return pdfMake.createPdf(buildElegantQuotePdfDefinition(fullData));
+    definition = buildElegantQuotePdfDefinition(fullData);
+  } else {
+    // "normal" (aere=false) ou "aere" (aere=true)
+    definition = buildQuotePdfDefinition(fullData, resolvedTheme === "aere");
   }
 
-  // "normal" (aere=false) ou "aere" (aere=true)
-  return pdfMake.createPdf(buildQuotePdfDefinition(fullData, resolvedTheme === "aere"));
+  return pdfMake.createPdf(
+    applyPdfFontSizeAdjustment(
+      definition,
+      fullData.quote.pdf_font_size_adjustment,
+    ),
+  );
 }

@@ -61,7 +61,7 @@ Deno.serve(async (request) => {
   const { data: quote, error: quoteError } = await userClient
     .from("quotes")
     .select(
-      "id, quote_number, title, description, status, issue_date, valid_until, notes, terms, subtotal_ht, total_tva, total_ttc, tva_rate, customer_id, company_id",
+      "id, quote_number, title, description, status, issue_date, valid_until, notes, terms, subtotal_ht, total_tva, total_ttc, tva_rate, pdf_font_size_adjustment, pdf_other_section_position, customer_id, company_id",
     )
     .eq("id", quoteId)
     .single();
@@ -96,12 +96,13 @@ Deno.serve(async (request) => {
   ] = await Promise.all([
     userClient
       .from("quote_items")
-      .select("id, room_id, label, description, unit, quantity, unit_price_ht")
+      .select("id, room_id, label, description, unit, quantity, unit_price_ht, tva_rate")
       .eq("quote_id", quoteId)
-      .order("sort_order", { ascending: true }),
+      .order("sort_order", { ascending: true })
+      .order("id", { ascending: true }),
     userClient
       .from("quote_rooms")
-      .select("id, name, sort_order")
+      .select("id, name, sort_order, pdf_page_break")
       .eq("quote_id", quoteId)
       .order("sort_order", { ascending: true }),
     userClient
@@ -160,6 +161,7 @@ Deno.serve(async (request) => {
       id: publicId,
       name: room.name,
       sort_order: room.sort_order,
+      pdf_page_break: room.pdf_page_break,
     };
   });
 
@@ -171,6 +173,7 @@ Deno.serve(async (request) => {
     unit: item.unit,
     quantity: item.quantity,
     unit_price_ht: item.unit_price_ht,
+    tva_rate: item.tva_rate,
   }));
 
   const snapshot = {
@@ -209,6 +212,8 @@ Deno.serve(async (request) => {
         total_tva: quote.total_tva,
         total_ttc: quote.total_ttc,
         tva_rate: quote.tva_rate,
+        pdf_font_size_adjustment: quote.pdf_font_size_adjustment,
+        pdf_other_section_position: quote.pdf_other_section_position,
       },
       rooms,
       items,

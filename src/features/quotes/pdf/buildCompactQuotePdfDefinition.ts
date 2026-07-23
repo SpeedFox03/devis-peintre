@@ -4,9 +4,16 @@ import type {
   TDocumentDefinitions,
 } from "pdfmake/interfaces";
 
-import type { QuotePdfData } from "./quotePdfTypes";
+import type {
+  QuotePdfData,
+  QuoteRoomPageBreak,
+} from "./quotePdfTypes";
 import { formatDisplayDate } from "../../../lib/formatters";
 import { calculateItemsTotal } from "../utils/quoteTotals";
+import {
+  getVisibleOtherSectionPosition,
+  insertOtherQuoteSection,
+} from "./insertOtherQuoteSection";
 
 // ─── Palettes ─────────────────────────────────────────────────────────────────
 
@@ -195,7 +202,8 @@ function makeCompactRoomTable(
   cp: CompactPalette,
   roomName: string,
   items: Array<{ label: string; description: string | null; unit: string; quantity: number; unit_price_ht: number }>,
-  isFirst: boolean
+  isFirst: boolean,
+  pageBreak: QuoteRoomPageBreak,
 ): Content {
   const body: unknown[][] = [
     [
@@ -271,6 +279,8 @@ function makeCompactRoomTable(
       paddingBottom: () => 0,
     },
     margin: [0, isFirst ? 0 : 6, 0, 0],
+    unbreakable: pageBreak === "keep",
+    pageBreak: pageBreak === "before" ? "before" : undefined,
   };
 }
 
@@ -352,12 +362,29 @@ export function buildCompactQuotePdfDefinition(data: QuotePdfData): TDocumentDef
     .filter((room) => room.items.length > 0);
   const unassignedItems = data.items.filter((item) => !item.room_id);
 
-  const roomSections: Content[] = groupedRooms.map((room, i) =>
-    makeCompactRoomTable(cp, room.name, room.items, i === 0)
+  const sections = insertOtherQuoteSection(
+    groupedRooms,
+    unassignedItems.length > 0
+      ? {
+          id: "__other__",
+          name: "Autre",
+          sort_order: 0,
+          pdf_page_break: "auto" as const,
+          items: unassignedItems,
+        }
+      : null,
+    getVisibleOtherSectionPosition(data),
   );
-  if (unassignedItems.length > 0) {
-    roomSections.push(makeCompactRoomTable(cp, "Sans pièce", unassignedItems, groupedRooms.length === 0));
-  }
+
+  const roomSections: Content[] = sections.map((room, i) =>
+    makeCompactRoomTable(
+      cp,
+      room.name,
+      room.items,
+      i === 0,
+      room.pdf_page_break,
+    )
+  );
 
   const styles: StyleDictionary = {
     colHeader:       { fontSize: 7.5, bold: true, color: cp.TEXT_DARK },

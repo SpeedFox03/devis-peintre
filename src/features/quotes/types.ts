@@ -22,6 +22,8 @@ export type QuoteDetails = {
   total_ttc: number;
   customer_id: string;
   company_id: string;
+  pdf_font_size_adjustment: number;
+  pdf_other_section_position: number | null;
 };
 
 export type QuoteItem = {
@@ -42,7 +44,17 @@ export type QuoteItem = {
 export type Room = {
   id: string;
   name: string;
+  notes: string | null;
   sort_order: number;
+  pdf_page_break: "auto" | "keep" | "before";
+};
+
+export type RoomTemplate = {
+  id: string;
+  company_id: string;
+  name: string;
+  room_name: string;
+  created_at: string;
 };
 
 export type RoomPhoto = {

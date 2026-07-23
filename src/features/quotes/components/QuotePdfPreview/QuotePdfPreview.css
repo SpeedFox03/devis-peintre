@@ -40,8 +40,27 @@
   display: flex;
   flex: 0 0 auto;
   gap: 10px;
+  align-items: center;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.quote-pdf-preview__font-size-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(111, 82, 60, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.quote-pdf-preview__font-size-control > span {
+  padding: 0 6px;
+  color: #6b7280;
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .quote-pdf-preview__viewport {
@@ -155,6 +174,11 @@
   .quote-pdf-preview__actions,
   .quote-pdf-preview__actions > * {
     width: 100%;
+  }
+
+  .quote-pdf-preview__font-size-control {
+    display: grid;
+    grid-template-columns: 1fr repeat(3, auto);
   }
 
   .quote-pdf-preview__viewport,

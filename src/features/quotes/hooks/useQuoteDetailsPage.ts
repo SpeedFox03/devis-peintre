@@ -4,7 +4,11 @@ import { useParams } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
 import type { ServiceCatalogItem } from "../../catalog/types";
 import { generateQuotePdf } from "../pdf/generateQuotePdf";
-import type { QuotePdfData } from "../pdf/quotePdfTypes";
+import type {
+  QuoteItemInlineEdit,
+  QuotePdfData,
+  QuoteRoomPageBreak,
+} from "../pdf/quotePdfTypes";
 import type {
   Company,
   Customer,
@@ -17,6 +21,7 @@ import type {
   RoomFormState,
   RoomPhoto,
   RoomPhotoWithUrl,
+  RoomTemplate,
 } from "../types";
 import {
   createInitialItemForm,
@@ -61,6 +66,7 @@ export function useQuoteDetailsPage() {
   const [quote, setQuote] = useState<QuoteDetails | null>(null);
   const [items, setItems] = useState<QuoteItem[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [roomTemplates, setRoomTemplates] = useState<RoomTemplate[]>([]);
   const [roomPhotos, setRoomPhotos] = useState<RoomPhoto[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -73,6 +79,9 @@ export function useQuoteDetailsPage() {
   const [savingRoom, setSavingRoom] = useState(false);
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
   const [deletingRoomId, setDeletingRoomId] = useState<string | null>(null);
+  const [duplicatingRoomId, setDuplicatingRoomId] = useState<string | null>(null);
+  const [savingRoomTemplateId, setSavingRoomTemplateId] = useState<string | null>(null);
+  const [insertingRoomTemplateId, setInsertingRoomTemplateId] = useState<string | null>(null);
   const [uploadingPhotoRoomId, setUploadingPhotoRoomId] = useState<string | null>(null);
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
@@ -81,6 +90,8 @@ export function useQuoteDetailsPage() {
   const [movingItem, setMovingItem] = useState<QuoteItem | null>(null);
   const [moveRoomId, setMoveRoomId] = useState("");
   const [movingItemLoading, setMovingItemLoading] = useState(false);
+  const [savingPdfFontSize, setSavingPdfFontSize] = useState(false);
+  const [savingQuoteOrder, setSavingQuoteOrder] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -118,7 +129,7 @@ export function useQuoteDetailsPage() {
       const quoteRes = await supabase
         .from("quotes")
         .select(
-          "id, quote_number, title, description, status, issue_date, valid_until, tva_rate, notes, terms, subtotal_ht, total_tva, total_ttc, customer_id, company_id"
+          "id, quote_number, title, description, status, issue_date, valid_until, tva_rate, notes, terms, subtotal_ht, total_tva, total_ttc, customer_id, company_id, pdf_font_size_adjustment, pdf_other_section_position"
         )
         .eq("id", quoteId)
         .single();
@@ -132,7 +143,7 @@ export function useQuoteDetailsPage() {
       const loadedQuote = quoteRes.data as QuoteDetails;
 
       const [
-        itemsRes, roomsRes, servicesRes, customerOptionsRes,
+        itemsRes, roomsRes, roomTemplatesRes, servicesRes, customerOptionsRes,
         companyCoreRes, companySettingsRes, companyAddrRes,
         customerCoreRes, customerAddrsRes,
       ] = await Promise.all([
@@ -140,12 +151,18 @@ export function useQuoteDetailsPage() {
           .from("quote_items")
           .select("id, quote_id, room_id, item_type, category, label, description, unit, quantity, unit_price_ht, tva_rate, sort_order")
           .eq("quote_id", quoteId)
-          .order("sort_order", { ascending: true }),
+          .order("sort_order", { ascending: true })
+          .order("id", { ascending: true }),
         supabase
           .from("quote_rooms")
-          .select("id, name, sort_order")
+          .select("id, name, notes, sort_order, pdf_page_break")
           .eq("quote_id", quoteId)
           .order("sort_order", { ascending: true }),
+        supabase
+          .from("quote_room_templates")
+          .select("id, company_id, name, room_name, created_at")
+          .eq("company_id", loadedQuote.company_id)
+          .order("name", { ascending: true }),
         supabase
           .from("service_catalog")
           .select("id, name, category, default_unit, default_unit_price_ht, default_tva_rate, default_description, default_metadata, is_active")
@@ -189,6 +206,7 @@ export function useQuoteDetailsPage() {
 
       if (itemsRes.error) { setError(itemsRes.error.message); setLoading(false); return; }
       if (roomsRes.error) { setError(roomsRes.error.message); setLoading(false); return; }
+      if (roomTemplatesRes.error) { setError(roomTemplatesRes.error.message); setLoading(false); return; }
       if (servicesRes.error) { setError(servicesRes.error.message); setLoading(false); return; }
       if (customerOptionsRes.error) { setError(customerOptionsRes.error.message); setLoading(false); return; }
       if (companyCoreRes.error) { setError(companyCoreRes.error.message); setLoading(false); return; }
@@ -251,6 +269,7 @@ export function useQuoteDetailsPage() {
       setQuoteGeneralForm(createInitialQuoteGeneralForm(loadedQuote));
       setItems((itemsRes.data ?? []) as QuoteItem[]);
       setRooms(loadedRooms);
+      setRoomTemplates((roomTemplatesRes.data ?? []) as RoomTemplate[]);
       setRoomPhotos(photosResult.photos);
       setCompany(mergedCompany);
       setCustomer(mergedCustomer);
@@ -276,7 +295,7 @@ export function useQuoteDetailsPage() {
     const quoteRes = await supabase
       .from("quotes")
       .select(
-        "id, quote_number, title, description, status, issue_date, valid_until, tva_rate, notes, terms, subtotal_ht, total_tva, total_ttc, customer_id, company_id"
+        "id, quote_number, title, description, status, issue_date, valid_until, tva_rate, notes, terms, subtotal_ht, total_tva, total_ttc, customer_id, company_id, pdf_font_size_adjustment, pdf_other_section_position"
       )
       .eq("id", quoteId)
       .single();
@@ -289,7 +308,7 @@ export function useQuoteDetailsPage() {
     const loadedQuote = quoteRes.data as QuoteDetails;
 
     const [
-      itemsRes, roomsRes, servicesRes,
+      itemsRes, roomsRes, roomTemplatesRes, servicesRes,
       companyCoreRes, companySettingsRes, companyAddrRes,
       customerCoreRes, customerAddrsRes,
     ] = await Promise.all([
@@ -297,12 +316,18 @@ export function useQuoteDetailsPage() {
         .from("quote_items")
         .select("id, quote_id, room_id, item_type, category, label, description, unit, quantity, unit_price_ht, tva_rate, sort_order")
         .eq("quote_id", quoteId)
-        .order("sort_order", { ascending: true }),
+        .order("sort_order", { ascending: true })
+        .order("id", { ascending: true }),
       supabase
         .from("quote_rooms")
-        .select("id, name, sort_order")
+        .select("id, name, notes, sort_order, pdf_page_break")
         .eq("quote_id", quoteId)
         .order("sort_order", { ascending: true }),
+      supabase
+        .from("quote_room_templates")
+        .select("id, company_id, name, room_name, created_at")
+        .eq("company_id", loadedQuote.company_id)
+        .order("name", { ascending: true }),
       supabase
         .from("service_catalog")
         .select("id, name, category, default_unit, default_unit_price_ht, default_tva_rate, default_description, default_metadata, is_active")
@@ -340,6 +365,7 @@ export function useQuoteDetailsPage() {
 
     if (itemsRes.error) { setError(itemsRes.error.message); return; }
     if (roomsRes.error) { setError(roomsRes.error.message); return; }
+    if (roomTemplatesRes.error) { setError(roomTemplatesRes.error.message); return; }
     if (servicesRes.error) { setError(servicesRes.error.message); return; }
     if (companyCoreRes.error) { setError(companyCoreRes.error.message); return; }
     if (customerCoreRes.error) { setError(customerCoreRes.error.message); return; }
@@ -380,6 +406,7 @@ export function useQuoteDetailsPage() {
     setQuoteGeneralForm(createInitialQuoteGeneralForm(loadedQuote));
     setItems((itemsRes.data ?? []) as QuoteItem[]);
     setRooms(loadedRooms);
+    setRoomTemplates((roomTemplatesRes.data ?? []) as RoomTemplate[]);
     setRoomPhotos(photosResult.photos);
     setCompany(mergedCompany);
     setCustomer(mergedCustomer);
@@ -1094,6 +1121,88 @@ export function useQuoteDetailsPage() {
     await reloadQuoteData();
   }
 
+  async function handleDuplicateRoom(roomId: string) {
+    if (duplicatingRoomId) return;
+
+    setDuplicatingRoomId(roomId);
+    setError(null);
+
+    const { error: duplicateError } = await supabase.rpc(
+      "duplicate_quote_room",
+      { p_room_id: roomId },
+    );
+
+    if (duplicateError) {
+      setError(duplicateError.message);
+      setDuplicatingRoomId(null);
+      return;
+    }
+
+    await reloadQuoteData();
+    setDuplicatingRoomId(null);
+  }
+
+  async function handleSaveRoomTemplate(roomId: string) {
+    if (savingRoomTemplateId) return;
+
+    const room = rooms.find((currentRoom) => currentRoom.id === roomId);
+    if (!room) {
+      setError("Pièce introuvable.");
+      return;
+    }
+
+    const requestedName = window.prompt(
+      "Nom du modèle de pièce",
+      `${room.name} standard`,
+    );
+    const templateName = requestedName?.trim();
+    if (!templateName) return;
+
+    setSavingRoomTemplateId(roomId);
+    setError(null);
+
+    const { error: createTemplateError } = await supabase.rpc(
+      "create_quote_room_template",
+      {
+        p_room_id: roomId,
+        p_template_name: templateName,
+      },
+    );
+
+    if (createTemplateError) {
+      setError(createTemplateError.message);
+      setSavingRoomTemplateId(null);
+      return;
+    }
+
+    await reloadQuoteData();
+    setSavingRoomTemplateId(null);
+  }
+
+  async function handleInsertRoomTemplate(templateId: string) {
+    if (!quoteId || insertingRoomTemplateId) return;
+
+    setInsertingRoomTemplateId(templateId);
+    setError(null);
+
+    const { error: insertTemplateError } = await supabase.rpc(
+      "insert_quote_room_template",
+      {
+        p_quote_id: quoteId,
+        p_template_id: templateId,
+      },
+    );
+
+    if (insertTemplateError) {
+      setError(insertTemplateError.message);
+      setInsertingRoomTemplateId(null);
+      return;
+    }
+
+    await reloadQuoteData();
+    setInsertingRoomTemplateId(null);
+  }
+
   async function handleDownloadPdf() {
     if (!quote) return;
 
@@ -1116,6 +1225,8 @@ export function useQuoteDetailsPage() {
           total_tva: quote.total_tva,
           total_ttc: quote.total_ttc,
           tva_rate: quote.tva_rate,
+          pdf_font_size_adjustment: quote.pdf_font_size_adjustment,
+          pdf_other_section_position: quote.pdf_other_section_position,
         },
         rooms,
         items: items.map((item) => ({
@@ -1126,6 +1237,7 @@ export function useQuoteDetailsPage() {
           unit: item.unit,
           quantity: item.quantity,
           unit_price_ht: item.unit_price_ht,
+          tva_rate: item.tva_rate,
         })),
       };
 
@@ -1139,6 +1251,67 @@ export function useQuoteDetailsPage() {
     }
   }
 
+  async function handleSetPdfFontSize(adjustment: -1 | 0 | 1) {
+    if (!quote || savingPdfFontSize) return;
+
+    if (quote.pdf_font_size_adjustment === adjustment) return;
+
+    setSavingPdfFontSize(true);
+    setError(null);
+
+    const { error: updateError } = await supabase
+      .from("quotes")
+      .update({ pdf_font_size_adjustment: adjustment })
+      .eq("id", quote.id);
+
+    if (updateError) {
+      setError(updateError.message);
+      setSavingPdfFontSize(false);
+      return;
+    }
+
+    setQuote((current) =>
+      current
+        ? { ...current, pdf_font_size_adjustment: adjustment }
+        : current,
+    );
+    setSavingPdfFontSize(false);
+  }
+
+  async function handleSaveQuoteOrder(
+    roomOrder: string[],
+    itemOrder: string[],
+    roomPageBreaks: Record<string, QuoteRoomPageBreak>,
+    itemEdits: Record<string, QuoteItemInlineEdit>,
+    otherSectionPosition: number | null,
+  ): Promise<string | null> {
+    if (!quoteId || savingQuoteOrder) {
+      return "Le devis ne peut pas être réorganisé pour le moment.";
+    }
+
+    setSavingQuoteOrder(true);
+    setError(null);
+
+    const { error: saveOrderError } = await supabase.rpc("save_quote_editor", {
+      p_quote_id: quoteId,
+      p_room_order: roomOrder,
+      p_item_order: itemOrder,
+      p_room_page_breaks: roomPageBreaks,
+      p_item_edits: itemEdits,
+      p_other_section_position: otherSectionPosition,
+    });
+
+    if (saveOrderError) {
+      setError(saveOrderError.message);
+      setSavingQuoteOrder(false);
+      return saveOrderError.message;
+    }
+
+    await reloadQuoteData();
+    setSavingQuoteOrder(false);
+    return null;
+  }
+
   const roomMap = useMemo(() => {
     return new Map(rooms.map((room) => [room.id, room.name]));
   }, [rooms]);
@@ -1148,6 +1321,7 @@ export function useQuoteDetailsPage() {
     quote,
     items,
     rooms,
+    roomTemplates,
     roomPhotos,
     company,
     customer,
@@ -1160,6 +1334,9 @@ export function useQuoteDetailsPage() {
     savingRoom,
     deletingItemId,
     deletingRoomId,
+    duplicatingRoomId,
+    savingRoomTemplateId,
+    insertingRoomTemplateId,
     uploadingPhotoRoomId,
     deletingPhotoId,
     downloadingPdf,
@@ -1168,6 +1345,8 @@ export function useQuoteDetailsPage() {
     movingItem,
     moveRoomId,
     movingItemLoading,
+    savingPdfFontSize,
+    savingQuoteOrder,
 
     error,
     showItemForm,
@@ -1216,10 +1395,15 @@ export function useQuoteDetailsPage() {
     handleDuplicateItem,
     handleDeleteItem,
     handleDeleteRoom,
+    handleDuplicateRoom,
+    handleSaveRoomTemplate,
+    handleInsertRoomTemplate,
     handleUploadRoomPhotos,
     handleLoadRoomGallery,
     handleDeleteRoomPhoto,
     handleDownloadPdf,
+    handleSetPdfFontSize,
+    handleSaveQuoteOrder,
 
     setCatalogSearch,
     setCatalogCategory,

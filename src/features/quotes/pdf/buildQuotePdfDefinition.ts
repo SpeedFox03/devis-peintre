@@ -5,9 +5,16 @@ import type {
   TDocumentDefinitions,
 } from "pdfmake/interfaces";
 
-import type { QuotePdfData } from "./quotePdfTypes";
+import type {
+  QuotePdfData,
+  QuoteRoomPageBreak,
+} from "./quotePdfTypes";
 import { formatDisplayDate } from "../../../lib/formatters";
 import { calculateItemsTotal } from "../utils/quoteTotals";
+import {
+  getVisibleOtherSectionPosition,
+  insertOtherQuoteSection,
+} from "./insertOtherQuoteSection";
 
 // ─── Palettes ─────────────────────────────────────────────────────────────────
 
@@ -174,7 +181,8 @@ function makeRoomTable(
   p: Palette,
   aere: boolean,
   roomName: string,
-  items: Array<{ label: string; description: string | null; unit: string; quantity: number; unit_price_ht: number }>
+  items: Array<{ label: string; description: string | null; unit: string; quantity: number; unit_price_ht: number }>,
+  pageBreak: QuoteRoomPageBreak,
 ): Content {
   const padV     = aere ? 11 : 7;   // padding vertical en-tête + items
   const padVItem = aere ? 10 : 6;
@@ -261,7 +269,8 @@ function makeRoomTable(
       paddingBottom: (i: number) => (i <= 1 ? padV : padVItem),
     },
     margin: [0, 0, 0, 14],
-    unbreakable: false,
+    unbreakable: pageBreak === "keep",
+    pageBreak: pageBreak === "before" ? "before" : undefined,
   };
 }
 
@@ -294,10 +303,21 @@ export function buildQuotePdfDefinition(
     data.customer?.email || "-",
   ];
 
-  const roomSections: Content[] = [
-    ...groupedRooms.map((room) => makeRoomTable(p, aereB, room.name, room.items)),
-    ...(unassignedItems.length > 0 ? [makeRoomTable(p, aereB, "Sans pièce", unassignedItems)] : []),
-  ];
+  const roomSections: Content[] = insertOtherQuoteSection(
+    groupedRooms.map((room) =>
+      makeRoomTable(
+        p,
+        aereB,
+        room.name,
+        room.items,
+        room.pdf_page_break,
+      ),
+    ),
+    unassignedItems.length > 0
+      ? makeRoomTable(p, aereB, "Autre", unassignedItems, "auto")
+      : null,
+    getVisibleOtherSectionPosition(data),
+  );
 
   const notesAndTerms: Content[] = [];
   if (data.quote.notes || data.quote.terms) {

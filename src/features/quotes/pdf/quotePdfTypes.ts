@@ -34,14 +34,31 @@ export type QuotePdfRoom = {
   id: string;
   name: string;
   sort_order: number;
+  pdf_page_break: QuoteRoomPageBreak;
 };
+
+export type QuoteRoomPageBreak = "auto" | "keep" | "before";
+
+export function resolveQuoteRoomPageBreak(
+  value: unknown,
+): QuoteRoomPageBreak {
+  return value === "keep" || value === "before" ? value : "auto";
+}
 
 export type QuotePdfItem = {
   id: string;
   room_id: string | null;
+  sort_order?: number;
   label: string;
   description: string | null;
   unit: string;
+  quantity: number;
+  unit_price_ht: number;
+  tva_rate?: number;
+};
+
+export type QuoteItemInlineEdit = {
+  label: string;
   quantity: number;
   unit_price_ht: number;
 };
@@ -58,6 +75,8 @@ export type QuotePdfQuote = {
   total_tva: number;
   total_ttc: number;
   tva_rate: number;
+  pdf_font_size_adjustment?: number | null;
+  pdf_other_section_position?: number | null;
 };
 
 export type QuotePdfData = {

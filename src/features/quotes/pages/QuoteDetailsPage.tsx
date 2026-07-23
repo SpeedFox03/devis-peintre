@@ -99,6 +99,7 @@ export function QuoteDetailsPage() {
     quote,
     items,
     rooms,
+    roomTemplates,
     roomPhotos,
     customer,
     customerOptions,
@@ -110,6 +111,9 @@ export function QuoteDetailsPage() {
     savingRoom,
     deletingItemId,
     deletingRoomId,
+    duplicatingRoomId,
+    savingRoomTemplateId,
+    insertingRoomTemplateId,
     uploadingPhotoRoomId,
     deletingPhotoId,
     downloadingPdf,
@@ -118,6 +122,8 @@ export function QuoteDetailsPage() {
     movingItem,
     moveRoomId,
     movingItemLoading,
+    savingPdfFontSize,
+    savingQuoteOrder,
 
     error,
     showItemForm,
@@ -164,10 +170,15 @@ export function QuoteDetailsPage() {
     handleDuplicateItem,
     handleDeleteItem,
     handleDeleteRoom,
+    handleDuplicateRoom,
+    handleSaveRoomTemplate,
+    handleInsertRoomTemplate,
     handleUploadRoomPhotos,
     handleLoadRoomGallery,
     handleDeleteRoomPhoto,
     handleDownloadPdf,
+    handleSetPdfFontSize,
+    handleSaveQuoteOrder,
 
     setCatalogSearch,
     setCatalogCategory,
@@ -303,6 +314,7 @@ export function QuoteDetailsPage() {
               <section className="quote-premium-page__section-panel quote-premium-page__section-panel--rooms">
                 <QuoteRoomsSection
                   rooms={rooms}
+                  roomTemplates={roomTemplates}
                   items={items}
                   roomPhotos={roomPhotos}
                   showForm={showRoomForm}
@@ -310,6 +322,9 @@ export function QuoteDetailsPage() {
                   saving={savingRoom}
                   error={error}
                   deletingRoomId={deletingRoomId}
+                  duplicatingRoomId={duplicatingRoomId}
+                  savingRoomTemplateId={savingRoomTemplateId}
+                  insertingRoomTemplateId={insertingRoomTemplateId}
                   uploadingPhotoRoomId={uploadingPhotoRoomId}
                   deletingPhotoId={deletingPhotoId}
                   onOpenForm={openRoomForm}
@@ -317,6 +332,9 @@ export function QuoteDetailsPage() {
                   onSubmit={handleAddRoom}
                   onChange={updateRoomField}
                   onDelete={handleDeleteRoom}
+                  onDuplicate={handleDuplicateRoom}
+                  onSaveTemplate={handleSaveRoomTemplate}
+                  onInsertTemplate={handleInsertRoomTemplate}
                   onUploadPhotos={handleUploadRoomPhotos}
                   onLoadGallery={handleLoadRoomGallery}
                   onDeletePhoto={handleDeleteRoomPhoto}
@@ -562,6 +580,11 @@ export function QuoteDetailsPage() {
           <QuotePdfPreview
             quoteId={quote.id}
             quoteNumber={quote.quote_number}
+            fontSizeAdjustment={quote.pdf_font_size_adjustment}
+            savingFontSize={savingPdfFontSize}
+            savingOrder={savingQuoteOrder}
+            onSetFontSize={handleSetPdfFontSize}
+            onSaveOrder={handleSaveQuoteOrder}
           />
         )}
       </div>

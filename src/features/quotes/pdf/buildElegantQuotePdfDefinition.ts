@@ -5,7 +5,10 @@ import type {
   TDocumentDefinitions,
 } from "pdfmake/interfaces";
 
-import type { QuotePdfData } from "./quotePdfTypes";
+import type {
+  QuotePdfData,
+  QuoteRoomPageBreak,
+} from "./quotePdfTypes";
 import { formatDisplayDate } from "../../../lib/formatters";
 import { calculateItemsTotal } from "../utils/quoteTotals";
 import {
@@ -13,6 +16,10 @@ import {
   ELEGANT_PAINT_TOP_RECT,
 } from "./elegantPaintAssets";
 import { ELEGANT_FONT_SERIF, ELEGANT_FONT_SCRIPT } from "./elegantFontAssets";
+import {
+  getVisibleOtherSectionPosition,
+  insertOtherQuoteSection,
+} from "./insertOtherQuoteSection";
 
 // ─── Thème « Élégant » ──────────────────────────────────────────────────────────
 //
@@ -284,6 +291,11 @@ function makePartiesRow(p: ElegantPalette, left: TableCell, right: TableCell): C
 // ─── Tableau des prestations ───────────────────────────────────────────────────
 
 type ItemLite = { label: string; description: string | null; unit: string; quantity: number; unit_price_ht: number };
+type ItemGroup = {
+  name: string | null;
+  items: ItemLite[];
+  pageBreak: QuoteRoomPageBreak;
+};
 
 function headerCell(text: string, p: ElegantPalette, align: "left" | "center" | "right" = "left"): TableCell {
   return {
@@ -299,7 +311,7 @@ function headerCell(text: string, p: ElegantPalette, align: "left" | "center" | 
 
 function buildItemsTable(
   p: ElegantPalette,
-  groups: Array<{ name: string | null; items: ItemLite[] }>
+  groups: ItemGroup[],
 ): Content {
   const body: TableCell[][] = [];
 
@@ -391,6 +403,19 @@ function buildItemsTable(
       paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 0, paddingBottom: () => 0,
     },
     margin: [0, 0, 0, 0],
+  };
+}
+
+function buildRoomItemsTable(
+  p: ElegantPalette,
+  group: ItemGroup,
+  isFirst: boolean,
+): Content {
+  return {
+    stack: [buildItemsTable(p, [group])],
+    margin: [0, isFirst ? 0 : 8, 0, 0],
+    unbreakable: group.pageBreak === "keep",
+    pageBreak: group.pageBreak === "before" ? "before" : undefined,
   };
 }
 
@@ -528,19 +553,25 @@ export function buildElegantQuotePdfDefinition(data: QuotePdfData): TDocumentDef
   const p = getElegantPalette(data.colorMode, data.accentColor);
 
   const groupedRooms = data.rooms
-    .map((room) => ({ name: room.name as string | null, items: data.items.filter((i) => i.room_id === room.id) }))
+    .map((room) => ({
+      name: room.name as string | null,
+      items: data.items.filter((i) => i.room_id === room.id),
+      pageBreak: room.pdf_page_break,
+    }))
     .filter((room) => room.items.length > 0);
   const unassignedItems = data.items.filter((i) => !i.room_id);
 
-  const groups: Array<{ name: string | null; items: ItemLite[] }> = [
-    ...groupedRooms.map((r) => ({
+  const groups: ItemGroup[] = insertOtherQuoteSection(
+    groupedRooms.map((r) => ({
       name: r.name,
       items: r.items,
+      pageBreak: r.pageBreak,
     })),
-    ...(unassignedItems.length > 0
-      ? [{ name: "Sans pièce", items: unassignedItems }]
-      : []),
-  ];
+    unassignedItems.length > 0
+      ? { name: "Autre", items: unassignedItems, pageBreak: "auto" }
+      : null,
+    getVisibleOtherSectionPosition(data),
+  );
 
   const companyLines = [
     joinParts([data.company?.address_line1, data.company?.address_line2]),
@@ -574,7 +605,9 @@ export function buildElegantQuotePdfDefinition(data: QuotePdfData): TDocumentDef
       ? [{ text: data.quote.description, color: p.TEXT_MUTED, fontSize: 10, lineHeight: 1.45, alignment: "center", margin: [0, 0, 0, 20] } as Content]
       : []),
 
-    buildItemsTable(p, groups),
+    ...groups.map((group, index) =>
+      buildRoomItemsTable(p, group, index === 0),
+    ),
 
     makeTotals(data, p),
 
