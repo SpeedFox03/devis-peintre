@@ -16,6 +16,7 @@ import { QuoteClientLinkButton } from "../components/QuoteClientLink/QuoteClient
 import { QuoteClientResponseBanner } from "../components/QuoteClientResponse/QuoteClientResponseBanner";
 import { QuoteEmailButton } from "../components/QuoteEmailButton/QuoteEmailButton";
 import { QuotePdfPreview } from "../components/QuotePdfPreview/QuotePdfPreview";
+import { QuoteVoiceAssistant } from "../components/QuoteVoiceAssistant/QuoteVoiceAssistant";
 import { useQuoteDetailsPage } from "../hooks/useQuoteDetailsPage";
 import {
   getQuoteStatusLabel,
@@ -310,6 +311,13 @@ export function QuoteDetailsPage() {
       <div className="quote-premium-page__page-content">
         {activePage === "builder" ? (
           <div className="quote-premium-page__page-stack">
+            <QuoteVoiceAssistant
+              quoteId={quote.id}
+              quoteStatus={quote.status}
+              defaultTvaRate={quote.tva_rate}
+              onApplied={reloadQuoteData}
+            />
+
             <div className="quote-premium-page__builder-columns">
               <section className="quote-premium-page__section-panel quote-premium-page__section-panel--rooms">
                 <QuoteRoomsSection

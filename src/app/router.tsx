@@ -1,4 +1,5 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
+import { env } from "../lib/env";
 import { LoginPage } from "../features/auth/pages/LoginPage";
 import { RegisterPage } from "../features/auth/pages/RegisterPage";
 import { ForgotPasswordPage } from "../features/auth/pages/ForgotPasswordPage";
@@ -23,8 +24,10 @@ export const router = createBrowserRouter([
     element: <LoginPage />,
   },
   {
+    // Inscription libre coupée en phase de test : les anciens liens
+    // retombent sur la connexion au lieu de renvoyer une 404.
     path: "/register",
-    element: <RegisterPage />,
+    element: env.signupEnabled ? <RegisterPage /> : <Navigate to="/login" replace />,
   },
   {
     path: "/mot-de-passe-oublie",

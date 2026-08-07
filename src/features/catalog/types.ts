@@ -1,3 +1,16 @@
+export type ServiceCatalogPricingBasis =
+  | "finished_surface"
+  | "per_coat"
+  | "per_unit";
+
+export type ServiceCatalogMetadata = {
+  aliases?: string[];
+  surface_type?: string;
+  included_coats?: number;
+  pricing_basis?: ServiceCatalogPricingBasis;
+  [key: string]: unknown;
+};
+
 export type ServiceCatalogItem = {
   id: string;
   name: string;
@@ -6,7 +19,7 @@ export type ServiceCatalogItem = {
   default_unit_price_ht: number;
   default_tva_rate: number;
   default_description: string | null;
-  default_metadata: Record<string, unknown>;
+  default_metadata: ServiceCatalogMetadata;
   is_active: boolean;
 };
 
@@ -17,5 +30,9 @@ export type ServiceCatalogFormState = {
   default_unit_price_ht: string;
   default_tva_rate: string;
   default_description: string;
+  aliases: string;
+  surface_type: string;
+  included_coats: string;
+  pricing_basis: "" | ServiceCatalogPricingBasis;
   is_active: boolean;
 };

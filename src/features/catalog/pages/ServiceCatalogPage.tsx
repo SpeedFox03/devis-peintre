@@ -26,17 +26,14 @@ import {
   getCategoryLabel,
   getUnitLabel,
 } from "../catalogOptions";
+import type {
+  ServiceCatalogItem as SharedServiceCatalogItem,
+  ServiceCatalogMetadata,
+  ServiceCatalogPricingBasis,
+} from "../types";
 import "./ServiceCatalogPage.css";
 
-type ServiceCatalogItem = {
-  id: string;
-  name: string;
-  category: string | null;
-  default_unit: string;
-  default_unit_price_ht: number;
-  default_tva_rate: number;
-  default_description: string | null;
-  is_active: boolean;
+type ServiceCatalogItem = SharedServiceCatalogItem & {
   created_at: string;
 };
 
@@ -47,6 +44,10 @@ type ServiceCatalogFormState = {
   default_unit_price_ht: string;
   default_tva_rate: string;
   default_description: string;
+  aliases: string;
+  surface_type: string;
+  included_coats: string;
+  pricing_basis: "" | ServiceCatalogPricingBasis;
 };
 
 const initialForm: ServiceCatalogFormState = {
@@ -56,6 +57,10 @@ const initialForm: ServiceCatalogFormState = {
   default_unit_price_ht: "0",
   default_tva_rate: "21",
   default_description: "",
+  aliases: "",
+  surface_type: "",
+  included_coats: "",
+  pricing_basis: "finished_surface",
 };
 
 function formatCurrency(value: number) {
@@ -73,6 +78,8 @@ export function ServiceCatalogPage() {
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [editingMetadata, setEditingMetadata] =
+    useState<ServiceCatalogMetadata>({});
 
   const [form, setForm] = useState<ServiceCatalogFormState>(initialForm);
 
@@ -87,7 +94,7 @@ export function ServiceCatalogPage() {
     const { data, error } = await supabase
       .from("service_catalog")
       .select(
-        "id, name, category, default_unit, default_unit_price_ht, default_tva_rate, default_description, is_active, created_at"
+        "id, name, category, default_unit, default_unit_price_ht, default_tva_rate, default_description, default_metadata, is_active, created_at"
       )
       .order("created_at", { ascending: false });
 
@@ -113,7 +120,10 @@ export function ServiceCatalogPage() {
       const matchesSearch =
         !normalizedSearch ||
         service.name.toLowerCase().includes(normalizedSearch) ||
-        (service.default_description ?? "").toLowerCase().includes(normalizedSearch);
+        (service.default_description ?? "").toLowerCase().includes(normalizedSearch) ||
+        (service.default_metadata?.aliases ?? []).some((alias) =>
+          alias.toLowerCase().includes(normalizedSearch)
+        );
 
       const matchesCategory =
         categoryFilter === "all" || service.category === categoryFilter;
@@ -139,6 +149,7 @@ export function ServiceCatalogPage() {
 
   function resetForm() {
     setForm(initialForm);
+    setEditingMetadata({});
     setEditingServiceId(null);
     setError(null);
     setSuccessMessage(null);
@@ -155,6 +166,7 @@ export function ServiceCatalogPage() {
   }
 
   function openEditForm(service: ServiceCatalogItem) {
+    const metadata = service.default_metadata ?? {};
     setForm({
       name: service.name,
       category: service.category ?? "other",
@@ -162,7 +174,23 @@ export function ServiceCatalogPage() {
       default_unit_price_ht: String(service.default_unit_price_ht),
       default_tva_rate: String(service.default_tva_rate),
       default_description: service.default_description ?? "",
+      aliases: Array.isArray(metadata.aliases)
+        ? metadata.aliases.join(", ")
+        : "",
+      surface_type:
+        typeof metadata.surface_type === "string" ? metadata.surface_type : "",
+      included_coats:
+        typeof metadata.included_coats === "number"
+          ? String(metadata.included_coats)
+          : "",
+      pricing_basis:
+        metadata.pricing_basis === "per_coat" ||
+        metadata.pricing_basis === "per_unit" ||
+        metadata.pricing_basis === "finished_surface"
+          ? metadata.pricing_basis
+          : "finished_surface",
     });
+    setEditingMetadata(metadata);
     setEditingServiceId(service.id);
     setShowForm(true);
     setError(null);
@@ -184,6 +212,31 @@ export function ServiceCatalogPage() {
       return;
     }
 
+    const metadata: ServiceCatalogMetadata = { ...editingMetadata };
+    const aliases = form.aliases
+      .split(",")
+      .map((alias) => alias.trim())
+      .filter(Boolean);
+    const includedCoats = Number(form.included_coats);
+
+    if (aliases.length > 0) metadata.aliases = aliases;
+    else delete metadata.aliases;
+
+    if (form.surface_type.trim()) {
+      metadata.surface_type = form.surface_type.trim();
+    } else {
+      delete metadata.surface_type;
+    }
+
+    if (Number.isInteger(includedCoats) && includedCoats > 0) {
+      metadata.included_coats = includedCoats;
+    } else {
+      delete metadata.included_coats;
+    }
+
+    if (form.pricing_basis) metadata.pricing_basis = form.pricing_basis;
+    else delete metadata.pricing_basis;
+
     const payload = {
       owner_user_id: user.id,
       name: form.name.trim(),
@@ -192,7 +245,7 @@ export function ServiceCatalogPage() {
       default_unit_price_ht: Number(form.default_unit_price_ht || 0),
       default_tva_rate: Number(form.default_tva_rate || 21),
       default_description: form.default_description.trim() || null,
-      default_metadata: {},
+      default_metadata: metadata,
     };
 
     if (!payload.name) {
@@ -476,6 +529,55 @@ export function ServiceCatalogPage() {
                 }
               />
             </FormField>
+
+            <FormGrid columns="2">
+              <FormField label="Alias reconnus par la dictée">
+                <TextInput
+                  value={form.aliases}
+                  onChange={(e) => updateField("aliases", e.target.value)}
+                  placeholder="primaire, sous-couche, impression"
+                />
+              </FormField>
+
+              <FormField label="Type de surface">
+                <TextInput
+                  value={form.surface_type}
+                  onChange={(e) => updateField("surface_type", e.target.value)}
+                  placeholder="mur, plafond, façade..."
+                />
+              </FormField>
+            </FormGrid>
+
+            <FormGrid columns="2">
+              <FormField label="Mode de calcul">
+                <Select
+                  value={form.pricing_basis}
+                  onChange={(e) =>
+                    updateField(
+                      "pricing_basis",
+                      e.target.value as ServiceCatalogFormState["pricing_basis"]
+                    )
+                  }
+                >
+                  <option value="finished_surface">
+                    Surface finie (prix déjà toutes couches)
+                  </option>
+                  <option value="per_coat">Surface multipliée par couche</option>
+                  <option value="per_unit">À l’unité</option>
+                </Select>
+              </FormField>
+
+              <FormField label="Nombre de couches incluses">
+                <TextInput
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={form.included_coats}
+                  onChange={(e) => updateField("included_coats", e.target.value)}
+                  placeholder="2"
+                />
+              </FormField>
+            </FormGrid>
 
             {error && <ErrorMessage message={error} />}
 

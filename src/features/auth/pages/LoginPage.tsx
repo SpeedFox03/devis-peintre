@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
+import { env } from "../../../lib/env";
 import { Button } from "../../../components/ui/Button/Button";
 import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import { FormField } from "../../../components/ui/FormField/FormField";
@@ -11,12 +12,22 @@ import "./PasswordRecoveryPage.css";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Renseigné par ProtectedRoute quand la session a été fermée parce que
+  // l'adresse ne figure plus dans la liste blanche.
+  const accessDenied =
+    (location.state as { accessDenied?: boolean } | null)?.accessDenied === true;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    accessDenied
+      ? "Accès refusé : cette adresse n’est pas autorisée pendant la phase de test."
+      : null,
+  );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -124,13 +135,21 @@ export function LoginPage() {
           </form>
 
           <div className="auth-premium-page__footer">
-            <p className="auth-premium-page__footer-text">
-              Pas encore de compte ?
-            </p>
+            {env.signupEnabled ? (
+              <>
+                <p className="auth-premium-page__footer-text">
+                  Pas encore de compte ?
+                </p>
 
-            <Link to="/register" className="auth-premium-page__footer-link">
-              Créer un compte
-            </Link>
+                <Link to="/register" className="auth-premium-page__footer-link">
+                  Créer un compte
+                </Link>
+              </>
+            ) : (
+              <p className="auth-premium-page__footer-text">
+                Accès sur invitation pendant la phase de test.
+              </p>
+            )}
           </div>
         </div>
       </div>

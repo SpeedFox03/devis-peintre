@@ -3,7 +3,7 @@ import { useAuth } from "../hooks/useAuth";
 import { LoadingBlock } from "../../../components/ui/LoadingBlock";
 
 export function ProtectedRoute() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, accessDenied } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -11,7 +11,9 @@ export function ProtectedRoute() {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return (
+      <Navigate to="/login" replace state={{ from: location, accessDenied }} />
+    );
   }
 
   return <Outlet />;
