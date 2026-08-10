@@ -2,6 +2,13 @@
 // The authenticated caller never receives the Resend API key or the link token.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  buildQuoteEmailHtml,
+  buildQuoteEmailSubject,
+  buildQuoteEmailText,
+  normalizeEmailBranding,
+  type EmailBrandingRow,
+} from "../_shared/quoteEmailBranding.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -101,7 +108,7 @@ Deno.serve(async (request) => {
   const [{ data: company }, { data: customer }, { data: ownedCompany }] = await Promise.all([
     userClient
       .from("companies")
-      .select("id, name")
+      .select("id, name, logo_url")
       .eq("id", quote.company_id)
       .single(),
     userClient
@@ -126,10 +133,19 @@ Deno.serve(async (request) => {
     return json({ error: "Le client ne possède pas d'adresse e-mail valide." }, 422);
   }
 
-  const { data: credentialRows, error: credentialsError } = await adminClient.rpc(
-    "get_company_resend_credentials",
-    { p_company_id: quote.company_id },
-  );
+  const [credentialsResult, brandingResult] = await Promise.all([
+    adminClient.rpc("get_company_resend_credentials", {
+      p_company_id: quote.company_id,
+    }),
+    adminClient
+      .from("company_email_settings")
+      .select(
+        "subject_template, heading, intro_text, button_label, signature, primary_color, background_color, show_logo",
+      )
+      .eq("company_id", quote.company_id)
+      .single(),
+  ]);
+  const { data: credentialRows, error: credentialsError } = credentialsResult;
   const credentials = (credentialRows?.[0] ?? null) as ResendCredentials | null;
 
   if (credentialsError || !credentials?.api_key) {
@@ -139,6 +155,14 @@ Deno.serve(async (request) => {
   if (!credentials.enabled) {
     return json({ error: "L'envoi d'e-mails est désactivé dans les paramètres." }, 422);
   }
+
+  if (brandingResult.error || !brandingResult.data) {
+    return json({ error: "Le design de l'e-mail ne peut pas être chargé." }, 500);
+  }
+
+  const branding = normalizeEmailBranding(
+    brandingResult.data as EmailBrandingRow,
+  );
 
   const linkResponse = await fetch(`${SUPABASE_URL}/functions/v1/create-quote-public-link`, {
     method: "POST",
@@ -171,7 +195,14 @@ Deno.serve(async (request) => {
     return json({ error: "Le lien sécurisé n'a pas pu être vérifié." }, 500);
   }
 
-  const subject = `Votre devis ${quote.quote_number} – ${company.name}`.slice(0, 300);
+  const clientName = getCustomerName(customer);
+  const templateTokens = {
+    companyName: company.name,
+    clientName,
+    quoteNumber: quote.quote_number,
+    quoteTitle: quote.title,
+  };
+  const subject = buildQuoteEmailSubject(branding, templateTokens);
   const { data: delivery, error: deliveryError } = await adminClient
     .from("quote_email_deliveries")
     .insert({
@@ -192,34 +223,23 @@ Deno.serve(async (request) => {
     return json({ error: "L'envoi n'a pas pu être enregistré dans l'historique." }, 500);
   }
 
-  const clientName = getCustomerName(customer);
   const quoteUrl = `${PUBLIC_APP_URL}/devis-client#${encodeURIComponent(linkResult.token)}`;
   const safeFromName = credentials.from_name.replace(/[<>"\r\n]/g, "").trim();
+  const emailContent = {
+    ...templateTokens,
+    totalTtc: Number(quote.total_ttc),
+    expiresAt: linkResult.expiresAt,
+    quoteUrl,
+    personalMessage,
+    logoUrl: company.logo_url,
+  };
   const emailPayload = {
     from: `${safeFromName} <${credentials.from_email}>`,
     to: [recipientEmail],
     reply_to: credentials.reply_to_email || undefined,
     subject,
-    html: buildQuoteEmailHtml({
-      companyName: company.name,
-      clientName,
-      quoteNumber: quote.quote_number,
-      quoteTitle: quote.title,
-      totalTtc: Number(quote.total_ttc),
-      expiresAt: linkResult.expiresAt,
-      quoteUrl,
-      personalMessage,
-    }),
-    text: buildQuoteEmailText({
-      companyName: company.name,
-      clientName,
-      quoteNumber: quote.quote_number,
-      quoteTitle: quote.title,
-      totalTtc: Number(quote.total_ttc),
-      expiresAt: linkResult.expiresAt,
-      quoteUrl,
-      personalMessage,
-    }),
+    html: buildQuoteEmailHtml(emailContent, branding),
+    text: buildQuoteEmailText(emailContent, branding),
   };
 
   let resendResponse: Response;
@@ -337,102 +357,6 @@ function getCustomerName(customer: {
     [customer.first_name, customer.last_name].filter(Boolean).join(" ") ||
     "Madame, Monsieur"
   );
-}
-
-type QuoteEmailContent = {
-  companyName: string;
-  clientName: string;
-  quoteNumber: string;
-  quoteTitle: string;
-  totalTtc: number;
-  expiresAt: string;
-  quoteUrl: string;
-  personalMessage: string;
-};
-
-function buildQuoteEmailHtml(content: QuoteEmailContent) {
-  const messageBlock = content.personalMessage
-    ? `<div style="margin:22px 0;padding:16px 18px;border-left:3px solid #b18652;background:#f8f1e8;border-radius:0 10px 10px 0;line-height:1.65">${escapeHtml(content.personalMessage).replaceAll("\n", "<br>")}</div>`
-    : "";
-
-  return `
-    <!doctype html>
-    <html lang="fr">
-      <head>
-        <meta name="viewport" content="width=device-width,initial-scale=1">
-      </head>
-      <body style="margin:0;background:#f6efe6;color:#34251b;font-family:Arial,sans-serif">
-        <div style="max-width:620px;margin:0 auto;padding:36px 18px">
-          <div style="background:#fffdf9;border:1px solid #e2d5c5;border-radius:18px;overflow:hidden">
-            <div style="padding:30px 30px 22px;border-bottom:1px solid #eadfd2">
-              <p style="margin:0 0 7px;color:#9a7447;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Votre devis</p>
-              <h1 style="margin:0;color:#2f2118;font-size:27px;line-height:1.25">${escapeHtml(content.quoteNumber)}</h1>
-              <p style="margin:8px 0 0;color:#806b5a;line-height:1.5">${escapeHtml(content.quoteTitle)}</p>
-            </div>
-            <div style="padding:28px 30px 32px">
-              <p style="margin:0 0 14px;line-height:1.65">Bonjour ${escapeHtml(content.clientName)},</p>
-              <p style="margin:0;line-height:1.65">${escapeHtml(content.companyName)} vous invite à consulter son devis en ligne.</p>
-              ${messageBlock}
-              <div style="margin:24px 0;padding:18px;background:#f8f1e8;border-radius:12px">
-                <table role="presentation" style="width:100%;border-collapse:collapse">
-                  <tr>
-                    <td style="padding:3px 0;color:#806b5a">Montant total TTC</td>
-                    <td style="padding:3px 0;text-align:right;color:#2f2118;font-weight:700">${formatCurrency(content.totalTtc)}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding:7px 0 3px;color:#806b5a">Lien valable jusqu'au</td>
-                    <td style="padding:7px 0 3px;text-align:right;color:#2f2118">${formatDate(content.expiresAt)}</td>
-                  </tr>
-                </table>
-              </div>
-              <div style="margin:26px 0;text-align:center">
-                <a href="${escapeHtml(content.quoteUrl)}" style="display:inline-block;padding:14px 24px;border-radius:10px;background:#6f523c;color:#fff8f2;font-weight:700;text-decoration:none">Consulter et répondre au devis</a>
-              </div>
-              <p style="margin:0;color:#806b5a;font-size:13px;line-height:1.6">Le lien est personnel et permet d'accepter le devis ou de le refuser en indiquant un motif.</p>
-            </div>
-          </div>
-          <p style="margin:18px 0 0;color:#806b5a;font-size:12px;text-align:center">Envoyé par ${escapeHtml(content.companyName)}</p>
-        </div>
-      </body>
-    </html>
-  `;
-}
-
-function buildQuoteEmailText(content: QuoteEmailContent) {
-  return [
-    `Bonjour ${content.clientName},`,
-    "",
-    `${content.companyName} vous invite à consulter son devis ${content.quoteNumber}.`,
-    content.quoteTitle,
-    content.personalMessage ? `\n${content.personalMessage}` : "",
-    "",
-    `Montant total TTC : ${formatCurrency(content.totalTtc)}`,
-    `Lien valable jusqu'au ${formatDate(content.expiresAt)}`,
-    "",
-    `Consulter et répondre au devis : ${content.quoteUrl}`,
-    "",
-    "Ce lien est personnel. Ne le transférez pas à un tiers.",
-  ].filter((line, index, lines) => line !== "" || lines[index - 1] !== "").join("\n");
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("fr-BE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(Number.isFinite(value) ? value : 0);
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("fr-BE", { dateStyle: "long" }).format(new Date(value));
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }
 
 async function sha256(value: string) {

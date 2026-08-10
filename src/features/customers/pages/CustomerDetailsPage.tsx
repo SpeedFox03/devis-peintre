@@ -47,14 +47,14 @@ export function CustomerDetailsPage() {
   } = useCustomerDetails();
 
   const [activePage, setActivePage] = useState<CustomerPageId>("quotes");
-  const [topbarPortalTarget, setTopbarPortalTarget] = useState<Element | null>(null);
+  const [topbarPortalTarget] = useState<Element | null>(() =>
+    document.querySelector(".app-topbar")
+  );
 
   useEffect(() => {
-    const topbar = document.querySelector(".app-topbar");
-    setTopbarPortalTarget(topbar);
-    topbar?.classList.add("app-topbar--with-quote-nav");
-    return () => { topbar?.classList.remove("app-topbar--with-quote-nav"); };
-  }, []);
+    topbarPortalTarget?.classList.add("app-topbar--with-quote-nav");
+    return () => { topbarPortalTarget?.classList.remove("app-topbar--with-quote-nav"); };
+  }, [topbarPortalTarget]);
 
   if (loading) {
     return <LoadingBlock message="Chargement du client..." />;
@@ -295,7 +295,7 @@ export function CustomerDetailsPage() {
                     <strong>{customer.phone || "-"}</strong>
                   </li>
                   <li>
-                    <span>Adresse facturation</span>
+                    <span>Adresse principale</span>
                     <strong>{addresses.billingAddress || "-"}</strong>
                   </li>
                   <li>
@@ -386,7 +386,7 @@ export function CustomerDetailsPage() {
                     />
                   </FormField>
 
-                  <FormField label="Pays facturation">
+                  <FormField label="Pays">
                     <TextInput
                       value={form.billing_country}
                       onChange={(e) => updateField("billing_country", e.target.value)}
@@ -396,7 +396,7 @@ export function CustomerDetailsPage() {
 
                 <div className="customer-details-premium-page__address-block">
                   <h3 className="customer-details-premium-page__subsection-title">
-                    Adresse de facturation
+                    Adresse principale
                   </h3>
 
                   <FormGrid columns="2">

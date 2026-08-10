@@ -1,0 +1,89 @@
+.projects-page { display: grid; gap: 22px; }
+
+.projects-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.projects-page__header > div { display: grid; gap: 7px; }
+.projects-page__header h1 { margin: 0; color: var(--text-strong); font-size: 2rem; line-height: 1.08; }
+.projects-page__header p { margin: 0; color: var(--text-soft); }
+.projects-page__eyebrow { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+
+.projects-page__empty {
+  min-height: 300px;
+  padding: 36px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 18px;
+  text-align: center;
+}
+
+.projects-page__empty-icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.projects-page__empty h2 { margin: 0 0 8px; color: var(--text-strong); font-size: 1.15rem; }
+.projects-page__empty p { max-width: 560px; margin: 0; color: var(--text-soft); line-height: 1.6; }
+.projects-page__empty a { color: var(--primary); font-weight: 800; }
+
+.projects-page__summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.projects-page__summary > div { padding: 18px; display: flex; align-items: end; justify-content: space-between; gap: 12px; }
+.projects-page__summary span { color: var(--text-soft); font-size: 0.82rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+.projects-page__summary strong { color: var(--text-strong); font-size: 1.8rem; line-height: 1; }
+
+.projects-page__filters { padding: 16px; display: grid; grid-template-columns: minmax(260px, 2fr) minmax(190px, 1fr); gap: 14px; }
+.projects-page__list { display: grid; gap: 10px; }
+.projects-page__card {
+  min-width: 0;
+  min-height: 82px;
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) minmax(180px, auto) 18px;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+.projects-page__card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+.projects-page__status { padding: 5px 8px; border-radius: var(--radius-pill); background: var(--primary-soft); color: var(--primary); font-size: 0.72rem; font-weight: 800; text-align: center; }
+.projects-page__status--in_progress { background: var(--warning-soft); color: #7b5b31; }
+.projects-page__status--completed { background: var(--success-soft); color: var(--success); }
+.projects-page__status--archived { background: var(--surface-muted); color: var(--text-soft); }
+.projects-page__card-copy,
+.projects-page__card-meta { min-width: 0; display: grid; gap: 4px; }
+.projects-page__card-copy strong { overflow: hidden; color: var(--text-strong); text-overflow: ellipsis; white-space: nowrap; }
+.projects-page__card-copy small,
+.projects-page__card-meta small { color: var(--text-soft); }
+.projects-page__card-meta { text-align: right; }
+.projects-page__card-meta strong { color: var(--text); font-size: 0.9rem; }
+.projects-page__form { display: grid; gap: 16px; }
+.projects-page__form-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+@media (max-width: 640px) {
+  .projects-page__header { display: grid; }
+  .projects-page__header h1 { font-size: 1.65rem; }
+  .projects-page__empty { min-height: 260px; padding: 24px 18px; }
+  .projects-page__summary,
+  .projects-page__filters { grid-template-columns: 1fr; }
+  .projects-page__card { grid-template-columns: 1fr auto; gap: 9px 12px; }
+  .projects-page__status { width: fit-content; }
+  .projects-page__card-copy { grid-column: 1 / -1; grid-row: 1; }
+  .projects-page__status { grid-column: 1; grid-row: 2; }
+  .projects-page__card-meta { grid-column: 1 / -1; grid-row: 3; text-align: left; }
+  .projects-page__card > span:last-child { grid-column: 2; grid-row: 2; }
+}

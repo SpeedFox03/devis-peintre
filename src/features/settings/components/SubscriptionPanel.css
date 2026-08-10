@@ -1,0 +1,279 @@
+.subscription-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.subscription-panel > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.subscription-panel > header > div {
+  display: grid;
+  gap: 5px;
+}
+
+.subscription-panel h2,
+.subscription-panel h3,
+.subscription-panel p {
+  margin: 0;
+}
+
+.subscription-panel h2,
+.subscription-panel h3 {
+  color: var(--text-strong);
+}
+
+.subscription-panel > header p:not(.subscription-panel__eyebrow) {
+  color: var(--text-soft);
+}
+
+.subscription-panel__eyebrow {
+  color: var(--text-soft);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.subscription-panel__status {
+  flex: 0 0 auto;
+  padding: 7px 11px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  color: var(--text-soft);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.subscription-panel__status--active,
+.subscription-panel__status--trialing {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.subscription-panel__plan {
+  padding: 22px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.subscription-panel__plan > div {
+  display: grid;
+  gap: 5px;
+}
+
+.subscription-panel__plan small,
+.subscription-panel__promo small {
+  color: var(--text-soft);
+}
+
+.subscription-panel__plan strong,
+.subscription-panel__promo strong {
+  color: var(--text-strong);
+}
+
+.subscription-panel__prices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.subscription-panel__price-card {
+  position: relative;
+  padding: 24px;
+  display: grid;
+  gap: 20px;
+  border: 1px solid var(--border);
+}
+
+.subscription-panel__price-card--recommended {
+  border-color: rgba(111, 82, 60, 0.44);
+  box-shadow: var(--shadow-md);
+}
+
+.subscription-panel__price-card--selected {
+  outline: 3px solid var(--primary-soft);
+}
+
+.subscription-panel__recommendation {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 5px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.subscription-panel__price-heading {
+  display: grid;
+  gap: 7px;
+  padding-right: 100px;
+}
+
+.subscription-panel__price-heading > span {
+  color: var(--text-soft);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.subscription-panel__price-heading > strong {
+  color: var(--text-strong);
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  line-height: 1;
+}
+
+.subscription-panel__price-heading > strong small {
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.subscription-panel__price-heading p {
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.subscription-panel__price-heading .subscription-panel__setup-fee {
+  color: #76552f;
+  font-weight: 800;
+}
+
+.subscription-panel__price-heading .subscription-panel__setup-fee--included {
+  color: var(--success);
+}
+
+.subscription-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+}
+
+.subscription-panel li {
+  position: relative;
+  padding-left: 22px;
+  color: var(--text);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.subscription-panel li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--success);
+  font-weight: 900;
+}
+
+.subscription-panel__price-card .ui-button {
+  width: 100%;
+  justify-content: center;
+  align-self: end;
+}
+
+.subscription-panel__pending,
+.subscription-panel__success {
+  padding: 13px 15px;
+  border-radius: var(--radius-md);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.subscription-panel__pending {
+  border: 1px solid rgba(177, 134, 82, 0.28);
+  background: var(--warning-soft);
+  color: #76552f;
+}
+
+.subscription-panel__success {
+  border: 1px solid rgba(95, 117, 81, 0.26);
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.subscription-panel__promo {
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 260px);
+  align-items: center;
+  gap: 16px;
+}
+
+.subscription-panel__promo > div {
+  display: grid;
+  gap: 3px;
+}
+
+.subscription-panel__seat-note {
+  color: var(--text-soft);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.subscription-panel__included {
+  padding: 22px;
+  display: grid;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(0, 1.3fr);
+  gap: 24px;
+}
+
+.subscription-panel__included > div {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+
+.subscription-panel__empty {
+  min-height: 180px;
+  padding: 28px;
+  place-items: center;
+  align-content: center;
+  text-align: center;
+}
+
+.subscription-panel__empty p {
+  margin-top: 6px;
+  color: var(--text-soft);
+}
+
+@media (max-width: 900px) {
+  .subscription-panel__prices,
+  .subscription-panel__included {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .subscription-panel > header {
+    display: grid;
+  }
+
+  .subscription-panel__status {
+    width: fit-content;
+  }
+
+  .subscription-panel__plan {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .subscription-panel__promo {
+    grid-template-columns: 1fr;
+  }
+
+  .subscription-panel__price-heading {
+    padding-right: 0;
+    padding-top: 30px;
+  }
+}

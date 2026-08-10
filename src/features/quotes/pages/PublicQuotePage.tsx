@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Button } from "../../../components/ui/Button/Button";
 import { env } from "../../../lib/env";
-import { generateQuotePdf } from "../pdf/generateQuotePdf";
 import type { QuotePdfData } from "../pdf/quotePdfTypes";
 import "./PublicQuotePage.css";
 
@@ -110,6 +109,7 @@ export function PublicQuotePage() {
 
     async function buildPdfPreview() {
       try {
+        const { generateQuotePdf } = await import("../pdf/generateQuotePdf");
         const pdf = await generateQuotePdf(
           payload!.quote.data,
           payload!.quote.theme,

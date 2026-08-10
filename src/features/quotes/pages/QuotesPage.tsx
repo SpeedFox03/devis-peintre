@@ -6,6 +6,8 @@ import { LoadingBlock } from "../../../components/ui/LoadingBlock/LoadingBlock";
 import { EmptyState } from "../../../components/ui/EmptyState/EmptyState";
 import { ErrorMessage } from "../../../components/ui/ErrorMessage/ErrorMessage";
 import { Button } from "../../../components/ui/Button/Button";
+import { ActionMenu } from "../../../components/ui/ActionMenu/ActionMenu";
+import { Drawer } from "../../../components/ui/Drawer/Drawer";
 import { DataTable } from "../../../components/ui/DataTable/DataTable";
 import { Card } from "../../../components/ui/Card/Card";
 import { FormField } from "../../../components/ui/FormField/FormField";
@@ -21,7 +23,7 @@ import {
   TrashIcon,
 } from "../../../components/ui/Icons/AppIcons";
 import { formatDisplayDate } from "../../../lib/formatters";
-import { generateQuotePdf } from "../pdf/generateQuotePdf";
+import { env } from "../../../lib/env";
 import { loadQuotePdfData } from "../pdf/loadQuotePdfData";
 import "./QuotesPage.css";
 
@@ -58,9 +60,16 @@ type CompanyOption = {
   default_terms: string | null;
 };
 
+type ProjectOption = {
+  id: string;
+  customer_id: string;
+  name: string;
+};
+
 type QuoteFormState = {
   company_id: string;
   customer_id: string;
+  project_id: string;
   quote_number: string;
   title: string;
   description: string;
@@ -83,13 +92,15 @@ function getDefaultValidUntil(validityDays = 30) {
 
 function createInitialForm(
   companies: CompanyOption[] = [],
-  presetCustomerId = ""
+  presetCustomerId = "",
+  presetProjectId = "",
 ): QuoteFormState {
   const firstCompany = companies[0];
 
   return {
     company_id: firstCompany?.id || "",
     customer_id: presetCustomerId,
+    project_id: presetProjectId,
     quote_number: "",
     title: "",
     description: "",
@@ -116,7 +127,7 @@ function getStatusLabel(status: QuoteStatus) {
     case "expired":
       return "Expiré";
     case "invoiced":
-      return "Facturé";
+      return "Historique";
     default:
       return status;
   }
@@ -129,11 +140,13 @@ function formatCurrency(value: number) {
 export function QuotesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const presetCustomerId = searchParams.get("customerId") ?? "";
+  const presetProjectId = searchParams.get("projectId") ?? "";
   const shouldOpenCreate = searchParams.get("new") === "1";
 
   const [quotes, setQuotes] = useState<QuoteRow[]>([]);
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [companies, setCompanies] = useState<CompanyOption[]>([]);
+  const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -151,7 +164,11 @@ export function QuotesPage() {
     let cancelled = false;
 
     async function fetchPageData() {
-      const [quotesRes, customersRes, companiesRes, settingsRes] = await Promise.all([
+      const projectsPromise = env.projectsEnabled
+        ? supabase.from("projects").select("id, customer_id, name").neq("status", "archived").order("updated_at", { ascending: false })
+        : Promise.resolve({ data: [] as ProjectOption[], error: null });
+
+      const [quotesRes, customersRes, companiesRes, settingsRes, projectsRes] = await Promise.all([
         supabase
           .from("quotes")
           .select("id, quote_number, title, status, total_ttc, issue_date")
@@ -168,6 +185,7 @@ export function QuotesPage() {
         supabase
           .from("company_settings")
           .select("company_id, default_tva_rate, default_quote_validity_days, default_notes, default_terms"),
+        projectsPromise,
       ]);
 
       if (cancelled) return;
@@ -190,6 +208,12 @@ export function QuotesPage() {
         return;
       }
 
+      if (projectsRes.error) {
+        setError(projectsRes.error.message);
+        setLoading(false);
+        return;
+      }
+
       const settingsByCompanyId = Object.fromEntries(
         (settingsRes.data ?? []).map((s) => [s.company_id, s])
       );
@@ -202,7 +226,8 @@ export function QuotesPage() {
       setQuotes((quotesRes.data ?? []) as QuoteRow[]);
       setCustomers(loadedCustomers);
       setCompanies(loadedCompanies);
-      setForm(createInitialForm(loadedCompanies, presetCustomerId));
+      setProjects((projectsRes.data ?? []) as ProjectOption[]);
+      setForm(createInitialForm(loadedCompanies, presetCustomerId, presetProjectId));
       setShowForm(shouldOpenCreate);
       setError(null);
       setLoading(false);
@@ -213,7 +238,7 @@ export function QuotesPage() {
     return () => {
       cancelled = true;
     };
-  }, [presetCustomerId, shouldOpenCreate]);
+  }, [presetCustomerId, presetProjectId, shouldOpenCreate]);
 
   async function reloadQuotesOnly() {
     const { data, error } = await supabase
@@ -240,7 +265,7 @@ export function QuotesPage() {
   }
 
   function openCreateForm() {
-    setForm(createInitialForm(companies, presetCustomerId));
+    setForm(createInitialForm(companies, presetCustomerId, presetProjectId));
     setError(null);
     setShowForm(true);
   }
@@ -248,7 +273,7 @@ export function QuotesPage() {
   function closeCreateForm() {
     setShowForm(false);
     setError(null);
-    if (searchParams.get("customerId") || searchParams.get("new")) {
+    if (searchParams.get("customerId") || searchParams.get("projectId") || searchParams.get("new")) {
       setSearchParams({}, { replace: true });
     }
   }
@@ -292,7 +317,7 @@ export function QuotesPage() {
       return;
     }
 
-    const { error: insertError } = await supabase.rpc("create_quote", {
+    const createQuoteInput = {
       p_company_id: form.company_id,
       p_customer_id: form.customer_id,
       p_title: form.title,
@@ -302,7 +327,11 @@ export function QuotesPage() {
       p_tva_rate: Number(form.tva_rate || 21),
       p_notes: form.notes || null,
       p_terms: form.terms || null,
-    });
+    };
+    const { data: createdQuoteResult, error: insertError } = await supabase.rpc(
+      "create_quote",
+      createQuoteInput,
+    );
 
     if (insertError) {
       setError(insertError.message);
@@ -310,10 +339,37 @@ export function QuotesPage() {
       return;
     }
 
+    if (env.projectsEnabled && form.project_id) {
+      const createdQuoteId = typeof createdQuoteResult === "string"
+        ? createdQuoteResult
+        : Array.isArray(createdQuoteResult) && typeof createdQuoteResult[0]?.id === "string"
+          ? createdQuoteResult[0].id
+          : createdQuoteResult && typeof createdQuoteResult === "object" && "id" in createdQuoteResult && typeof createdQuoteResult.id === "string"
+            ? createdQuoteResult.id
+            : null;
+      if (createdQuoteId) {
+        const { error: projectLinkError } = await supabase
+          .from("quotes")
+          .update({ project_id: form.project_id })
+          .eq("id", createdQuoteId);
+        if (projectLinkError) {
+          setError(`Le devis a été créé, mais son association au projet a échoué : ${projectLinkError.message}`);
+          setSaving(false);
+          await reloadQuotesOnly();
+          return;
+        }
+      } else {
+        setError("Le devis a été créé, mais la base n’a pas renvoyé son identifiant pour l’associer au projet.");
+        setSaving(false);
+        await reloadQuotesOnly();
+        return;
+      }
+    }
+
     setForm(createInitialForm(companies));
     setShowForm(false);
     setSaving(false);
-    if (searchParams.get("customerId") || searchParams.get("new")) {
+    if (searchParams.get("customerId") || searchParams.get("projectId") || searchParams.get("new")) {
       setSearchParams({}, { replace: true });
     }
     await reloadQuotesOnly();
@@ -365,6 +421,7 @@ export function QuotesPage() {
 
     try {
       const { data, theme, colorMode, accentColor } = await loadQuotePdfData(quote.id);
+      const { generateQuotePdf } = await import("../pdf/generateQuotePdf");
       const pdf = await generateQuotePdf(data, theme, colorMode, accentColor);
       pdf.download(`${quote.quote_number}.pdf`);
     } catch (downloadError) {
@@ -422,13 +479,8 @@ export function QuotesPage() {
     });
   }, [quotes, search, statusFilter]);
 
-  const totalQuotes = quotes.length;
   const draftCount = quotes.filter((quote) => quote.status === "draft").length;
-  const acceptedCount = quotes.filter((quote) => quote.status === "accepted").length;
-  const totalPortfolio = quotes.reduce(
-    (sum, quote) => sum + Number(quote.total_ttc || 0),
-    0
-  );
+  const awaitingResponseCount = quotes.filter((quote) => quote.status === "sent").length;
 
   if (loading) {
     return <LoadingBlock message="Chargement des devis..." />;
@@ -445,39 +497,32 @@ export function QuotesPage() {
         <div className="quotes-premium-page__hero-actions">
           <Button
             variant="primary"
-            onClick={showForm ? closeCreateForm : openCreateForm}
+            onClick={openCreateForm}
           >
-            {showForm ? null : <PlusIcon />}
-            {showForm ? "Fermer le formulaire" : "Nouveau devis"}
+            <PlusIcon />
+            Nouveau devis
           </Button>
         </div>
       </header>
 
-      <div className="quotes-premium-page__stats">
+      <div className="quotes-premium-page__stats quotes-premium-page__stats--compact">
         <Card className="quotes-premium-page__stat-card">
-          <p className="quotes-premium-page__stat-label">Nombre de devis</p>
-          <p className="quotes-premium-page__stat-value">{totalQuotes}</p>
-        </Card>
-
-        <Card className="quotes-premium-page__stat-card">
-          <p className="quotes-premium-page__stat-label">Brouillons</p>
+          <p className="quotes-premium-page__stat-label">À finaliser</p>
           <p className="quotes-premium-page__stat-value">{draftCount}</p>
         </Card>
 
         <Card className="quotes-premium-page__stat-card">
-          <p className="quotes-premium-page__stat-label">Acceptés</p>
-          <p className="quotes-premium-page__stat-value">{acceptedCount}</p>
-        </Card>
-
-        <Card className="quotes-premium-page__stat-card">
-          <p className="quotes-premium-page__stat-label">Montant cumulé TTC</p>
-          <p className="quotes-premium-page__stat-value quotes-premium-page__stat-value--highlight">
-            {formatCurrency(totalPortfolio)}
-          </p>
+          <p className="quotes-premium-page__stat-label">En attente client</p>
+          <p className="quotes-premium-page__stat-value">{awaitingResponseCount}</p>
         </Card>
       </div>
 
-      {showForm ? (
+      <Drawer
+        open={showForm}
+        onClose={closeCreateForm}
+        title="Créer un devis"
+        description="Renseignez l’essentiel. Les pièces et les prestations s’ajoutent ensuite dans le devis."
+      >
         <Card className="quotes-premium-page__form-card">
           <div className="quotes-premium-page__form-intro">
             <div>
@@ -515,6 +560,22 @@ export function QuotesPage() {
                   ))}
                 </Select>
               </FormField>
+
+              {env.projectsEnabled ? (
+                <FormField label="Projet">
+                  <Select
+                    value={form.project_id}
+                    onChange={(e) => updateField("project_id", e.target.value)}
+                  >
+                    <option value="">Sans projet</option>
+                    {projects
+                      .filter((project) => !form.customer_id || project.customer_id === form.customer_id)
+                      .map((project) => (
+                        <option key={project.id} value={project.id}>{project.name}</option>
+                      ))}
+                  </Select>
+                </FormField>
+              ) : null}
             </FormGrid>
 
             <FormGrid columns="2">
@@ -603,40 +664,40 @@ export function QuotesPage() {
             </div>
           </form>
         </Card>
-      ) : (
-        <Card className="quotes-premium-page__filters-card">
-          <div className="quotes-premium-page__filters">
-            <div className="quotes-premium-page__filters-grid">
-              <FormField label="Recherche">
-                <TextInput
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Numéro ou titre du devis"
-                />
-              </FormField>
+      </Drawer>
 
-              <FormField label="Statut">
-                <Select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <option value="all">Tous les statuts</option>
-                  <option value="draft">{getStatusLabel("draft")}</option>
-                  <option value="sent">{getStatusLabel("sent")}</option>
-                  <option value="accepted">{getStatusLabel("accepted")}</option>
-                  <option value="rejected">{getStatusLabel("rejected")}</option>
-                  <option value="expired">{getStatusLabel("expired")}</option>
-                  <option value="invoiced">{getStatusLabel("invoiced")}</option>
-                </Select>
-              </FormField>
-            </div>
+      <Card className="quotes-premium-page__filters-card">
+        <div className="quotes-premium-page__filters">
+          <div className="quotes-premium-page__filters-grid">
+            <FormField label="Recherche">
+              <TextInput
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Numéro ou titre du devis"
+              />
+            </FormField>
+
+            <FormField label="Statut">
+              <Select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="all">Tous les statuts</option>
+                <option value="draft">{getStatusLabel("draft")}</option>
+                <option value="sent">{getStatusLabel("sent")}</option>
+                <option value="accepted">{getStatusLabel("accepted")}</option>
+                <option value="rejected">{getStatusLabel("rejected")}</option>
+                <option value="expired">{getStatusLabel("expired")}</option>
+                <option value="invoiced">Historique</option>
+              </Select>
+            </FormField>
           </div>
-        </Card>
-      )}
+        </div>
+      </Card>
 
       {error && !showForm ? <ErrorMessage message={error} /> : null}
 
-      {!showForm && filteredQuotes.length === 0 ? (
+      {filteredQuotes.length === 0 ? (
         <EmptyState
           title="Aucun devis"
           description={
@@ -649,7 +710,7 @@ export function QuotesPage() {
         />
       ) : null}
 
-      {!showForm && filteredQuotes.length > 0 ? (
+      {filteredQuotes.length > 0 ? (
         <>
           {/* ── Tableau desktop ── */}
           <div className="quotes-premium-page__table-shell">
@@ -689,6 +750,7 @@ export function QuotesPage() {
                         handleStatusChange(quote.id, e.target.value as QuoteStatus)
                       }
                       disabled={
+                        quote.status === "invoiced" ||
                         updatingStatusQuoteId === quote.id ||
                         duplicatingQuoteId === quote.id ||
                         deletingQuoteId === quote.id ||
@@ -700,7 +762,9 @@ export function QuotesPage() {
                       <option value="accepted">{getStatusLabel("accepted")}</option>
                       <option value="rejected">{getStatusLabel("rejected")}</option>
                       <option value="expired">{getStatusLabel("expired")}</option>
-                      <option value="invoiced">{getStatusLabel("invoiced")}</option>
+                      {quote.status === "invoiced" && (
+                        <option value="invoiced">Historique</option>
+                      )}
                     </Select>
                   </td>
 
@@ -724,64 +788,11 @@ export function QuotesPage() {
                           <EyeIcon />
                         </Button>
                       </Link>
-
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        iconOnly
-                        onClick={() => void handleDownloadQuote(quote)}
-                        disabled={
-                          downloadingQuoteId === quote.id ||
-                          duplicatingQuoteId === quote.id ||
-                          deletingQuoteId === quote.id ||
-                          updatingStatusQuoteId === quote.id
-                        }
-                        aria-label={
-                          downloadingQuoteId === quote.id
-                            ? `Génération du PDF ${quote.quote_number}`
-                            : `Télécharger le PDF ${quote.quote_number}`
-                        }
-                        title="Télécharger le PDF"
-                      >
-                        <DownloadIcon />
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        iconOnly
-                        onClick={() => handleDuplicateQuote(quote.id)}
-                        disabled={
-                          duplicatingQuoteId === quote.id ||
-                          deletingQuoteId === quote.id ||
-                          updatingStatusQuoteId === quote.id ||
-                          downloadingQuoteId === quote.id
-                        }
-                        aria-label={`Dupliquer ${quote.quote_number}`}
-                        title="Dupliquer"
-                      >
-                        <CopyIcon />
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="danger"
-                        size="sm"
-                        iconOnly
-                        onClick={() => handleDeleteQuote(quote.id)}
-                        disabled={
-                          deletingQuoteId === quote.id ||
-                          duplicatingQuoteId === quote.id ||
-                          updatingStatusQuoteId === quote.id ||
-                          downloadingQuoteId === quote.id
-                        }
-                        aria-label={`Supprimer ${quote.quote_number}`}
-                        title="Supprimer"
-                      >
-                        <TrashIcon />
-                      </Button>
+                      <ActionMenu label={`Actions pour ${quote.quote_number}`}>
+                        <button type="button" onClick={() => void handleDownloadQuote(quote)} disabled={downloadingQuoteId === quote.id}><DownloadIcon /> Télécharger le PDF</button>
+                        <button type="button" onClick={() => handleDuplicateQuote(quote.id)} disabled={duplicatingQuoteId === quote.id}><CopyIcon /> Dupliquer</button>
+                        <button type="button" data-danger="true" onClick={() => handleDeleteQuote(quote.id)} disabled={deletingQuoteId === quote.id}><TrashIcon /> Supprimer</button>
+                      </ActionMenu>
                     </div>
                   </td>
                 </tr>
@@ -821,6 +832,7 @@ export function QuotesPage() {
                         handleStatusChange(quote.id, e.target.value as QuoteStatus)
                       }
                       disabled={
+                        quote.status === "invoiced" ||
                         updatingStatusQuoteId === quote.id ||
                         duplicatingQuoteId === quote.id ||
                         deletingQuoteId === quote.id ||
@@ -832,7 +844,9 @@ export function QuotesPage() {
                       <option value="accepted">{getStatusLabel("accepted")}</option>
                       <option value="rejected">{getStatusLabel("rejected")}</option>
                       <option value="expired">{getStatusLabel("expired")}</option>
-                      <option value="invoiced">{getStatusLabel("invoiced")}</option>
+                      {quote.status === "invoiced" && (
+                        <option value="invoiced">Historique</option>
+                      )}
                     </Select>
                   </div>
                 </div>
@@ -845,60 +859,11 @@ export function QuotesPage() {
                     </Button>
                   </Link>
 
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    iconOnly
-                    onClick={() => void handleDownloadQuote(quote)}
-                    disabled={
-                      downloadingQuoteId === quote.id ||
-                      duplicatingQuoteId === quote.id ||
-                      deletingQuoteId === quote.id ||
-                      updatingStatusQuoteId === quote.id
-                    }
-                    aria-label={
-                      downloadingQuoteId === quote.id
-                        ? `Génération du PDF ${quote.quote_number}`
-                        : `Télécharger le PDF ${quote.quote_number}`
-                    }
-                    title="Télécharger le PDF"
-                  >
-                    <DownloadIcon />
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    iconOnly
-                    onClick={() => handleDuplicateQuote(quote.id)}
-                    disabled={
-                      duplicatingQuoteId === quote.id ||
-                      deletingQuoteId === quote.id ||
-                      updatingStatusQuoteId === quote.id ||
-                      downloadingQuoteId === quote.id
-                    }
-                    aria-label={`Dupliquer ${quote.quote_number}`}
-                    title="Dupliquer"
-                  >
-                    <CopyIcon />
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="danger"
-                    iconOnly
-                    onClick={() => handleDeleteQuote(quote.id)}
-                    disabled={
-                      deletingQuoteId === quote.id ||
-                      duplicatingQuoteId === quote.id ||
-                      updatingStatusQuoteId === quote.id ||
-                      downloadingQuoteId === quote.id
-                    }
-                    aria-label={`Supprimer ${quote.quote_number}`}
-                    title="Supprimer"
-                  >
-                    <TrashIcon />
-                  </Button>
+                  <ActionMenu label={`Actions pour ${quote.quote_number}`}>
+                    <button type="button" onClick={() => void handleDownloadQuote(quote)} disabled={downloadingQuoteId === quote.id}><DownloadIcon /> Télécharger le PDF</button>
+                    <button type="button" onClick={() => handleDuplicateQuote(quote.id)} disabled={duplicatingQuoteId === quote.id}><CopyIcon /> Dupliquer</button>
+                    <button type="button" data-danger="true" onClick={() => handleDeleteQuote(quote.id)} disabled={deletingQuoteId === quote.id}><TrashIcon /> Supprimer</button>
+                  </ActionMenu>
                 </div>
               </article>
             ))}

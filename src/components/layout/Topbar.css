@@ -105,6 +105,8 @@
   flex: 0 0 auto;
   transition: background var(--transition-fast), border-color var(--transition-fast);
 }
+
+.app-topbar__mobile-brand { display: none; }
 .app-topbar__logout:hover {
   background: var(--primary-strong);
   border-color: var(--primary-strong);
@@ -131,7 +133,31 @@
   .app-topbar__user-email { display: none; }
 }
 
-/* ── Mobile : la topbar est cachée, la sidebar mobile-bar prend le relais ── */
 @media (max-width: 768px) {
-  .app-topbar { display: none; }
+  .app-topbar {
+    position: sticky;
+    min-height: 58px;
+    margin: -12px -12px 18px;
+    padding: 0 14px;
+    gap: 10px;
+  }
+
+  .app-topbar__mobile-brand {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    flex: 0 0 auto;
+  }
+
+  .app-topbar__eyebrow { display: none; }
+  .app-topbar__title { font-size: 1rem; }
+  .app-topbar__actions { display: none; }
+  .app-topbar .quote-topbar-nav { display: none; }
 }

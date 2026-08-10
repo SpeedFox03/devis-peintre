@@ -1,73 +1,44 @@
-# React + TypeScript + Vite
+# Application devis artisan
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Application React/Vite reliée à Supabase pour gérer le parcours **Client → Projet → Devis**, le catalogue de prestations et les paramètres d’entreprise.
 
-Currently, two official plugins are available:
+## Développement local
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Contrôle complet avant livraison :
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run verify
 ```
+
+Ce contrôle exécute le lint, la vérification TypeScript, le contrôle de sûreté des migrations et le build de production.
+
+## E-mails de devis
+
+Chaque entreprise peut relier son propre compte Resend dans **Paramètres → E-mails**. La clé API est stockée dans Supabase Vault et n'est jamais exposée au frontend.
+
+Le même écran permet de personnaliser l'objet, le titre, l'introduction, le bouton, la signature, le logo et les couleurs de l'e-mail. Un aperçu en direct et un envoi de test utilisent le rendu réellement envoyé aux clients.
+
+Variables disponibles dans les textes : `{{company_name}}`, `{{client_name}}`, `{{quote_number}}` et `{{quote_title}}`.
+
+## Activation progressive
+
+Les fonctionnalités qui dépendent de la migration finale sont protégées par des variables :
+
+- `VITE_PROJECTS_ENABLED=true` active les projets et le rattachement des devis ;
+- `VITE_ADMINISTRATION_ENABLED=true` active abonnements, modèles assignés et administration ;
+- `VITE_SIGNUP_ENABLED=true` réactive l’inscription publique.
+
+Les deux premières variables doivent rester désactivées tant que la migration SQL et les fonctions Edge d’administration ne sont pas déployées et vérifiées.
+
+## Données de production
+
+La facturation a été retirée du frontend. Ses tables et données historiques sont volontairement conservées. Toute opération distante doit suivre [la procédure de protection](docs/PROTECTION_DONNEES_PRODUCTION.md), notamment pour le compte `contact@momentdart.be`.
+
+La migration cible se trouve dans `supabase/migrations/20260809_add_company_projects_billing_admin.sql`. Elle est additive et ne doit être exécutée qu’après restauration testée, inventaire avant migration et copie séparée de Supabase Storage.
+
+Voir aussi [l’architecture de la refonte](docs/REFONTE_APPLICATION.md).

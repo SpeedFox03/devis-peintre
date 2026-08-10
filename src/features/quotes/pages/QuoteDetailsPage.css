@@ -6,7 +6,9 @@
   gap: 20px;
   padding-bottom: 32px;
   min-width: 0;
+  max-width: 100%;
   width: 100%;
+  overflow-x: clip;
   box-sizing: border-box;
 }
 
@@ -164,12 +166,17 @@
     display: flex;
     gap: 8px;
     padding: 0 2px;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .quote-page-tabs-mobile .quote-topbar-nav__tab {
     flex: 1 1 0;
+    min-width: 0;
     font-size: 0.85rem;
     padding: 10px 8px;
+    line-height: 1.2;
+    white-space: normal;
   }
 }
 
@@ -241,6 +248,8 @@
   display: grid;
   gap: 18px;
   min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 
 .quote-premium-page__hero-main { flex: 1 1 auto; }
@@ -356,6 +365,13 @@
   .quote-premium-page {
     gap: 14px;
     padding-top: 8px;
+  }
+
+  .quote-premium-page__builder-columns,
+  .quote-premium-page__builder-columns > * {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
   }
 
   .quote-premium-page__hero { padding: 16px; border-radius: 18px; }

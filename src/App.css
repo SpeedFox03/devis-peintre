@@ -49,9 +49,6 @@ a {
 :root .settings-premium-page__hero,
 :root .catalog-premium-page__hero,
 :root .home-page__hero,
-:root .invoice-details-premium__hero,
-:root .invoices-premium-page__hero,
-:root .archived-customers-premium-page__hero,
 :root .quote-premium-page__hero,
 :root .quotes-premium-page__hero,
 :root .customer-details-premium-page__hero,
@@ -77,17 +74,11 @@ a {
 :root .customer-details-premium-page__quote-card,
 :root .catalog-premium-page__service-card,
 :root .quote-catalog-picker-premium__card,
-:root .invoices-premium-page__filters-card,
-:root .invoices-premium-page__invoice-card,
-:root .invoice-details-premium__info-card,
-:root .invoice-details-premium__item-card,
-:root .invoice-details-premium__payment-card,
 :root .quotes-premium-page__stat-card,
 :root .quotes-premium-page__filters-card,
 :root .quotes-premium-page__quote-card,
 :root .quote-items-premium__catalog-card,
-:root .quote-items-premium__item-card,
-:root .quote-rooms-premium__card {
+:root .quote-items-premium__item-card {
   border-color: var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);

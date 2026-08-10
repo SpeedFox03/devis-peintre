@@ -1,12 +1,9 @@
-/* ── Desktop sidebar ── */
 .app-sidebar {
   position: sticky;
   top: 0;
   height: 100vh;
-  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0;
   color: rgba(255, 248, 242, 0.78);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 220px),
@@ -22,6 +19,8 @@
   align-items: center;
   padding: 20px;
   border-bottom: 1px solid rgba(255, 248, 242, 0.1);
+  color: inherit;
+  text-decoration: none;
 }
 
 .app-sidebar__brand-mark {
@@ -32,7 +31,7 @@
   place-items: center;
   background: var(--surface);
   color: var(--primary-strong);
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.08em;
   box-shadow: 0 2px 8px rgba(47, 33, 24, 0.28);
   flex: 0 0 auto;
@@ -40,48 +39,62 @@
 
 .app-sidebar__eyebrow {
   margin: 0 0 2px;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  color: rgba(255, 248, 242, 0.62);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: rgba(255, 248, 242, 0.65);
 }
 
-.app-sidebar__title    { margin: 0; font-size: 1rem; line-height: 1.2; color: #fff8f2; font-weight: 600; }
-.app-sidebar__subtitle { display: none; }
+.app-sidebar__title {
+  margin: 0;
+  color: #fff8f2;
+  font-size: 1rem;
+  line-height: 1.2;
+  font-weight: 700;
+}
 
-.app-sidebar__nav     { display: grid; align-content: start; gap: 4px; padding: 16px 12px; }
-.app-sidebar__section { display: grid; gap: 2px; }
+.app-sidebar__nav {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 12px;
+}
+
+.app-sidebar__section { display: grid; gap: 3px; }
 
 .app-sidebar__section-title {
   margin: 0;
-  padding: 20px 12px 8px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  padding: 18px 12px 7px;
+  color: rgba(255, 248, 242, 0.52);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: rgba(255, 248, 242, 0.65);
 }
 
 .app-sidebar__link {
+  position: relative;
+  min-height: 44px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
   gap: 12px;
-  position: relative;
-  min-height: 42px;
-  padding: 10px 12px;
   border-radius: var(--radius-md);
-  text-decoration: none;
   color: rgba(255, 248, 242, 0.76);
+  text-decoration: none;
   transition: background var(--transition-fast), color var(--transition-fast);
 }
 
-.app-sidebar__link:hover { background: rgba(255, 248, 242, 0.08); color: #fff8f2; }
+.app-sidebar__link:hover {
+  background: rgba(255, 248, 242, 0.08);
+  color: #fff8f2;
+}
 
 .app-sidebar__link--active {
   background: rgba(255, 248, 242, 0.12);
   color: #fff8f2;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .app-sidebar__link--active::before {
@@ -97,180 +110,22 @@
 }
 
 .app-sidebar__link-icon {
+  width: 22px;
   display: inline-grid;
   place-items: center;
-  width: 22px;
   color: inherit;
-  opacity: 0.9;
+  opacity: 0.92;
   flex: 0 0 auto;
 }
 
-.app-sidebar__footer { margin-top: auto; padding: 12px; }
+.app-sidebar__link-icon svg { width: 20px; height: 20px; }
 
-
-/* ── Mobile bar : cachée sur desktop ── */
-.app-sidebar__mobile-bar { display: none; }
-.app-sidebar__overlay    { display: none; }
-
-/* ── Mobile / tablette ── */
-@media (max-width: 768px) {
-
-  /* Barre fixe en haut */
-  .app-sidebar__mobile-bar {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 0 16px;
-    height: 56px;
-    background: rgba(255, 250, 244, 0.96);
-    border-bottom: 1px solid var(--border);
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 50;
-    box-shadow: 0 1px 8px rgba(47,33,24,0.07);
-  }
-
-  .app-sidebar__mobile-bar .app-sidebar__brand-mark {
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-sm);
-    font-size: 0.82rem;
-    box-shadow: none;
-  }
-
-  .app-sidebar__mobile-title {
-    flex: 1 1 auto;
-    font-weight: 800;
-    font-size: 1rem;
-    color: #2f2118;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* Bouton hamburger */
-  .app-sidebar__hamburger {
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-    width: 40px !important;
-    height: 40px !important;
-    min-height: unset !important;
-    padding: 0 !important;
-    border: 1px solid rgba(120, 92, 68, 0.2) !important;
-    border-radius: var(--radius-md) !important;
-    background: rgba(255, 251, 246, 0.9) !important;
-    color: #503c2e !important;
-    font-size: 1.2rem;
-    flex: 0 0 auto;
-    box-shadow: none !important;
-  }
-
-  /* Overlay semi-transparent */
-  .app-sidebar__overlay {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 59;
-    background: rgba(47, 33, 24, 0.4);
-    backdrop-filter: blur(2px);
-  }
-
-  /* Sidebar → drawer latéral */
-  .app-sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100dvh;
-    width: min(280px, 85vw);
-    z-index: 60;
-    transform: translateX(-100%);
-    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-    border-right: 1px solid rgba(120, 92, 68, 0.18);
-    box-shadow: none;
-  }
-
-  .app-sidebar--mobile-open {
-    transform: translateX(0);
-    box-shadow: 8px 0 40px rgba(47, 33, 24, 0.18);
-  }
-}
-/* ══════════════════════════════════════════
-   Bloc utilisateur + déconnexion (mobile only)
-══════════════════════════════════════════ */
-.app-sidebar__user-block {
-  display: none; /* caché sur desktop */
+.app-sidebar__footer {
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid rgba(255, 248, 242, 0.08);
 }
 
 @media (max-width: 768px) {
-  .app-sidebar__user-block {
-    display: grid;
-    gap: 10px;
-    padding: 14px;
-    border-radius: var(--radius-md);
-    background: rgba(255, 248, 242, 0.06);
-    border: 1px solid rgba(255, 248, 242, 0.12);
-    margin-bottom: 10px;
-  }
-
-  .app-sidebar__user-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-  }
-
-  .app-sidebar__user-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-sm);
-    display: grid;
-    place-items: center;
-    background: var(--surface);
-    color: var(--primary-strong);
-    font-weight: 800;
-    font-size: 0.82rem;
-    flex: 0 0 auto;
-  }
-
-  .app-sidebar__user-meta {
-    display: grid;
-    gap: 1px;
-    min-width: 0;
-  }
-
-  .app-sidebar__user-label {
-    font-size: 0.68rem;
-    color: rgba(255, 248, 242, 0.65);
-    white-space: nowrap;
-  }
-
-  .app-sidebar__user-email {
-    color: #fff8f2;
-    font-size: 0.85rem;
-    font-weight: 700;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .app-sidebar__logout {
-    width: 100%;
-    padding: 10px 14px;
-    border-radius: var(--radius-md);
-    border: 1px solid rgba(255, 248, 242, 0.16);
-    background: rgba(255, 248, 242, 0.1);
-    color: #fff8f2;
-    font-weight: 700;
-    font-size: 0.88rem;
-    cursor: pointer;
-    text-align: center;
-    transition: background var(--transition-fast);
-  }
-
-  .app-sidebar__logout:hover {
-    background: rgba(255, 248, 242, 0.16);
-  }
+  .app-sidebar { display: none; }
 }

@@ -10,6 +10,8 @@ import { FormGrid } from "../../../components/ui/FormGrid/FormGrid";
 import { TextArea } from "../../../components/ui/TextArea/TextArea";
 import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import { EmailSettingsPanel } from "../components/EmailSettingsPanel";
+import { SubscriptionPanel } from "../components/SubscriptionPanel";
+import { env } from "../../../lib/env";
 import "./SettingsPage.css";
 
 // ─── Tab pages ───────────────────────────────────────────────────────────────
@@ -18,6 +20,7 @@ const settingsPages = [
   { id: "informations", label: "Informations" },
   { id: "apparence",    label: "Apparence" },
   { id: "emails",       label: "E-mails" },
+  { id: "abonnement",   label: "Abonnement" },
 ] as const;
 
 type SettingsPageId = (typeof settingsPages)[number]["id"];
@@ -26,6 +29,7 @@ type SettingsPageId = (typeof settingsPages)[number]["id"];
 
 type CompanySettings = {
   id: string;
+  address_id: string | null;
   name: string;
   vat_number: string | null;
   email: string | null;
@@ -69,10 +73,19 @@ type CompanySettingsFormState = {
   default_notes: string;
   default_deposit_percent: string;
   pdf_theme: string;
+  pdf_density: string;
   pdf_accent_color: string;
   pdf_color_mode: boolean;
   legal_mentions: string;
   logo_url: string;
+};
+
+type QuoteDesignOption = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  renderer_key: string;
 };
 
 const PDF_THEME_OPTIONS: { value: string; label: string; description: string }[] = [
@@ -98,6 +111,37 @@ const PDF_THEME_OPTIONS: { value: string; label: string; description: string }[]
   },
 ];
 
+const PDF_DESIGN_OPTIONS = [
+  {
+    value: "standard",
+    label: "Standard artisan",
+    description: "Une présentation claire et professionnelle adaptée à tous les devis.",
+  },
+  {
+    value: "elegant",
+    label: "Élégant",
+    description: "Papier crème, gestes de peinture et composition éditoriale.",
+  },
+] as const;
+
+const PDF_DENSITY_OPTIONS = [
+  { value: "compact", label: "Compact", description: "Plus de lignes par page" },
+  { value: "normal", label: "Normal", description: "Équilibre par défaut" },
+  { value: "aere", label: "Aéré", description: "Davantage d’espace" },
+] as const;
+
+function getPdfDesign(value: string) {
+  return value === "elegant" ? "elegant" : "standard";
+}
+
+function getPdfDensity(value: string) {
+  return value === "compact" || value === "aere" ? value : "normal";
+}
+
+function getPdfDesignLabel(value: string) {
+  return getPdfDesign(value) === "elegant" ? "Élégant" : "Standard artisan";
+}
+
 function getPdfThemeLabel(value: string) {
   return PDF_THEME_OPTIONS.find((o) => o.value === value)?.label ?? value;
 }
@@ -122,6 +166,7 @@ function createInitialForm(company: CompanySettings | null): CompanySettingsForm
     default_notes: company?.default_notes ?? "",
     default_deposit_percent: String(company?.default_deposit_percent ?? 0),
     pdf_theme: company?.pdf_theme ?? "normal",
+    pdf_density: getPdfDensity(company?.pdf_theme ?? "normal"),
     pdf_accent_color: company?.pdf_accent_color ?? "#8e7452",
     pdf_color_mode: company?.pdf_color_mode ?? true,
     legal_mentions: company?.legal_mentions ?? "",
@@ -533,14 +578,13 @@ function ThemePreviewElegant({ color = true }: { color?: boolean }) {
 export function SettingsPage() {
   // Tab navigation
   const [activePage, setActivePage] = useState<SettingsPageId>("informations");
-  const [topbarPortalTarget, setTopbarPortalTarget] = useState<Element | null>(null);
+  const [topbarPortalTarget] = useState<Element | null>(() => document.querySelector(".app-topbar"));
 
   useEffect(() => {
-    const topbar = document.querySelector(".app-topbar");
-    setTopbarPortalTarget(topbar);
+    const topbar = topbarPortalTarget;
     topbar?.classList.add("app-topbar--with-quote-nav");
     return () => { topbar?.classList.remove("app-topbar--with-quote-nav"); };
-  }, []);
+  }, [topbarPortalTarget]);
 
   // Data state
   const [company, setCompany] = useState<CompanySettings | null>(null);
@@ -550,6 +594,9 @@ export function SettingsPage() {
   const [creatingCompany, setCreatingCompany] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [availableDesigns, setAvailableDesigns] = useState<QuoteDesignOption[]>([]);
+  const [selectedDesignId, setSelectedDesignId] = useState<string | null>(null);
+  const canUseElegantDesign = form.pdf_theme === "elegant";
   const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
 
   async function handleLogoUpload(event: React.ChangeEvent<HTMLInputElement>) {
@@ -561,7 +608,7 @@ export function SettingsPage() {
     setLogoUploadError(null);
 
     const ext = file.name.split(".").pop() ?? "png";
-    const path = `${company.id}/${Date.now()}.${ext}`;
+    const path = `${company.id}/${file.lastModified}.${ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from("company-logos")
@@ -638,6 +685,8 @@ export function SettingsPage() {
     if (!data) {
       setCompany(null);
       setForm(createInitialForm(null));
+      setAvailableDesigns([]);
+      setSelectedDesignId(null);
       setLoading(false);
       return;
     }
@@ -650,16 +699,43 @@ export function SettingsPage() {
         .maybeSingle(),
       supabase
         .from("addresses")
-        .select("line1, line2, postal_code, city, country")
+        .select("id, line1, line2, postal_code, city, country")
         .eq("entity_id", data.id)
         .eq("entity_type", "company")
         .eq("role", "main")
         .maybeSingle(),
     ]);
 
+    let assignedDesigns: QuoteDesignOption[] = [];
+    let defaultDesignId: string | null = null;
+    let defaultDensity: string | null = null;
+    if (env.administrationEnabled) {
+      const [designsRes, preferenceRes] = await Promise.all([
+        supabase
+          .from("quote_designs")
+          .select("id, name, slug, description, renderer_key")
+          .eq("active", true)
+          .order("created_at"),
+        supabase
+          .from("company_quote_preferences")
+          .select("default_design_id, default_density")
+          .eq("company_id", data.id)
+          .maybeSingle(),
+      ]);
+      if (designsRes.error || preferenceRes.error) {
+        setError(designsRes.error?.message ?? preferenceRes.error?.message ?? "Impossible de charger les modèles de devis.");
+        setLoading(false);
+        return;
+      }
+      assignedDesigns = (designsRes.data ?? []) as QuoteDesignOption[];
+      defaultDesignId = preferenceRes.data?.default_design_id ?? null;
+      defaultDensity = preferenceRes.data?.default_density ?? null;
+    }
+
     const loadedCompany: CompanySettings = {
       ...data,
       ...(settingsRes.data ?? {}),
+      address_id: addrRes.data?.id ?? null,
       address_line1: addrRes.data?.line1 ?? null,
       address_line2: addrRes.data?.line2 ?? null,
       postal_code: addrRes.data?.postal_code ?? null,
@@ -667,13 +743,25 @@ export function SettingsPage() {
       country: addrRes.data?.country ?? null,
     } as CompanySettings;
 
+    const selectedDesign = assignedDesigns.find((design) => design.id === defaultDesignId) ?? assignedDesigns[0] ?? null;
+    if (selectedDesign) {
+      loadedCompany.pdf_theme = selectedDesign.renderer_key === "elegant"
+        ? "elegant"
+        : getPdfDensity(defaultDensity ?? loadedCompany.pdf_theme);
+    }
+
     setCompany(loadedCompany);
-    setForm(createInitialForm(loadedCompany));
+    const loadedForm = createInitialForm(loadedCompany);
+    loadedForm.pdf_density = getPdfDensity(defaultDensity ?? loadedForm.pdf_theme);
+    setForm(loadedForm);
+    setAvailableDesigns(assignedDesigns);
+    setSelectedDesignId(selectedDesign?.id ?? null);
     setLoading(false);
   }
 
   useEffect(() => {
-    void loadSettings();
+    const timer = window.setTimeout(() => void loadSettings(), 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   function updateField<K extends keyof CompanySettingsFormState>(
@@ -786,7 +874,7 @@ export function SettingsPage() {
     }
 
     // 2. Upsert des paramètres PDF / défauts dans company_settings
-    await supabase.from("company_settings").upsert(
+    const { error: settingsError } = await supabase.from("company_settings").upsert(
       {
         company_id: company.id,
         pdf_theme: form.pdf_theme,
@@ -801,16 +889,35 @@ export function SettingsPage() {
       { onConflict: "company_id" }
     );
 
-    // 3. Upsert de l'adresse dans la table addresses
-    await supabase.from("addresses").delete()
-      .eq("entity_type", "company")
-      .eq("entity_id", company.id)
-      .eq("role", "main");
+    if (settingsError) {
+      setError(settingsError.message);
+      setSaving(false);
+      return;
+    }
 
+    if (env.administrationEnabled && selectedDesignId) {
+      const { error: preferenceError } = await supabase
+        .from("company_quote_preferences")
+        .update({
+          default_design_id: selectedDesignId,
+          default_density: form.pdf_density,
+        })
+        .eq("company_id", company.id);
+
+      if (preferenceError) {
+        setError(preferenceError.message);
+        setSaving(false);
+        return;
+      }
+    }
+
+    // 3. Mettre à jour l'adresse existante sans la supprimer au préalable.
+    // Une suppression suivie d'une insertion pouvait faire perdre l'adresse si
+    // la seconde requête échouait.
     const addrLine1 = form.address_line1.trim();
     const addrCity = form.city.trim();
-    if (addrLine1 || addrCity) {
-      await supabase.from("addresses").insert({
+    if (company.address_id || addrLine1 || addrCity) {
+      const addressPayload = {
         owner_user_id: currentUser.id,
         entity_type: "company",
         entity_id: company.id,
@@ -820,7 +927,16 @@ export function SettingsPage() {
         postal_code: form.postal_code.trim() || null,
         city: addrCity || null,
         country: form.country.trim() || "Belgique",
-      });
+      };
+      const addressResult = company.address_id
+        ? await supabase.from("addresses").update(addressPayload).eq("id", company.address_id)
+        : await supabase.from("addresses").insert(addressPayload);
+
+      if (addressResult.error) {
+        setError(addressResult.error.message);
+        setSaving(false);
+        return;
+      }
     }
 
     setSaving(false);
@@ -1072,14 +1188,6 @@ export function SettingsPage() {
                       onChange={(e) => updateField("default_quote_validity_days", e.target.value)}
                     />
                   </FormField>
-                  <FormField label="Acompte par défaut (%)">
-                    <TextInput
-                      type="number"
-                      step="0.01"
-                      value={form.default_deposit_percent}
-                      onChange={(e) => updateField("default_deposit_percent", e.target.value)}
-                    />
-                  </FormField>
                 </FormGrid>
                 <FormField label="Notes par défaut">
                   <TextArea
@@ -1170,7 +1278,7 @@ export function SettingsPage() {
                   </li>
                   <li>
                     <span>Mise en page PDF</span>
-                    <strong>{getPdfThemeLabel(form.pdf_theme)}</strong>
+                    <strong>{getPdfThemeLabel(form.pdf_density)}</strong>
                   </li>
                 </ul>
               </div>
@@ -1189,22 +1297,55 @@ export function SettingsPage() {
               <div className="settings-premium-page__section-header">
                 <div>
                   <p className="settings-premium-page__section-eyebrow">Document</p>
-                  <h2 className="settings-premium-page__section-title">Mise en page PDF</h2>
+                  <h2 className="settings-premium-page__section-title">Modèle de devis</h2>
                 </div>
               </div>
               <div className="settings-premium-page__form-block">
-                <FormField label="Choisir une mise en page">
+                <FormField label="Design">
                   <div className="settings-premium-page__theme-picker">
-                    {PDF_THEME_OPTIONS.map((option) => (
+                    {env.administrationEnabled && availableDesigns.length > 0
+                      ? availableDesigns.map((option) => (
+                      <button
+                        key={option.id}
+                        type="button"
+                        className={`settings-premium-page__theme-card ${
+                          selectedDesignId === option.id
+                            ? "settings-premium-page__theme-card--active"
+                            : ""
+                        }`}
+                        onClick={() => {
+                          setSelectedDesignId(option.id);
+                          updateField(
+                            "pdf_theme",
+                            option.renderer_key === "elegant" ? "elegant" : form.pdf_density,
+                          );
+                        }}
+                      >
+                        <span className="settings-premium-page__theme-card-label">
+                          {option.name}
+                        </span>
+                        <span className="settings-premium-page__theme-card-desc">
+                          {option.description || "Modèle disponible pour votre entreprise."}
+                        </span>
+                      </button>
+                    ))
+                      : PDF_DESIGN_OPTIONS
+                        .filter((option) => option.value !== "elegant" || canUseElegantDesign)
+                        .map((option) => (
                       <button
                         key={option.value}
                         type="button"
                         className={`settings-premium-page__theme-card ${
-                          form.pdf_theme === option.value
+                          getPdfDesign(form.pdf_theme) === option.value
                             ? "settings-premium-page__theme-card--active"
                             : ""
                         }`}
-                        onClick={() => updateField("pdf_theme", option.value)}
+                        onClick={() =>
+                          updateField(
+                            "pdf_theme",
+                            option.value === "elegant" ? "elegant" : form.pdf_density,
+                          )
+                        }
                       >
                         <span className="settings-premium-page__theme-card-label">
                           {option.label}
@@ -1215,6 +1356,29 @@ export function SettingsPage() {
                       </button>
                     ))}
                   </div>
+                </FormField>
+
+                <FormField label="Densité du contenu">
+                  <div className="settings-premium-page__color-mode">
+                    {PDF_DENSITY_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className={`settings-premium-page__color-mode-btn${
+                          form.pdf_density === option.value
+                            ? " settings-premium-page__color-mode-btn--active"
+                            : ""
+                        }`}
+                        onClick={() => {
+                          updateField("pdf_density", option.value);
+                          if (getPdfDesign(form.pdf_theme) === "standard") updateField("pdf_theme", option.value);
+                        }}
+                      >
+                        <span><strong>{option.label}</strong><small>{option.description}</small></span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="settings-premium-page__field-note">La densité est enregistrée séparément du design visuel.</p>
                 </FormField>
 
                 {/* Option couleur */}
@@ -1263,7 +1427,7 @@ export function SettingsPage() {
                 {/* Live preview */}
                 <div className="settings-premium-page__theme-preview">
                   <p className="settings-premium-page__theme-preview-label">
-                    Aperçu — {getPdfThemeLabel(form.pdf_theme)}{form.pdf_color_mode ? ", en couleur" : ", noir & blanc"}
+                    Aperçu — {getPdfDesignLabel(form.pdf_theme)} · {getPdfThemeLabel(form.pdf_density)}{form.pdf_color_mode ? ", en couleur" : ", noir & blanc"}
                   </p>
                   {form.pdf_theme === "compact" ? (
                     <ThemePreviewCompact color={form.pdf_color_mode} />
@@ -1309,8 +1473,12 @@ export function SettingsPage() {
                 <p className="settings-premium-page__side-label">Thème actif</p>
                 <ul className="settings-premium-page__meta-list">
                   <li>
-                    <span>Mise en page</span>
-                    <strong>{getPdfThemeLabel(form.pdf_theme)}</strong>
+                    <span>Modèle</span>
+                    <strong>{getPdfDesignLabel(form.pdf_theme)}</strong>
+                  </li>
+                  <li>
+                    <span>Densité</span>
+                    <strong>{getPdfThemeLabel(form.pdf_density)}</strong>
                   </li>
                   <li>
                     <span>Couleur</span>
@@ -1333,7 +1501,12 @@ export function SettingsPage() {
           companyId={company.id}
           companyName={form.name || company.name}
           companyEmail={form.email || company.email}
+          companyLogoUrl={form.logo_url || company.logo_url}
         />
+      )}
+
+      {activePage === "abonnement" && (
+        <SubscriptionPanel companyId={company.id} />
       )}
     </section>
   );

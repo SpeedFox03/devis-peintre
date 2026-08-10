@@ -11,12 +11,15 @@ import { QuotesPage } from "../features/quotes/pages/QuotesPage";
 import { QuoteDetailsPage } from "../features/quotes/pages/QuoteDetailsPage";
 import { CustomersPage } from "../features/customers/pages/CustomersPage";
 import { CustomerDetailsPage } from "../features/customers/pages/CustomerDetailsPage";
-import { ArchivedCustomersPage } from "../features/customers/pages/ArchivedCustomersPage";
 import { SettingsPage } from "../features/settings/pages/SettingsPage";
 import { ServiceCatalogPage } from "../features/catalog/pages/ServiceCatalogPage";
-import { InvoicesPage } from "../features/invoices/pages/InvoicesPage";
-import { InvoiceDetailsPage } from "../features/invoices/pages/InvoiceDetailsPage";
+import { ProjectsPage } from "../features/projects/pages/ProjectsPage";
+import { ProjectDetailsPage } from "../features/projects/pages/ProjectDetailsPage";
+import { AdminRoute } from "../features/admin/components/AdminRoute";
+import { AdminPage } from "../features/admin/pages/AdminPage";
 import { PublicQuotePage } from "../features/quotes/pages/PublicQuotePage";
+import { SubscriptionRequiredRoute } from "../features/subscriptions/SubscriptionRequiredRoute";
+import { SubscriptionPage } from "../features/subscriptions/pages/SubscriptionPage";
 
 export const router = createBrowserRouter([
   {
@@ -53,12 +56,17 @@ export const router = createBrowserRouter([
             element: <HomePage />,
           },
           {
-            path: "devis",
-            element: <QuotesPage />,
-          },
-          {
-            path: "devis/:quoteId",
-            element: <QuoteDetailsPage />,
+            element: <SubscriptionRequiredRoute />,
+            children: [
+              {
+                path: "devis",
+                element: <QuotesPage />,
+              },
+              {
+                path: "devis/:quoteId",
+                element: <QuoteDetailsPage />,
+              },
+            ],
           },
           {
             path: "clients",
@@ -66,27 +74,41 @@ export const router = createBrowserRouter([
           },
           {
             path: "clients/archives",
-            element: <ArchivedCustomersPage />,
+            element: <Navigate to="/clients?status=archived" replace />,
           },
           {
             path: "clients/:customerId",
             element: <CustomerDetailsPage />,
           },
           {
+            path: "projets",
+            element: <ProjectsPage />,
+          },
+          {
+            path: "projets/:projectId",
+            element: <ProjectDetailsPage />,
+          },
+          {
             path: "catalogue",
             element: <ServiceCatalogPage />,
           },
           {
-            path: "factures",
-            element: <InvoicesPage />,
-          },
-          {
-            path: "factures/:invoiceId",
-            element: <InvoiceDetailsPage />,
-          },
-          {
             path: "parametres",
             element: <SettingsPage />,
+          },
+          {
+            path: "abonnement",
+            element: <SubscriptionPage />,
+          },
+          {
+            path: "admin",
+            element: <AdminRoute />,
+            children: [
+              {
+                index: true,
+                element: <AdminPage />,
+              },
+            ],
           },
         ],
       },

@@ -3,7 +3,6 @@ import type { FormEvent } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
 import type { ServiceCatalogItem } from "../../catalog/types";
-import { generateQuotePdf } from "../pdf/generateQuotePdf";
 import type {
   QuoteItemInlineEdit,
   QuotePdfData,
@@ -85,7 +84,6 @@ export function useQuoteDetailsPage() {
   const [uploadingPhotoRoomId, setUploadingPhotoRoomId] = useState<string | null>(null);
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
-  const [creatingInvoice, setCreatingInvoice] = useState(false);
   const [addingCatalogServiceId, setAddingCatalogServiceId] = useState<string | null>(null);
   const [movingItem, setMovingItem] = useState<QuoteItem | null>(null);
   const [moveRoomId, setMoveRoomId] = useState("");
@@ -524,36 +522,9 @@ export function useQuoteDetailsPage() {
     await reloadQuoteData();
   }
 
-  async function handleCreateInvoiceFromQuote() {
-    if (!quoteId) {
-      setError("Devis introuvable.");
-      return;
-    }
-
-    if (items.length === 0) {
-      setError("Impossible de créer une facture à partir d'un devis sans ligne.");
-      return;
-    }
-
-    setCreatingInvoice(true);
-    setError(null);
-
-    const { error: rpcError } = await supabase.rpc("create_invoice_from_quote", {
-      p_quote_id: quoteId,
-      p_invoice_type: "invoice",
-    });
-
-    if (rpcError) {
-      setError(rpcError.message);
-      setCreatingInvoice(false);
-      return;
-    }
-
-    setCreatingInvoice(false);
-    await reloadQuoteData();
-  }
-
   function openCreateItemForm() {
+    setMovingItem(null);
+    setMoveRoomId("");
     setEditingItemId(null);
     setItemForm(createInitialItemForm(quote?.tva_rate ?? 21));
     setError(null);
@@ -562,6 +533,8 @@ export function useQuoteDetailsPage() {
   }
 
   function openEditItemForm(item: QuoteItem) {
+    setMovingItem(null);
+    setMoveRoomId("");
     setEditingItemId(item.id);
     setItemForm(mapItemToForm(item));
     setError(null);
@@ -587,6 +560,8 @@ export function useQuoteDetailsPage() {
   }
 
   function openCatalogPicker() {
+    setMovingItem(null);
+    setMoveRoomId("");
     setShowCatalogPicker(true);
     setShowItemForm(false);
     setEditingItemId(null);
@@ -599,6 +574,9 @@ export function useQuoteDetailsPage() {
   }
 
   function openMoveItem(item: QuoteItem) {
+    setShowItemForm(false);
+    setEditingItemId(null);
+    setShowCatalogPicker(false);
     setMovingItem(item);
     setMoveRoomId(item.room_id || "");
     setError(null);
@@ -1241,6 +1219,7 @@ export function useQuoteDetailsPage() {
         })),
       };
 
+      const { generateQuotePdf } = await import("../pdf/generateQuotePdf");
       const pdf = await generateQuotePdf(pdfData, company?.pdf_theme, company?.pdf_color_mode ?? true, company?.pdf_accent_color);
       pdf.download(`${quote.quote_number}.pdf`);
     } catch (err) {
@@ -1340,7 +1319,6 @@ export function useQuoteDetailsPage() {
     uploadingPhotoRoomId,
     deletingPhotoId,
     downloadingPdf,
-    creatingInvoice,
     addingCatalogServiceId,
     movingItem,
     moveRoomId,
@@ -1373,8 +1351,6 @@ export function useQuoteDetailsPage() {
     applyCompanyDefaultsToQuote,
 
     handleSaveQuoteGeneral,
-    handleCreateInvoiceFromQuote,
-
     openCreateItemForm,
     openEditItemForm,
     closeItemForm,

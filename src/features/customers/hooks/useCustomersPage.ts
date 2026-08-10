@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -35,6 +36,7 @@ export type CustomerFormState = {
 export type CustomerSortField = "name" | "city" | "created_at";
 export type SortDirection = "asc" | "desc";
 export type QuotesFilter = "all" | "with_quotes" | "without_quotes";
+export type CustomerStatusFilter = "active" | "archived";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -61,18 +63,23 @@ export function getCustomerName(customer: Pick<CustomerRow, "company_name" | "fi
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useCustomersPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [quoteCountByCustomerId, setQuoteCountByCustomerId] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(searchParams.get("new") === "1");
   const [form, setForm] = useState<CustomerFormState>(initialForm);
   const [saving, setSaving] = useState(false);
   const [archivingCustomerId, setArchivingCustomerId] = useState<string | null>(null);
+  const [restoringCustomerId, setRestoringCustomerId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<CustomerSortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [quotesFilter, setQuotesFilter] = useState<QuotesFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<CustomerStatusFilter>(
+    searchParams.get("status") === "archived" ? "archived" : "active",
+  );
 
   // ── Chargement initial ──────────────────────────────────────────────────────
 
@@ -84,7 +91,6 @@ export function useCustomersPage() {
       supabase
         .from("customers")
         .select("id, company_name, first_name, last_name, email, phone, created_at, archived_at")
-        .is("archived_at", null)
         .order("created_at", { ascending: false }),
       supabase.from("quotes").select("customer_id"),
     ]);
@@ -101,7 +107,7 @@ export function useCustomersPage() {
       return;
     }
 
-    // Charger les villes de facturation depuis la table addresses
+    // Charger les villes principales depuis la table addresses.
     const customerIds = (customersRes.data ?? []).map((c) => c.id);
     const cityByCustomerId: Record<string, string | null> = {};
     if (customerIds.length > 0) {
@@ -133,7 +139,8 @@ export function useCustomersPage() {
   }, []);
 
   useEffect(() => {
-    void loadCustomers();
+    const timer = window.setTimeout(() => void loadCustomers(), 0);
+    return () => window.clearTimeout(timer);
   }, [loadCustomers]);
 
   // ── Filtrage & tri ──────────────────────────────────────────────────────────
@@ -143,6 +150,9 @@ export function useCustomersPage() {
 
     const filtered = customers.filter((customer) => {
       const quoteCount = quoteCountByCustomerId[customer.id] ?? 0;
+
+      if (statusFilter === "active" && customer.archived_at) return false;
+      if (statusFilter === "archived" && !customer.archived_at) return false;
 
       if (quotesFilter === "with_quotes" && quoteCount === 0) return false;
       if (quotesFilter === "without_quotes" && quoteCount > 0) return false;
@@ -176,16 +186,23 @@ export function useCustomersPage() {
 
       return sortDirection === "asc" ? comparison : -comparison;
     });
-  }, [customers, quoteCountByCustomerId, search, sortField, sortDirection, quotesFilter]);
+  }, [customers, quoteCountByCustomerId, search, sortField, sortDirection, quotesFilter, statusFilter]);
 
   // ── Stats ───────────────────────────────────────────────────────────────────
 
   const stats = useMemo(() => {
-    const totalCustomers = customers.length;
-    const customersWithQuotes = customers.filter((c) => (quoteCountByCustomerId[c.id] ?? 0) > 0).length;
-    const customersWithoutQuotes = customers.filter((c) => (quoteCountByCustomerId[c.id] ?? 0) === 0).length;
+    const activeCustomers = customers.filter((customer) => !customer.archived_at);
+    const archivedCustomers = customers.filter((customer) => customer.archived_at);
+    const customersWithQuotes = activeCustomers.filter((c) => (quoteCountByCustomerId[c.id] ?? 0) > 0).length;
+    const customersWithoutQuotes = activeCustomers.filter((c) => (quoteCountByCustomerId[c.id] ?? 0) === 0).length;
     const totalQuotesLinked = Object.values(quoteCountByCustomerId).reduce((sum, count) => sum + count, 0);
-    return { totalCustomers, customersWithQuotes, customersWithoutQuotes, totalQuotesLinked };
+    return {
+      totalCustomers: activeCustomers.length,
+      archivedCustomers: archivedCustomers.length,
+      customersWithQuotes,
+      customersWithoutQuotes,
+      totalQuotesLinked,
+    };
   }, [customers, quoteCountByCustomerId]);
 
   // ── Formulaire ──────────────────────────────────────────────────────────────
@@ -204,6 +221,11 @@ export function useCustomersPage() {
     setShowForm(false);
     setForm(initialForm);
     setError(null);
+    if (searchParams.get("new")) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("new");
+      setSearchParams(nextParams, { replace: true });
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -304,9 +326,33 @@ export function useCustomersPage() {
       return;
     }
 
-    // ✅ Retrait local — pas de rechargement complet
-    setCustomers((prev) => prev.filter((c) => c.id !== customer.id));
+    setCustomers((prev) =>
+      prev.map((item) =>
+        item.id === customer.id ? { ...item, archived_at: new Date().toISOString() } : item,
+      ),
+    );
     setArchivingCustomerId(null);
+  }
+
+  async function handleRestoreCustomer(customer: CustomerRow) {
+    setRestoringCustomerId(customer.id);
+    setError(null);
+
+    const { error: updateError } = await supabase
+      .from("customers")
+      .update({ archived_at: null })
+      .eq("id", customer.id);
+
+    if (updateError) {
+      setError(updateError.message);
+      setRestoringCustomerId(null);
+      return;
+    }
+
+    setCustomers((prev) =>
+      prev.map((item) => item.id === customer.id ? { ...item, archived_at: null } : item),
+    );
+    setRestoringCustomerId(null);
   }
 
   return {
@@ -318,6 +364,7 @@ export function useCustomersPage() {
     error,
     saving,
     archivingCustomerId,
+    restoringCustomerId,
     showForm,
     form,
     stats,
@@ -326,11 +373,13 @@ export function useCustomersPage() {
     sortField, setSortField,
     sortDirection, setSortDirection,
     quotesFilter, setQuotesFilter,
+    statusFilter, setStatusFilter,
     // Actions
     updateField,
     openForm,
     closeForm,
     handleSubmit,
     handleArchiveCustomer,
+    handleRestoreCustomer,
   };
 }

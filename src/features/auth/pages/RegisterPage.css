@@ -145,6 +145,19 @@
   gap: 16px;
 }
 
+.auth-premium-page__subscription-hint,
+.auth-premium-page__notice {
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid rgba(95, 117, 81, 0.22);
+  border-radius: 12px;
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .auth-premium-page__footer {
   margin-top: 22px;
   display: flex;

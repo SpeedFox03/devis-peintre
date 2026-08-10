@@ -12,6 +12,7 @@ export function RegisterPage() {
   const navigate = useNavigate();
 
   const [fullName, setFullName] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -30,12 +31,13 @@ export function RegisterPage() {
     setSubmitting(true);
     setError(null);
 
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
       options: {
         data: {
           full_name: fullName.trim() || null,
+          company_name: companyName.trim() || null,
         },
       },
     });
@@ -47,7 +49,18 @@ export function RegisterPage() {
     }
 
     setSubmitting(false);
-    navigate("/");
+    if (signUpData.session) {
+      navigate("/abonnement");
+    } else {
+      navigate("/login", {
+        replace: true,
+        state: {
+          redirectTo: "/abonnement",
+          notice:
+            "Votre compte a été créé. Confirmez votre adresse e-mail si nécessaire, puis connectez-vous pour choisir votre abonnement.",
+        },
+      });
+    }
   }
 
   return (
@@ -115,6 +128,15 @@ export function RegisterPage() {
               />
             </FormField>
 
+            <FormField label="Nom de l’entreprise">
+              <TextInput
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="Peinture Dupont"
+                required
+              />
+            </FormField>
+
             <FormField label="Adresse email">
               <TextInput
                 type="email"
@@ -147,6 +169,11 @@ export function RegisterPage() {
             <Button type="submit" disabled={submitting}>
               {submitting ? "Création..." : "Créer mon compte"}
             </Button>
+
+            <p className="auth-premium-page__subscription-hint">
+              Étape suivante : 75 € HT/mois avec configuration initiale, ou
+              750 € HT/an avec toute la configuration offerte.
+            </p>
           </form>
 
           <div className="auth-premium-page__footer">

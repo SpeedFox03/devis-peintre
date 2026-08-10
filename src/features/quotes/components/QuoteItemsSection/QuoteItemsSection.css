@@ -36,7 +36,7 @@
 /* ── Boîtes (catalogue, formulaire, déplacement) ── */
 .quote-items-premium__catalog-box,
 .quote-items-premium__form-box,
-.quote-items-premium__move-box {
+.quote-items-premium__inline-editor {
   display: grid;
   gap: 14px;
   padding: 14px;
@@ -197,6 +197,18 @@
 .quote-items-premium__cell-main         { display: grid; gap: 4px; min-width: 0; overflow: hidden; }
 .quote-items-premium__cell-main strong  { color: #111827; overflow-wrap: anywhere; }
 
+.quote-items-premium__table-row--expanded > td { border-bottom-color: transparent; }
+.quote-items-premium__inline-row > td {
+  width: auto !important;
+  padding: 0 12px 12px !important;
+  background: var(--surface-muted);
+}
+.quote-items-premium__inline-editor {
+  border-color: rgba(111, 82, 60, 0.22);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
 /* ══════════════════════════════════════════
    Vue cartes mobile (remplace le tableau)
 ══════════════════════════════════════════ */
@@ -214,11 +226,20 @@
   box-shadow: 0 1px 3px rgba(15,23,42,0.04);
 }
 
+.quote-items-premium__item-card--expanded {
+  border-color: rgba(111, 82, 60, 0.32);
+  box-shadow: 0 8px 24px rgba(47, 33, 24, 0.08);
+}
+
 .quote-items-premium__item-card-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
+}
+
+.quote-items-premium__item-card-header > div {
+  min-width: 0;
 }
 
 .quote-items-premium__item-card-title {
@@ -262,6 +283,9 @@
   font-size: 0.78rem;
   font-weight: 600;
   white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .quote-items-premium__item-card-actions {
@@ -344,10 +368,19 @@
   .quote-items-premium__filters { grid-template-columns: 1fr; }
   .quote-items-premium__catalog-grid { grid-template-columns: 1fr; }
 
-  .quote-items-premium__header,
   .quote-items-premium__subheader { flex-direction: column; align-items: flex-start; }
 
-  .quote-items-premium__header-actions,
+  .quote-items-premium__header { align-items: center; flex-wrap: nowrap; }
+  .quote-items-premium__header-actions {
+    width: auto;
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+  }
+  .quote-items-premium__header-actions .ui-button {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
   .quote-items-premium__move-actions { width: 100%; }
 
 }
@@ -355,6 +388,12 @@
 @media (max-width: 480px) {
   .quote-items-premium__shell { padding: 12px; }
   .quote-items-premium__item-card { padding: 12px; }
+  .quote-items-premium__inline-editor { padding: 12px; }
+  .quote-items-premium__header-actions .ui-button:not(.ui-button--icon) {
+    width: auto;
+    padding-inline: 10px;
+    font-size: 0.8rem;
+  }
 }
 
 /* ══════════════════════════════════════════

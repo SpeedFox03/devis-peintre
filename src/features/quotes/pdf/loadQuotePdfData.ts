@@ -1,4 +1,5 @@
 import { supabase } from "../../../lib/supabase";
+import { env } from "../../../lib/env";
 import type { QuotePdfData } from "./quotePdfTypes";
 
 type LoadedQuotePdfData = {
@@ -6,6 +7,26 @@ type LoadedQuotePdfData = {
   theme: string | null;
   colorMode: boolean | null;
   accentColor: string | null;
+};
+
+type QuotePdfRow = {
+  quote_number: string;
+  title: string;
+  description: string | null;
+  issue_date: string;
+  valid_until: string | null;
+  notes: string | null;
+  terms: string | null;
+  subtotal_ht: number;
+  total_tva: number;
+  total_ttc: number;
+  tva_rate: number;
+  pdf_font_size_adjustment: number | null;
+  pdf_other_section_position: number | null;
+  customer_id: string;
+  company_id: string;
+  quote_design_id?: string | null;
+  quote_density?: string | null;
 };
 
 function throwIfError(error: { message: string } | null) {
@@ -19,15 +40,41 @@ function requireData<T>(data: T | null, error: { message: string } | null, label
 }
 
 export async function loadQuotePdfData(quoteId: string): Promise<LoadedQuotePdfData> {
-  const quoteRes = await supabase
-    .from("quotes")
-    .select(
-      "quote_number, title, description, issue_date, valid_until, notes, terms, subtotal_ht, total_tva, total_ttc, tva_rate, pdf_font_size_adjustment, pdf_other_section_position, customer_id, company_id",
-    )
-    .eq("id", quoteId)
-    .single();
+  const quoteRes = env.administrationEnabled
+    ? await supabase
+      .from("quotes")
+      .select("quote_number, title, description, issue_date, valid_until, notes, terms, subtotal_ht, total_tva, total_ttc, tva_rate, pdf_font_size_adjustment, pdf_other_section_position, customer_id, company_id, quote_design_id, quote_density")
+      .eq("id", quoteId)
+      .single()
+    : await supabase
+      .from("quotes")
+      .select("quote_number, title, description, issue_date, valid_until, notes, terms, subtotal_ht, total_tva, total_ttc, tva_rate, pdf_font_size_adjustment, pdf_other_section_position, customer_id, company_id")
+      .eq("id", quoteId)
+      .single();
 
-  const quote = requireData(quoteRes.data, quoteRes.error, "Devis");
+  const quote = requireData(quoteRes.data, quoteRes.error, "Devis") as unknown as QuotePdfRow;
+
+  let assignedTheme: string | null = null;
+  if (env.administrationEnabled) {
+    const preferenceRes = await supabase
+      .from("company_quote_preferences")
+      .select("default_design_id, default_density")
+      .eq("company_id", quote.company_id)
+      .maybeSingle();
+    throwIfError(preferenceRes.error);
+    const designId = quote.quote_design_id ?? preferenceRes.data?.default_design_id ?? null;
+    if (designId) {
+      const designRes = await supabase
+        .from("quote_designs")
+        .select("renderer_key")
+        .eq("id", designId)
+        .maybeSingle();
+      throwIfError(designRes.error);
+      assignedTheme = designRes.data?.renderer_key === "elegant"
+        ? "elegant"
+        : getDensity(quote.quote_density ?? preferenceRes.data?.default_density);
+    }
+  }
 
   const [
     itemsRes,
@@ -136,8 +183,12 @@ export async function loadQuotePdfData(quoteId: string): Promise<LoadedQuotePdfD
       rooms: roomsRes.data ?? [],
       items: itemsRes.data ?? [],
     },
-    theme: companySettingsRes.data?.pdf_theme ?? null,
+    theme: assignedTheme ?? companySettingsRes.data?.pdf_theme ?? null,
     colorMode: companySettingsRes.data?.pdf_color_mode ?? true,
     accentColor: companySettingsRes.data?.pdf_accent_color ?? null,
   };
+}
+
+function getDensity(value: string | null | undefined) {
+  return value === "compact" || value === "aere" ? value : "normal";
 }

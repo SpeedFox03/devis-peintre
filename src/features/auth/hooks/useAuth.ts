@@ -1,8 +1,20 @@
-import { useEffect, useState } from "react";
-import type { Session } from "@supabase/supabase-js";
+import { createContext, createElement, useContext, useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
+import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../../../lib/supabase";
+import { env } from "../../../lib/env";
 
-export function useAuth() {
+type AuthContextValue = {
+  session: Session | null;
+  user: User | null;
+  loading: boolean;
+  accessDenied: boolean;
+  isAuthenticated: boolean;
+};
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -19,22 +31,22 @@ export function useAuth() {
         return;
       }
 
-      const { data: allowed, error } = await supabase.rpc(
-        "current_user_is_allowed",
-      );
+      const { data: allowed, error } = await supabase.rpc("current_user_is_allowed");
 
-      // Seule une réponse explicitement négative ferme l'accès : une erreur
-      // réseau ou une migration pas encore appliquée ne doit pas bloquer
-      // l'application.
+      // Compatibilité transitoire avec la liste blanche actuelle. La migration
+      // finale remplacera ce contrôle applicatif par les rôles et politiques RLS.
       if (!error && allowed === false) {
         await supabase.auth.signOut();
-
         if (mounted) {
           setSession(null);
           setAccessDenied(true);
           setLoading(false);
         }
         return;
+      }
+
+      if (env.administrationEnabled) {
+        await supabase.rpc("touch_current_profile_last_seen");
       }
 
       if (mounted) {
@@ -44,13 +56,8 @@ export function useAuth() {
       }
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      void resolveSession(data.session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    void supabase.auth.getSession().then(({ data }) => resolveSession(data.session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       void resolveSession(nextSession);
     });
 
@@ -60,11 +67,19 @@ export function useAuth() {
     };
   }, []);
 
-  return {
+  const value = useMemo<AuthContextValue>(() => ({
     session,
     user: session?.user ?? null,
     loading,
     accessDenied,
-    isAuthenticated: !!session,
-  };
+    isAuthenticated: Boolean(session),
+  }), [accessDenied, loading, session]);
+
+  return createElement(AuthContext.Provider, { value }, children);
+}
+
+export function useAuth() {
+  const value = useContext(AuthContext);
+  if (!value) throw new Error("useAuth doit être utilisé dans AuthProvider.");
+  return value;
 }

@@ -2,6 +2,13 @@
 // The API key is read server-side from Supabase Vault and is never returned.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  buildQuoteEmailHtml,
+  buildQuoteEmailSubject,
+  buildQuoteEmailText,
+  normalizeEmailBranding,
+  type EmailBrandingRow,
+} from "../_shared/quoteEmailBranding.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -64,7 +71,7 @@ Deno.serve(async (request) => {
 
   const { data: company, error: companyError } = await userClient
     .from("companies")
-    .select("id, name, email")
+    .select("id, name, email, logo_url")
     .eq("id", companyId)
     .eq("owner_user_id", user.id)
     .single();
@@ -73,11 +80,20 @@ Deno.serve(async (request) => {
     return json({ error: "Entreprise introuvable ou accès refusé." }, 403);
   }
 
-  const { data: credentialRows, error: credentialsError } = await adminClient.rpc(
-    "get_company_resend_credentials",
-    { p_company_id: companyId },
-  );
+  const [credentialsResult, brandingResult] = await Promise.all([
+    adminClient.rpc("get_company_resend_credentials", {
+      p_company_id: companyId,
+    }),
+    adminClient
+      .from("company_email_settings")
+      .select(
+        "subject_template, heading, intro_text, button_label, signature, primary_color, background_color, show_logo",
+      )
+      .eq("company_id", companyId)
+      .single(),
+  ]);
 
+  const { data: credentialRows, error: credentialsError } = credentialsResult;
   const credentials = (credentialRows?.[0] ?? null) as ResendCredentials | null;
   if (credentialsError || !credentials?.api_key) {
     return json({ error: "Aucune clé Resend n'est configurée pour cette entreprise." }, 422);
@@ -87,6 +103,14 @@ Deno.serve(async (request) => {
     return json({ error: "Active la configuration e-mail avant de la tester." }, 422);
   }
 
+  if (brandingResult.error || !brandingResult.data) {
+    return json({ error: "Le design de l'e-mail ne peut pas être chargé." }, 500);
+  }
+
+  const branding = normalizeEmailBranding(
+    brandingResult.data as EmailBrandingRow,
+  );
+
   const recipient = credentials.reply_to_email || company.email || user.email;
   if (!recipient) {
     return json({ error: "Aucune adresse ne peut recevoir l'e-mail de test." }, 422);
@@ -94,6 +118,18 @@ Deno.serve(async (request) => {
 
   const testedAt = new Date().toISOString();
   const safeFromName = credentials.from_name.replace(/[<>"\r\n]/g, "").trim();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const previewContent = {
+    companyName: company.name,
+    clientName: "Sophie Martin",
+    quoteNumber: "DEV-2026-0011",
+    quoteTitle: "Travaux de peinture intérieure",
+    totalTtc: 2450,
+    expiresAt,
+    quoteUrl: "https://appdevispeinture.netlify.app",
+    personalMessage: "Ceci est un aperçu du design configuré pour vos futurs e-mails de devis.",
+    logoUrl: company.logo_url,
+  };
 
   let resendResponse: Response;
   try {
@@ -108,11 +144,9 @@ Deno.serve(async (request) => {
         from: `${safeFromName} <${credentials.from_email}>`,
         to: [recipient],
         reply_to: credentials.reply_to_email || undefined,
-        subject: "Test de configuration des e-mails de devis",
-        html: buildTestEmailHtml(company.name, credentials.from_email),
-        text:
-          `La configuration Resend de ${company.name} fonctionne correctement.\n` +
-          `Adresse d'expédition : ${credentials.from_email}`,
+        subject: `[TEST] ${buildQuoteEmailSubject(branding, previewContent)}`.slice(0, 300),
+        html: buildQuoteEmailHtml(previewContent, branding),
+        text: buildQuoteEmailText(previewContent, branding),
       }),
     });
   } catch {
@@ -159,39 +193,6 @@ async function saveTestResult(
       updated_at: testedAt,
     })
     .eq("company_id", companyId);
-}
-
-function buildTestEmailHtml(companyName: string, fromEmail: string) {
-  return `
-    <!doctype html>
-    <html lang="fr">
-      <body style="margin:0;background:#f6efe4;color:#34251b;font-family:Arial,sans-serif">
-        <div style="max-width:560px;margin:0 auto;padding:36px 20px">
-          <div style="background:#fffdf9;border:1px solid #e2d5c5;border-radius:18px;padding:28px">
-            <p style="margin:0 0 8px;color:#8e7452;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">
-              Configuration e-mail
-            </p>
-            <h1 style="margin:0 0 16px;font-size:24px">Tout fonctionne correctement</h1>
-            <p style="margin:0 0 12px;line-height:1.6">
-              Resend est prêt à envoyer les devis de ${escapeHtml(companyName)}.
-            </p>
-            <p style="margin:0;color:#7d6654;line-height:1.6">
-              Adresse d'expédition testée : ${escapeHtml(fromEmail)}
-            </p>
-          </div>
-        </div>
-      </body>
-    </html>
-  `;
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }
 
 function json(body: unknown, status = 200) {

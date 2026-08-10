@@ -7,7 +7,6 @@ import type {
 } from "pdfjs-dist";
 import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 import { Button } from "../../../../components/ui/Button/Button";
-import { generateQuotePdf } from "../../pdf/generateQuotePdf";
 import { loadQuotePdfData } from "../../pdf/loadQuotePdfData";
 import type {
   QuoteItemInlineEdit,
@@ -182,6 +181,7 @@ export function QuotePdfPreview({
 
         const { data, theme, colorMode, accentColor } = loadedPreview;
         setPreviewData(loadedPreview);
+        const { generateQuotePdf } = await import("../../pdf/generateQuotePdf");
         const pdf = await generateQuotePdf(data, theme, colorMode, accentColor);
         const blob = await pdf.getBlob();
         createdUrl = URL.createObjectURL(blob);

@@ -4,9 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "check:migrations": "node scripts/check-migration-safety.mjs",
+    "prebuild": "npm run check:migrations",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "verify": "npm run lint && npm run build",
     "preview": "vite preview"
   },
   "dependencies": {

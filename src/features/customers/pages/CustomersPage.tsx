@@ -14,6 +14,7 @@ import {
   ArchiveIcon,
   EyeIcon,
   PlusIcon,
+  RestoreIcon,
 } from "../../../components/ui/Icons/AppIcons";
 import { useCustomersPage, getCustomerName } from "../hooks/useCustomersPage";
 import "./CustomersPage.css";
@@ -27,6 +28,7 @@ export function CustomersPage() {
     error,
     saving,
     archivingCustomerId,
+    restoringCustomerId,
     showForm,
     form,
     stats,
@@ -34,11 +36,13 @@ export function CustomersPage() {
     sortField, setSortField,
     sortDirection, setSortDirection,
     quotesFilter, setQuotesFilter,
+    statusFilter, setStatusFilter,
     updateField,
     openForm,
     closeForm,
     handleSubmit,
     handleArchiveCustomer,
+    handleRestoreCustomer,
   } = useCustomersPage();
 
   if (loading) {
@@ -54,12 +58,6 @@ export function CustomersPage() {
         </div>
 
         <div className="customers-premium-page__hero-actions">
-          <Link to="/clients/archives">
-            <Button type="button" variant="secondary">
-              Clients archivés
-            </Button>
-          </Link>
-
           <Button
             variant="primary"
             onClick={showForm ? closeForm : openForm}
@@ -70,25 +68,15 @@ export function CustomersPage() {
         </div>
       </header>
 
-      <div className="customers-premium-page__stats">
+      <div className="customers-premium-page__stats customers-premium-page__stats--compact">
         <Card>
           <p className="customers-premium-page__stat-label">Clients actifs</p>
           <p className="customers-premium-page__stat-value">{stats.totalCustomers}</p>
         </Card>
 
         <Card>
-          <p className="customers-premium-page__stat-label">Avec devis</p>
-          <p className="customers-premium-page__stat-value">{stats.customersWithQuotes}</p>
-        </Card>
-
-        <Card>
-          <p className="customers-premium-page__stat-label">Sans devis</p>
-          <p className="customers-premium-page__stat-value">{stats.customersWithoutQuotes}</p>
-        </Card>
-
-        <Card>
-          <p className="customers-premium-page__stat-label">Devis liés</p>
-          <p className="customers-premium-page__stat-value">{stats.totalQuotesLinked}</p>
+          <p className="customers-premium-page__stat-label">Clients archivés</p>
+          <p className="customers-premium-page__stat-value">{stats.archivedCustomers}</p>
         </Card>
       </div>
 
@@ -213,6 +201,16 @@ export function CustomersPage() {
                 </Select>
               </FormField>
 
+              <FormField label="Afficher">
+                <Select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                >
+                  <option value="active">Clients actifs</option>
+                  <option value="archived">Clients archivés</option>
+                </Select>
+              </FormField>
+
               <FormField label="Trier par">
                 <Select
                   value={sortField}
@@ -242,12 +240,16 @@ export function CustomersPage() {
 
       {!showForm && filteredCustomers.length === 0 ? (
         <EmptyState
-          title={customers.length === 0 ? "Aucun client" : "Aucun résultat"}
+          title={customers.length === 0 ? "Aucun client" : statusFilter === "archived" ? "Aucun client archivé" : "Aucun résultat"}
           description={
             customers.length === 0
               ? "Crée ton premier client pour démarrer ton suivi commercial."
-              : "Aucun client ne correspond aux filtres actuellement sélectionnés."
+              : statusFilter === "archived"
+                ? "Les clients archivés apparaîtront ici et pourront être restaurés."
+                : "Aucun client ne correspond aux filtres actuellement sélectionnés."
           }
+          actionLabel={customers.length === 0 && statusFilter === "active" ? "Créer un client" : undefined}
+          onAction={customers.length === 0 && statusFilter === "active" ? openForm : undefined}
         />
       ) : null}
 
@@ -291,25 +293,39 @@ export function CustomersPage() {
                     </td>
                     <td style={{ textAlign: "right" }}>
                       <div className="customers-premium-page__row-actions">
-                        <Link to={`/devis?new=1&customerId=${customer.id}`}>
-                          <Button type="button" variant="secondary" size="sm">
-                            <PlusIcon />
-                            Nouveau devis
+                        {customer.archived_at ? (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleRestoreCustomer(customer)}
+                            disabled={restoringCustomerId === customer.id}
+                          >
+                            <RestoreIcon />
+                            Restaurer
                           </Button>
-                        </Link>
-
-                        <Button
-                          type="button"
-                          variant="danger"
-                          size="sm"
-                          iconOnly
-                          onClick={() => handleArchiveCustomer(customer)}
-                          disabled={archivingCustomerId === customer.id}
-                          aria-label={`Archiver ${name}`}
-                          title="Archiver le client"
-                        >
-                          <ArchiveIcon />
-                        </Button>
+                        ) : (
+                          <>
+                            <Link to={`/devis?new=1&customerId=${customer.id}`}>
+                              <Button type="button" variant="secondary" size="sm">
+                                <PlusIcon />
+                                Nouveau devis
+                              </Button>
+                            </Link>
+                            <Button
+                              type="button"
+                              variant="danger"
+                              size="sm"
+                              iconOnly
+                              onClick={() => handleArchiveCustomer(customer)}
+                              disabled={archivingCustomerId === customer.id}
+                              aria-label={`Archiver ${name}`}
+                              title="Archiver le client"
+                            >
+                              <ArchiveIcon />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -371,28 +387,41 @@ export function CustomersPage() {
                       </Button>
                     </Link>
 
-                    <Link to={`/devis?new=1&customerId=${customer.id}`} style={{ flex: "1 1 auto" }}>
+                    {customer.archived_at ? (
                       <Button
                         type="button"
                         variant="secondary"
-                        style={{ width: "100%", justifyContent: "center" }}
+                        onClick={() => handleRestoreCustomer(customer)}
+                        disabled={restoringCustomerId === customer.id}
                       >
-                        <PlusIcon />
-                        Nouveau devis
+                        <RestoreIcon />
+                        Restaurer
                       </Button>
-                    </Link>
-
-                    <Button
-                      type="button"
-                      variant="danger"
-                      iconOnly
-                      onClick={() => handleArchiveCustomer(customer)}
-                      disabled={archivingCustomerId === customer.id}
-                      aria-label={`Archiver ${name}`}
-                      title="Archiver le client"
-                    >
-                      <ArchiveIcon />
-                    </Button>
+                    ) : (
+                      <>
+                        <Link to={`/devis?new=1&customerId=${customer.id}`} style={{ flex: "1 1 auto" }}>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            style={{ width: "100%", justifyContent: "center" }}
+                          >
+                            <PlusIcon />
+                            Nouveau devis
+                          </Button>
+                        </Link>
+                        <Button
+                          type="button"
+                          variant="danger"
+                          iconOnly
+                          onClick={() => handleArchiveCustomer(customer)}
+                          disabled={archivingCustomerId === customer.id}
+                          aria-label={`Archiver ${name}`}
+                          title="Archiver le client"
+                        >
+                          <ArchiveIcon />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </article>
               );

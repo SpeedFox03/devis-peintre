@@ -61,6 +61,10 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.customers-premium-page__stats--compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .customers-premium-page__stat-label {
   margin: 0 0 8px;
   color: var(--text-soft);
@@ -124,7 +128,7 @@
 .customers-premium-page__filters-grid {
   display: grid;
   gap: 16px;
-  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(180px, 1fr));
+  grid-template-columns: minmax(240px, 2fr) repeat(4, minmax(145px, 1fr));
 }
 
 .customers-premium-page__table-shell {

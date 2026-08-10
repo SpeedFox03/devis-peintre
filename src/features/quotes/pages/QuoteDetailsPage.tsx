@@ -60,11 +60,10 @@ export function QuoteDetailsPage() {
   const generalMenuRef = useRef<HTMLDivElement | null>(null);
 
   // Portal target: the .app-topbar element
-  const [topbarPortalTarget, setTopbarPortalTarget] = useState<Element | null>(null);
+  const [topbarPortalTarget] = useState<Element | null>(() => document.querySelector(".app-topbar"));
 
   useEffect(() => {
-    const topbar = document.querySelector(".app-topbar");
-    setTopbarPortalTarget(topbar);
+    const topbar = topbarPortalTarget;
 
     // Mark topbar so CSS can adjust its layout
     topbar?.classList.add("app-topbar--with-quote-nav");
@@ -72,7 +71,7 @@ export function QuoteDetailsPage() {
     return () => {
       topbar?.classList.remove("app-topbar--with-quote-nav");
     };
-  }, []);
+  }, [topbarPortalTarget]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -118,7 +117,6 @@ export function QuoteDetailsPage() {
     uploadingPhotoRoomId,
     deletingPhotoId,
     downloadingPdf,
-    creatingInvoice,
     addingCatalogServiceId,
     movingItem,
     moveRoomId,
@@ -149,8 +147,6 @@ export function QuoteDetailsPage() {
     applyCompanyDefaultsToQuote,
 
     handleSaveQuoteGeneral,
-    handleCreateInvoiceFromQuote,
-
     openCreateItemForm,
     openEditItemForm,
     closeItemForm,
@@ -277,17 +273,6 @@ export function QuoteDetailsPage() {
               quoteNumber={quote.quote_number}
               disabled={!(["draft", "sent"] as QuoteStatus[]).includes(quote.status)}
             />
-
-            <Button
-              variant="primary"
-              type="button"
-              onClick={handleCreateInvoiceFromQuote}
-              disabled={creatingInvoice}
-              aria-label="Transformer en facture"
-              title="Transformer en facture"
-            >
-              Transformer en facture
-            </Button>
 
             <Button
               variant="secondary"
@@ -502,6 +487,7 @@ export function QuoteDetailsPage() {
                     <Select
                       className="quote-premium-page__field-control"
                       value={quoteGeneralForm.status}
+                      disabled={quote.status === "invoiced"}
                       onChange={(e) =>
                         updateQuoteGeneralField("status", e.target.value as QuoteStatus)
                       }
@@ -511,7 +497,9 @@ export function QuoteDetailsPage() {
                       <option value="accepted">{getQuoteStatusLabel("accepted")}</option>
                       <option value="rejected">{getQuoteStatusLabel("rejected")}</option>
                       <option value="expired">{getQuoteStatusLabel("expired")}</option>
-                      <option value="invoiced">{getQuoteStatusLabel("invoiced")}</option>
+                      {quote.status === "invoiced" && (
+                        <option value="invoiced">Historique</option>
+                      )}
                     </Select>
                   </FormField>
 
@@ -596,6 +584,7 @@ export function QuoteDetailsPage() {
           />
         )}
       </div>
+
     </section>
   );
 }

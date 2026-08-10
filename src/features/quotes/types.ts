@@ -164,7 +164,7 @@ export function getQuoteStatusLabel(status: QuoteStatus) {
     case "expired":
       return "Expiré";
     case "invoiced":
-      return "Facturé";
+      return "Historique";
     default:
       return status;
   }

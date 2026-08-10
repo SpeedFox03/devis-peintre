@@ -18,6 +18,12 @@ export function LoginPage() {
   // l'adresse ne figure plus dans la liste blanche.
   const accessDenied =
     (location.state as { accessDenied?: boolean } | null)?.accessDenied === true;
+  const navigationState = location.state as {
+    from?: { pathname?: string };
+    redirectTo?: string;
+    notice?: string;
+  } | null;
+  const notice = navigationState?.notice ?? null;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,7 +52,9 @@ export function LoginPage() {
     }
 
     setSubmitting(false);
-    navigate("/");
+    const requestedTarget =
+      navigationState?.redirectTo ?? navigationState?.from?.pathname ?? "/";
+    navigate(requestedTarget.startsWith("/") ? requestedTarget : "/");
   }
 
   return (
@@ -105,6 +113,7 @@ export function LoginPage() {
           </div>
 
           <form className="auth-premium-page__form" onSubmit={handleSubmit}>
+            {notice ? <p className="auth-premium-page__notice">{notice}</p> : null}
             <FormField label="Adresse email">
               <TextInput
                 type="email"

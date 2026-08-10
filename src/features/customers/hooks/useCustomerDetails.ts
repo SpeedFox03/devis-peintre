@@ -104,7 +104,7 @@ export function getStatusLabel(status: QuoteStatus) {
     accepted: "Accepté",
     rejected: "Refusé",
     expired: "Expiré",
-    invoiced: "Facturé",
+    invoiced: "Historique",
   };
   return labels[status] ?? status;
 }
@@ -208,7 +208,8 @@ export function useCustomerDetails() {
   }, [customerId]);
 
   useEffect(() => {
-    void loadCustomerPage();
+    const timer = window.setTimeout(() => void loadCustomerPage(), 0);
+    return () => window.clearTimeout(timer);
   }, [loadCustomerPage]);
 
   // ── Protection départ page avec modifications non sauvegardées ─────────────

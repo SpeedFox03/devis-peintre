@@ -1,5 +1,4 @@
-import type { FormEvent } from "react";
-import { useState } from "react";
+import { Fragment, useState, type FormEvent } from "react";
 import { Button } from "../../../../components/ui/Button/Button";
 import { Card } from "../../../../components/ui/Card/Card";
 import { DataTable } from "../../../../components/ui/DataTable/DataTable";
@@ -279,6 +278,59 @@ export function QuoteItemsSection({
       : []),
   ];
 
+  function renderItemEditor() {
+    return (
+      <div className="quote-items-premium__inline-editor">
+        <QuoteItemForm
+          form={form}
+          rooms={rooms}
+          error={error}
+          saving={saving}
+          editing
+          onSubmit={onSubmit}
+          onCancel={onCloseForm}
+          onChange={onChange}
+        />
+      </div>
+    );
+  }
+
+  function renderMoveEditor() {
+    if (!movingItem) return null;
+
+    return (
+      <div className="quote-items-premium__inline-editor">
+        <div className="quote-items-premium__move-content">
+          <p className="quote-items-premium__move-label">
+            Déplacer <strong>{movingItem.label}</strong>
+          </p>
+
+          <FormField label="Nouvelle pièce">
+            <Select value={moveRoomId} onChange={(event) => onMoveRoomChange(event.target.value)}>
+              <option value="">Sans pièce</option>
+              {rooms.map((room) => (
+                <option key={room.id} value={room.id}>
+                  {room.name}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+
+          {error ? <ErrorMessage message={error} /> : null}
+
+          <div className="quote-items-premium__move-actions">
+            <Button type="button" disabled={movingItemLoading} onClick={onConfirmMove}>
+              {movingItemLoading ? "Déplacement..." : "Confirmer"}
+            </Button>
+            <Button type="button" variant="secondary" onClick={onCloseMove}>
+              Annuler
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <section className="quote-items-premium">
       <Card className="quote-items-premium__shell">
@@ -289,19 +341,18 @@ export function QuoteItemsSection({
 
           <div className="quote-items-premium__header-actions">
             {!showForm ? (
-              <Button type="button" iconOnly onClick={onOpenCreateForm} aria-label="Ajouter une ligne" title="Ajouter une ligne">
+              <Button type="button" onClick={onOpenCreateForm}>
                 <PlusIcon />
+                Ajouter
               </Button>
             ) : (
               <Button
                 type="button"
                 variant="secondary"
-                iconOnly
                 onClick={onCloseForm}
-                aria-label="Fermer la saisie"
-                title="Fermer la saisie"
               >
                 <CloseIcon />
+                Fermer
               </Button>
             )}
 
@@ -431,7 +482,7 @@ export function QuoteItemsSection({
           </div>
         ) : null}
 
-        {showForm ? (
+        {showForm && !editingItemId ? (
           <div className="quote-items-premium__form-box">
             <QuoteItemForm
               form={form}
@@ -446,49 +497,9 @@ export function QuoteItemsSection({
           </div>
         ) : null}
 
-        {movingItem ? (
-          <div className="quote-items-premium__move-box">
-            <div className="quote-items-premium__subheader">
-              <div>
-                <h3 className="quote-items-premium__sub-title">Déplacer la ligne</h3>
-              </div>
-            </div>
-
-            <div className="quote-items-premium__move-content">
-              <p className="quote-items-premium__move-label">
-                <strong>{movingItem.label}</strong>
-              </p>
-
-              <FormField label="Nouvelle pièce">
-                <Select value={moveRoomId} onChange={(event) => onMoveRoomChange(event.target.value)}>
-                  <option value="">Sans pièce</option>
-                  {rooms.map((room) => (
-                    <option key={room.id} value={room.id}>
-                      {room.name}
-                    </option>
-                  ))}
-                </Select>
-              </FormField>
-
-              <div className="quote-items-premium__move-actions">
-                <Button type="button" disabled={movingItemLoading} onClick={onConfirmMove}>
-                  {movingItemLoading ? "Déplacement..." : "Confirmer"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={onCloseMove}
-                  aria-label="Annuler"
-                  title="Annuler"
-                >
-                  <CloseIcon />
-                </Button>
-              </div>
-            </div>
-          </div>
+        {!showForm && !showCatalogPicker && !movingItem && error ? (
+          <ErrorMessage message={error} />
         ) : null}
-
-        {!showForm && !showCatalogPicker && error ? <ErrorMessage message={error} /> : null}
 
         {items.length === 0 ? (
           <EmptyState
@@ -518,30 +529,42 @@ export function QuoteItemsSection({
                 {items.map((item) => {
                   const totalHt = Number(item.quantity || 0) * Number(item.unit_price_ht || 0);
                   return (
-                    <tr key={item.id}>
-                      <td>
-                        <div className="quote-items-premium__cell-main">
-                          <strong>{item.label}</strong>
-                          {item.description?.trim() ? (
-                            <p className="quote-items-premium__cell-subtext">{item.description}</p>
-                          ) : null}
-                        </div>
-                      </td>
-                      <td>{item.room_id ? roomMap.get(item.room_id) || "—" : "—"}</td>
-                      <td>{formatQuantity(item.quantity)}</td>
-                      <td>{item.unit || "—"}</td>
-                      <td>{formatCurrency(item.unit_price_ht)}</td>
-                      <td>{Number(item.tva_rate || 0).toFixed(2)} %</td>
-                      <td>{formatCurrency(totalHt)}</td>
-                      <td>
-                        <div className="quote-items-premium__table-actions">
-                          <Button type="button" size="sm" variant="secondary" iconOnly onClick={() => onEdit(item)} aria-label="Modifier" title="Modifier"><PencilIcon /></Button>
-                          <Button type="button" size="sm" variant="secondary" iconOnly onClick={() => onDuplicate(item)} aria-label="Dupliquer" title="Dupliquer"><CopyIcon /></Button>
-                          <Button type="button" size="sm" variant="secondary" iconOnly onClick={() => onOpenMove(item)} aria-label="Déplacer" title="Déplacer"><ArrowsLeftRightIcon /></Button>
-                          <Button type="button" size="sm" variant="danger" iconOnly disabled={deletingItemId === item.id} onClick={() => onDelete(item.id)} aria-label="Supprimer" title="Supprimer"><TrashIcon /></Button>
-                        </div>
-                      </td>
-                    </tr>
+                    <Fragment key={item.id}>
+                      <tr className={editingItemId === item.id || movingItem?.id === item.id ? "quote-items-premium__table-row--expanded" : undefined}>
+                        <td>
+                          <div className="quote-items-premium__cell-main">
+                            <strong>{item.label}</strong>
+                            {item.description?.trim() ? (
+                              <p className="quote-items-premium__cell-subtext">{item.description}</p>
+                            ) : null}
+                          </div>
+                        </td>
+                        <td>{item.room_id ? roomMap.get(item.room_id) || "—" : "—"}</td>
+                        <td>{formatQuantity(item.quantity)}</td>
+                        <td>{item.unit || "—"}</td>
+                        <td>{formatCurrency(item.unit_price_ht)}</td>
+                        <td>{Number(item.tva_rate || 0).toFixed(2)} %</td>
+                        <td>{formatCurrency(totalHt)}</td>
+                        <td>
+                          <div className="quote-items-premium__table-actions">
+                            <Button type="button" size="sm" variant="secondary" iconOnly onClick={() => onEdit(item)} aria-label="Modifier" title="Modifier"><PencilIcon /></Button>
+                            <Button type="button" size="sm" variant="secondary" iconOnly onClick={() => onDuplicate(item)} aria-label="Dupliquer" title="Dupliquer"><CopyIcon /></Button>
+                            <Button type="button" size="sm" variant="secondary" iconOnly onClick={() => onOpenMove(item)} aria-label="Déplacer" title="Déplacer"><ArrowsLeftRightIcon /></Button>
+                            <Button type="button" size="sm" variant="danger" iconOnly disabled={deletingItemId === item.id} onClick={() => onDelete(item.id)} aria-label="Supprimer" title="Supprimer"><TrashIcon /></Button>
+                          </div>
+                        </td>
+                      </tr>
+                      {showForm && editingItemId === item.id ? (
+                        <tr className="quote-items-premium__inline-row">
+                          <td colSpan={8}>{renderItemEditor()}</td>
+                        </tr>
+                      ) : null}
+                      {movingItem?.id === item.id ? (
+                        <tr className="quote-items-premium__inline-row">
+                          <td colSpan={8}>{renderMoveEditor()}</td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
                   );
                 })}
               </DataTable>
@@ -553,7 +576,14 @@ export function QuoteItemsSection({
                 const totalHt = Number(item.quantity || 0) * Number(item.unit_price_ht || 0);
                 const roomName = item.room_id ? roomMap.get(item.room_id) : null;
                 return (
-                  <article key={item.id} className="quote-items-premium__item-card">
+                  <article
+                    key={item.id}
+                    className={`quote-items-premium__item-card ${
+                      editingItemId === item.id || movingItem?.id === item.id
+                        ? "quote-items-premium__item-card--expanded"
+                        : ""
+                    }`}
+                  >
                     <div className="quote-items-premium__item-card-header">
                       <div>
                         <p className="quote-items-premium__item-card-title">{item.label}</p>
@@ -577,6 +607,9 @@ export function QuoteItemsSection({
                       <Button type="button" size="sm" variant="secondary" iconOnly onClick={() => onOpenMove(item)} aria-label="Déplacer" title="Déplacer"><ArrowsLeftRightIcon /></Button>
                       <Button type="button" size="sm" variant="danger" iconOnly disabled={deletingItemId === item.id} onClick={() => onDelete(item.id)} aria-label="Supprimer" title="Supprimer"><TrashIcon /></Button>
                     </div>
+
+                    {showForm && editingItemId === item.id ? renderItemEditor() : null}
+                    {movingItem?.id === item.id ? renderMoveEditor() : null}
                   </article>
                 );
               })}

@@ -175,7 +175,6 @@ export function QuoteRoomsSection({
   }
 
   const activePhoto = galleryPhotos[activePhotoIndex] ?? null;
-  const roomsWithNotes = rooms.filter((room) => room.notes?.trim());
   const effectiveTemplateId = roomTemplates.some(
     (template) => template.id === selectedTemplateId,
   )
@@ -291,135 +290,110 @@ export function QuoteRoomsSection({
           />
         ) : (
           <>
-            <div className="quote-rooms-premium__grid">
+            <div className="quote-rooms-premium__list">
               {rooms.map((room) => {
                 const lineCount = getRoomItemsCount(room.id, items);
                 const photoCount = getRoomPhotosCount(room.id, roomPhotos);
                 const uploading = uploadingPhotoRoomId === room.id;
 
                 return (
-                  <article key={room.id} className="quote-rooms-premium__card">
-                    <div className="quote-rooms-premium__card-top">
-                      <div className="quote-rooms-premium__card-main">
-                        <h3 className="quote-rooms-premium__card-title">{room.name}</h3>
+                  <details key={room.id} className="quote-rooms-premium__room">
+                    <summary className="quote-rooms-premium__room-summary">
+                      <strong>{room.name}</strong>
+                      <span>
+                        {lineCount} {lineCount > 1 ? "lignes" : "ligne"}
+                      </span>
+                      <span className="quote-rooms-premium__room-chevron" aria-hidden="true" />
+                    </summary>
+
+                    <div className="quote-rooms-premium__room-content">
+                      <div className="quote-rooms-premium__room-meta">
+                        <span>{photoCount} photo{photoCount > 1 ? "s" : ""}</span>
+                        {room.notes?.trim() ? <p>{room.notes.trim()}</p> : null}
                       </div>
 
-                      <div className="quote-rooms-premium__badges">
-                        <span className="quote-rooms-premium__badge">
-                          {lineCount === 0
-                            ? "Aucune ligne"
-                            : `${lineCount} ligne${lineCount > 1 ? "s" : ""}`}
-                        </span>
-                        <span className="quote-rooms-premium__badge quote-rooms-premium__badge--photos">
-                          {photoCount} photo{photoCount > 1 ? "s" : ""}
-                        </span>
-                      </div>
-                    </div>
-
-                    <input
-                      ref={(input) => {
-                        fileInputsRef.current[room.id] = input;
-                      }}
-                      className="quote-rooms-premium__file-input"
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      multiple
-                      onChange={(event) =>
-                        void handlePhotoSelection(room.id, event.currentTarget.files)
-                      }
-                      tabIndex={-1}
-                    />
-
-                    <div className="quote-rooms-premium__card-actions">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        disabled={uploading}
-                        onClick={() => fileInputsRef.current[room.id]?.click()}
-                      >
-                        <ImageIcon />
-                        {uploading ? "Import..." : "Ajouter"}
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        disabled={photoCount === 0 || uploading}
-                        onClick={() => void openGallery(room)}
-                      >
-                        <EyeIcon />
-                        Galerie ({photoCount})
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        disabled={duplicatingRoomId !== null}
-                        onClick={() => onDuplicate(room.id)}
-                        title="Dupliquer la pièce avec toutes ses lignes, sans les photos"
-                      >
-                        <CopyIcon />
-                        {duplicatingRoomId === room.id
-                          ? "Duplication..."
-                          : "Dupliquer"}
-                      </Button>
-
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        disabled={
-                          savingRoomTemplateId !== null ||
-                          insertingRoomTemplateId !== null
+                      <input
+                        ref={(input) => {
+                          fileInputsRef.current[room.id] = input;
+                        }}
+                        className="quote-rooms-premium__file-input"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        multiple
+                        onChange={(event) =>
+                          void handlePhotoSelection(room.id, event.currentTarget.files)
                         }
-                        onClick={() => onSaveTemplate(room.id)}
-                        title="Enregistrer la pièce et ses lignes comme modèle, sans les photos"
-                      >
-                        <CatalogIcon />
-                        {savingRoomTemplateId === room.id
-                          ? "Enregistrement..."
-                          : "Créer un modèle"}
-                      </Button>
+                        tabIndex={-1}
+                      />
 
-                      <Button
-                        type="button"
-                        variant="danger"
-                        size="sm"
-                        disabled={deletingRoomId === room.id}
-                        onClick={() => onDelete(room.id)}
-                      >
-                        <TrashIcon />
-                        {deletingRoomId === room.id ? "Suppression..." : "Supprimer"}
-                      </Button>
+                      <div className="quote-rooms-premium__card-actions">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          disabled={uploading}
+                          onClick={() => fileInputsRef.current[room.id]?.click()}
+                        >
+                          <ImageIcon />
+                          {uploading ? "Import..." : "Ajouter des photos"}
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          disabled={photoCount === 0 || uploading}
+                          onClick={() => void openGallery(room)}
+                        >
+                          <EyeIcon />
+                          Galerie ({photoCount})
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          disabled={duplicatingRoomId !== null}
+                          onClick={() => onDuplicate(room.id)}
+                          title="Dupliquer la pièce avec toutes ses lignes, sans les photos"
+                        >
+                          <CopyIcon />
+                          {duplicatingRoomId === room.id ? "Duplication..." : "Dupliquer"}
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          disabled={
+                            savingRoomTemplateId !== null ||
+                            insertingRoomTemplateId !== null
+                          }
+                          onClick={() => onSaveTemplate(room.id)}
+                          title="Enregistrer la pièce et ses lignes comme modèle, sans les photos"
+                        >
+                          <CatalogIcon />
+                          {savingRoomTemplateId === room.id
+                            ? "Enregistrement..."
+                            : "Créer un modèle"}
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="danger"
+                          size="sm"
+                          disabled={deletingRoomId === room.id}
+                          onClick={() => onDelete(room.id)}
+                        >
+                          <TrashIcon />
+                          {deletingRoomId === room.id ? "Suppression..." : "Supprimer"}
+                        </Button>
+                      </div>
                     </div>
-                  </article>
+                  </details>
                 );
               })}
             </div>
-
-            {roomsWithNotes.length > 0 ? (
-              <aside
-                className="quote-rooms-premium__notes"
-                aria-labelledby="quote-room-notes-title"
-              >
-                <div className="quote-rooms-premium__notes-header">
-                  <h3 id="quote-room-notes-title">Notes des pièces</h3>
-                  <span>Usage interne — non affichées sur le devis</span>
-                </div>
-
-                <div className="quote-rooms-premium__notes-list">
-                  {roomsWithNotes.map((room) => (
-                    <article key={room.id} className="quote-rooms-premium__note">
-                      <h4>{room.name}</h4>
-                      <p>{room.notes?.trim()}</p>
-                    </article>
-                  ))}
-                </div>
-              </aside>
-            ) : null}
           </>
         )}
       </Card>
