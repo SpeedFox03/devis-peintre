@@ -54,6 +54,36 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.quote-items-premium__price-tabs {
+  display: inline-grid;
+  grid-template-columns: repeat(3, minmax(90px, 1fr));
+  gap: 6px;
+  justify-self: start;
+  padding: 5px;
+  border: 1px solid rgba(111, 82, 60, 0.16);
+  border-radius: 14px;
+  background: rgba(255, 251, 246, 0.78);
+}
+
+.quote-items-premium__price-tab {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #7d6654;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.quote-items-premium__price-tab--active {
+  background: #6f523c;
+  color: #fffaf5;
+  box-shadow: 0 5px 14px rgba(80, 60, 46, 0.16);
+}
+
 /* ── Grille catalogue ── */
 .quote-items-premium__catalog-grid {
   display: grid;
@@ -367,6 +397,10 @@
   .quote-items-premium__shell { padding: 14px; }
   .quote-items-premium__filters { grid-template-columns: 1fr; }
   .quote-items-premium__catalog-grid { grid-template-columns: 1fr; }
+  .quote-items-premium__price-tabs {
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 
   .quote-items-premium__subheader { flex-direction: column; align-items: flex-start; }
 

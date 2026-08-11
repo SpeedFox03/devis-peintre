@@ -3,6 +3,8 @@ export type ServiceCatalogPricingBasis =
   | "per_coat"
   | "per_unit";
 
+export type ServiceCatalogPriceTier = "low" | "medium" | "high";
+
 export type ServiceCatalogMetadata = {
   aliases?: string[];
   surface_type?: string;
@@ -16,7 +18,9 @@ export type ServiceCatalogItem = {
   name: string;
   category: string | null;
   default_unit: string;
+  default_unit_price_low_ht: number;
   default_unit_price_ht: number;
+  default_unit_price_high_ht: number;
   default_tva_rate: number;
   default_description: string | null;
   default_metadata: ServiceCatalogMetadata;
@@ -27,7 +31,9 @@ export type ServiceCatalogFormState = {
   name: string;
   category: string;
   default_unit: string;
+  default_unit_price_low_ht: string;
   default_unit_price_ht: string;
+  default_unit_price_high_ht: string;
   default_tva_rate: string;
   default_description: string;
   aliases: string;

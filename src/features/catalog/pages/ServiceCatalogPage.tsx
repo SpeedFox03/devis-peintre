@@ -26,9 +26,15 @@ import {
   getCategoryLabel,
   getUnitLabel,
 } from "../catalogOptions";
+import {
+  SERVICE_CATALOG_PRICE_TIERS,
+  getServiceCatalogPrice,
+  getServiceCatalogPriceTierLabel,
+} from "../catalogPricing";
 import type {
   ServiceCatalogItem as SharedServiceCatalogItem,
   ServiceCatalogMetadata,
+  ServiceCatalogPriceTier,
   ServiceCatalogPricingBasis,
 } from "../types";
 import "./ServiceCatalogPage.css";
@@ -41,7 +47,9 @@ type ServiceCatalogFormState = {
   name: string;
   category: string;
   default_unit: string;
+  default_unit_price_low_ht: string;
   default_unit_price_ht: string;
+  default_unit_price_high_ht: string;
   default_tva_rate: string;
   default_description: string;
   aliases: string;
@@ -54,7 +62,9 @@ const initialForm: ServiceCatalogFormState = {
   name: "",
   category: "painting",
   default_unit: "m2",
+  default_unit_price_low_ht: "0",
   default_unit_price_ht: "0",
+  default_unit_price_high_ht: "0",
   default_tva_rate: "21",
   default_description: "",
   aliases: "",
@@ -86,6 +96,7 @@ export function ServiceCatalogPage() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [priceTier, setPriceTier] = useState<ServiceCatalogPriceTier>("medium");
 
   async function loadServices() {
     setLoading(true);
@@ -94,7 +105,7 @@ export function ServiceCatalogPage() {
     const { data, error } = await supabase
       .from("service_catalog")
       .select(
-        "id, name, category, default_unit, default_unit_price_ht, default_tva_rate, default_description, default_metadata, is_active, created_at"
+        "id, name, category, default_unit, default_unit_price_low_ht, default_unit_price_ht, default_unit_price_high_ht, default_tva_rate, default_description, default_metadata, is_active, created_at"
       )
       .order("created_at", { ascending: false });
 
@@ -171,7 +182,9 @@ export function ServiceCatalogPage() {
       name: service.name,
       category: service.category ?? "other",
       default_unit: service.default_unit,
+      default_unit_price_low_ht: String(service.default_unit_price_low_ht),
       default_unit_price_ht: String(service.default_unit_price_ht),
+      default_unit_price_high_ht: String(service.default_unit_price_high_ht),
       default_tva_rate: String(service.default_tva_rate),
       default_description: service.default_description ?? "",
       aliases: Array.isArray(metadata.aliases)
@@ -242,7 +255,9 @@ export function ServiceCatalogPage() {
       name: form.name.trim(),
       category: form.category || null,
       default_unit: form.default_unit,
+      default_unit_price_low_ht: Number(form.default_unit_price_low_ht || 0),
       default_unit_price_ht: Number(form.default_unit_price_ht || 0),
+      default_unit_price_high_ht: Number(form.default_unit_price_high_ht || 0),
       default_tva_rate: Number(form.default_tva_rate || 21),
       default_description: form.default_description.trim() || null,
       default_metadata: metadata,
@@ -250,6 +265,16 @@ export function ServiceCatalogPage() {
 
     if (!payload.name) {
       setError("Le nom de la prestation est obligatoire.");
+      setSaving(false);
+      return;
+    }
+
+    if (
+      payload.default_unit_price_low_ht < 0
+      || payload.default_unit_price_ht < payload.default_unit_price_low_ht
+      || payload.default_unit_price_high_ht < payload.default_unit_price_ht
+    ) {
+      setError("Les prix doivent respecter l’ordre : bas ≤ moyen ≤ haut.");
       setSaving(false);
       return;
     }
@@ -329,7 +354,7 @@ export function ServiceCatalogPage() {
 
   async function handleRestoreDefaults() {
     const confirmed = window.confirm(
-      "Charger le catalogue par défaut ? Cette action remplacera toutes vos prestations actuelles par les 40 prestations du catalogue recommandé. Vos modifications et prestations personnalisées seront supprimées."
+      "Ajouter les paramètres par défaut manquants ? Vos prestations, produits, liaisons et prix personnalisés existants resteront inchangés. Aucun devis existant ne sera modifié."
     );
 
     if (!confirmed) return;
@@ -340,7 +365,7 @@ export function ServiceCatalogPage() {
 
     try {
       const { data, error: restoreError } = await supabase.rpc(
-        "reset_service_catalog_to_defaults"
+        "ensure_default_catalog_settings"
       );
 
       if (restoreError) {
@@ -352,8 +377,22 @@ export function ServiceCatalogPage() {
       resetForm();
       const reloaded = await loadServices();
       if (reloaded) {
+        const result = (data ?? {}) as {
+          services_added?: number;
+          suppliers_added?: number;
+          products_added?: number;
+          offers_added?: number;
+          links_added?: number;
+        };
+        const added = Number(result.services_added ?? 0)
+          + Number(result.suppliers_added ?? 0)
+          + Number(result.products_added ?? 0)
+          + Number(result.offers_added ?? 0)
+          + Number(result.links_added ?? 0);
         setSuccessMessage(
-          `${Number(data ?? 40)} prestations par défaut ont été chargées avec les derniers tarifs.`
+          added > 0
+            ? `${Number(result.services_added ?? 0)} prestation(s), ${Number(result.products_added ?? 0)} produit(s) et ${Number(result.links_added ?? 0)} liaison(s) manquants ont été ajoutés. Vos données existantes sont inchangées.`
+            : "Tout était déjà à jour. Aucune donnée existante n’a été modifiée."
         );
       }
     } catch (restoreError) {
@@ -373,7 +412,7 @@ export function ServiceCatalogPage() {
   const averagePrice =
     services.length > 0
       ? services.reduce(
-          (sum, service) => sum + Number(service.default_unit_price_ht || 0),
+          (sum, service) => sum + getServiceCatalogPrice(service, priceTier),
           0
         ) / services.length
       : 0;
@@ -389,8 +428,8 @@ export function ServiceCatalogPage() {
           <p className="catalog-premium-page__eyebrow">Bibliothèque métier</p>
           <h1 className="catalog-premium-page__title">Catalogue de prestations</h1>
           <p className="catalog-premium-page__description">
-            Personnalisez vos prestations ou rechargez les 40 paramètres par défaut
-            basés sur la grille de prix moyenne recommandée.
+            Gérez trois niveaux de prix par prestation. Les paramètres par défaut
+            ajoutent seulement ce qui manque et ne modifient jamais vos devis existants.
           </p>
         </div>
 
@@ -439,7 +478,9 @@ export function ServiceCatalogPage() {
         </Card>
 
         <Card>
-          <p className="catalog-premium-page__stat-label">Prix moyen HT</p>
+          <p className="catalog-premium-page__stat-label">
+            Moyenne · {getServiceCatalogPriceTierLabel(priceTier)} HT
+          </p>
           <p className="catalog-premium-page__stat-value">
             {formatCurrency(averagePrice)}
           </p>
@@ -485,7 +526,7 @@ export function ServiceCatalogPage() {
               </FormField>
             </FormGrid>
 
-            <FormGrid columns="3">
+            <FormGrid columns="2">
               <FormField label="Unité">
                 <Select
                   value={form.default_unit}
@@ -499,9 +540,33 @@ export function ServiceCatalogPage() {
                 </Select>
               </FormField>
 
-              <FormField label="Prix unitaire HT">
+              <FormField label="TVA (%)">
                 <TextInput
                   type="number"
+                  step="0.01"
+                  value={form.default_tva_rate}
+                  onChange={(e) => updateField("default_tva_rate", e.target.value)}
+                />
+              </FormField>
+            </FormGrid>
+
+            <FormGrid columns="3">
+              <FormField label="Prix bas HT">
+                <TextInput
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.default_unit_price_low_ht}
+                  onChange={(e) =>
+                    updateField("default_unit_price_low_ht", e.target.value)
+                  }
+                />
+              </FormField>
+
+              <FormField label="Prix moyen HT">
+                <TextInput
+                  type="number"
+                  min="0"
                   step="0.01"
                   value={form.default_unit_price_ht}
                   onChange={(e) =>
@@ -510,12 +575,15 @@ export function ServiceCatalogPage() {
                 />
               </FormField>
 
-              <FormField label="TVA (%)">
+              <FormField label="Prix haut HT">
                 <TextInput
                   type="number"
+                  min="0"
                   step="0.01"
-                  value={form.default_tva_rate}
-                  onChange={(e) => updateField("default_tva_rate", e.target.value)}
+                  value={form.default_unit_price_high_ht}
+                  onChange={(e) =>
+                    updateField("default_unit_price_high_ht", e.target.value)
+                  }
                 />
               </FormField>
             </FormGrid>
@@ -600,6 +668,30 @@ export function ServiceCatalogPage() {
 
       {!showForm && (
         <Card>
+          <div
+            className="catalog-premium-page__price-tabs"
+            role="tablist"
+            aria-label="Niveau de prix des prestations"
+          >
+            {SERVICE_CATALOG_PRICE_TIERS.map((tier) => (
+              <button
+                key={tier.value}
+                type="button"
+                role="tab"
+                aria-selected={priceTier === tier.value}
+                className={`catalog-premium-page__price-tab ${
+                  priceTier === tier.value
+                    ? "catalog-premium-page__price-tab--active"
+                    : ""
+                }`}
+                onClick={() => setPriceTier(tier.value)}
+              >
+                <strong>{tier.label}</strong>
+                <span>{tier.description}</span>
+              </button>
+            ))}
+          </div>
+
           <div className="catalog-premium-page__filters">
             <div className="catalog-premium-page__filters-grid">
               <FormField label="Recherche">
@@ -662,7 +754,7 @@ export function ServiceCatalogPage() {
                   <th>Nom</th>
                   <th>Catégorie</th>
                   <th>Unité</th>
-                  <th>Prix HT</th>
+                  <th>{getServiceCatalogPriceTierLabel(priceTier)} HT</th>
                   <th>TVA</th>
                   <th>Statut</th>
                   <th style={{ textAlign: "right" }}>Actions</th>
@@ -683,7 +775,7 @@ export function ServiceCatalogPage() {
                   </td>
                   <td>{getCategoryLabel(service.category)}</td>
                   <td>{getUnitLabel(service.default_unit)}</td>
-                  <td>{formatCurrency(service.default_unit_price_ht)}</td>
+                  <td>{formatCurrency(getServiceCatalogPrice(service, priceTier))}</td>
                   <td>{Number(service.default_tva_rate).toFixed(2)} %</td>
                   <td>
                     <span
@@ -754,7 +846,7 @@ export function ServiceCatalogPage() {
                     )}
                   </div>
                   <span className="catalog-premium-page__service-card-price">
-                    {formatCurrency(service.default_unit_price_ht)}
+                    {formatCurrency(getServiceCatalogPrice(service, priceTier))}
                   </span>
                 </div>
 

@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../../../lib/supabase";
-import type { ServiceCatalogItem } from "../../catalog/types";
+import { getServiceCatalogPrice } from "../../catalog/catalogPricing";
+import type {
+  ServiceCatalogItem,
+  ServiceCatalogPriceTier,
+} from "../../catalog/types";
 import type {
   QuoteItemInlineEdit,
   QuotePdfData,
@@ -163,7 +167,7 @@ export function useQuoteDetailsPage() {
           .order("name", { ascending: true }),
         supabase
           .from("service_catalog")
-          .select("id, name, category, default_unit, default_unit_price_ht, default_tva_rate, default_description, default_metadata, is_active")
+          .select("id, name, category, default_unit, default_unit_price_low_ht, default_unit_price_ht, default_unit_price_high_ht, default_tva_rate, default_description, default_metadata, is_active")
           .eq("is_active", true)
           .order("category", { ascending: true })
           .order("name", { ascending: true }),
@@ -328,7 +332,7 @@ export function useQuoteDetailsPage() {
         .order("name", { ascending: true }),
       supabase
         .from("service_catalog")
-        .select("id, name, category, default_unit, default_unit_price_ht, default_tva_rate, default_description, default_metadata, is_active")
+        .select("id, name, category, default_unit, default_unit_price_low_ht, default_unit_price_ht, default_unit_price_high_ht, default_tva_rate, default_description, default_metadata, is_active")
         .eq("is_active", true)
         .order("category", { ascending: true })
         .order("name", { ascending: true }),
@@ -742,7 +746,8 @@ export function useQuoteDetailsPage() {
 
   async function handleAddFromCatalog(
     service: ServiceCatalogItem,
-    quantity?: number
+    quantity?: number,
+    priceTier: ServiceCatalogPriceTier = "medium",
   ) {
     if (!quoteId || !quote) {
       setError("Devis introuvable.");
@@ -763,6 +768,8 @@ export function useQuoteDetailsPage() {
       return;
     }
 
+    const selectedUnitPrice = getServiceCatalogPrice(service, priceTier);
+
     const { error: insertError } = await supabase.from("quote_items").insert({
       quote_id: quoteId,
       service_catalog_id: service.id,
@@ -774,7 +781,7 @@ export function useQuoteDetailsPage() {
       description: service.default_description || null,
       unit: service.default_unit,
       quantity: Number.isFinite(quantity) ? quantity : 1,
-      unit_price_ht: Number(service.default_unit_price_ht || 0),
+      unit_price_ht: selectedUnitPrice,
       tva_rate: Number(service.default_tva_rate || quote.tva_rate || 21),
       metadata: {
         source: "service_catalog",
@@ -783,7 +790,11 @@ export function useQuoteDetailsPage() {
           name: service.name,
           category: service.category,
           default_unit: service.default_unit,
+          selected_price_tier: priceTier,
+          selected_unit_price_ht: selectedUnitPrice,
+          default_unit_price_low_ht: service.default_unit_price_low_ht,
           default_unit_price_ht: service.default_unit_price_ht,
+          default_unit_price_high_ht: service.default_unit_price_high_ht,
           default_tva_rate: service.default_tva_rate,
         },
       },

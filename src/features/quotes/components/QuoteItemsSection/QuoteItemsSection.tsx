@@ -9,7 +9,14 @@ import { Select } from "../../../../components/ui/Select/Select";
 import { TextInput } from "../../../../components/ui/TextInput/TextInput";
 import { QuoteItemForm } from "../QuoteItemForm/QuoteItemForm";
 import { getUnitLabel } from "../../../catalog/catalogOptions";
-import type { ServiceCatalogItem } from "../../../catalog/types";
+import {
+  SERVICE_CATALOG_PRICE_TIERS,
+  getServiceCatalogPrice,
+} from "../../../catalog/catalogPricing";
+import type {
+  ServiceCatalogItem,
+  ServiceCatalogPriceTier,
+} from "../../../catalog/types";
 import type { QuoteItem, QuoteItemFormState, Room } from "../../types";
 import { calculateItemsTotal } from "../../utils/quoteTotals";
 import "./QuoteItemsSection.css";
@@ -48,7 +55,11 @@ type QuoteItemsSectionProps = {
   onCatalogSearchChange: (value: string) => void;
   onCatalogCategoryChange: (value: string) => void;
   onCatalogRoomChange: (value: string) => void;
-  onAddFromCatalog: (service: ServiceCatalogItem, quantity?: number) => void;
+  onAddFromCatalog: (
+    service: ServiceCatalogItem,
+    quantity?: number,
+    priceTier?: ServiceCatalogPriceTier,
+  ) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onChange: <K extends keyof QuoteItemFormState>(field: K, value: QuoteItemFormState[K]) => void;
   onEdit: (item: QuoteItem) => void;
@@ -221,6 +232,8 @@ export function QuoteItemsSection({
 
   // État L×H par service du catalogue (clé = service.id)
   const [catalogDims, setCatalogDims] = useState<Record<string, CatalogDims>>({});
+  const [catalogPriceTier, setCatalogPriceTier] =
+    useState<ServiceCatalogPriceTier>("medium");
 
   function getDims(service: ServiceCatalogItem): CatalogDims {
     return catalogDims[service.id] ?? {
@@ -239,7 +252,8 @@ export function QuoteItemsSection({
     const parsedQuantity = quantityValue ? Number(quantityValue) : undefined;
     onAddFromCatalog(
       service,
-      Number.isFinite(parsedQuantity) ? parsedQuantity : undefined
+      Number.isFinite(parsedQuantity) ? parsedQuantity : undefined,
+      catalogPriceTier,
     );
   }
 
@@ -383,6 +397,29 @@ export function QuoteItemsSection({
               </div>
             </div>
 
+            <div
+              className="quote-items-premium__price-tabs"
+              role="tablist"
+              aria-label="Niveau de prix à appliquer au devis"
+            >
+              {SERVICE_CATALOG_PRICE_TIERS.map((tier) => (
+                <button
+                  key={tier.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={catalogPriceTier === tier.value}
+                  className={`quote-items-premium__price-tab ${
+                    catalogPriceTier === tier.value
+                      ? "quote-items-premium__price-tab--active"
+                      : ""
+                  }`}
+                  onClick={() => setCatalogPriceTier(tier.value)}
+                >
+                  {tier.label}
+                </button>
+              ))}
+            </div>
+
             <div className="quote-items-premium__filters">
               <FormField label="Recherche">
                 <TextInput
@@ -440,7 +477,7 @@ export function QuoteItemsSection({
                         </div>
 
                         <span className="quote-items-premium__catalog-badge">
-                          {formatCurrency(service.default_unit_price_ht)}
+                          {formatCurrency(getServiceCatalogPrice(service, catalogPriceTier))}
                           {isM2 ? " /m²" : ""}
                         </span>
                       </div>
