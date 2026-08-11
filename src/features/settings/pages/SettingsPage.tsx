@@ -18,6 +18,7 @@ import "./SettingsPage.css";
 
 const settingsPages = [
   { id: "informations", label: "Informations" },
+  { id: "einvoicing",  label: "E-facturation" },
   { id: "apparence",    label: "Apparence" },
   { id: "emails",       label: "E-mails" },
   { id: "abonnement",   label: "Abonnement" },
@@ -31,7 +32,9 @@ type CompanySettings = {
   id: string;
   address_id: string | null;
   name: string;
+  enterprise_number: string | null;
   vat_number: string | null;
+  country_code: string | null;
   email: string | null;
   phone: string | null;
   address_line1: string | null;
@@ -56,7 +59,9 @@ type CompanySettings = {
 
 type CompanySettingsFormState = {
   name: string;
+  enterprise_number: string;
   vat_number: string;
+  country_code: string;
   email: string;
   phone: string;
   address_line1: string;
@@ -86,6 +91,22 @@ type QuoteDesignOption = {
   slug: string;
   description: string | null;
   renderer_key: string;
+};
+
+type EinvoicingSetupForm = {
+  legalEntityId: string;
+  tenantId: string;
+  peppolScheme: string;
+  peppolIdentifier: string;
+  connectionStatus: string;
+};
+
+const emptyEinvoicingSetup: EinvoicingSetupForm = {
+  legalEntityId: "",
+  tenantId: "",
+  peppolScheme: "",
+  peppolIdentifier: "",
+  connectionStatus: "not_configured",
 };
 
 const PDF_THEME_OPTIONS: { value: string; label: string; description: string }[] = [
@@ -149,7 +170,9 @@ function getPdfThemeLabel(value: string) {
 function createInitialForm(company: CompanySettings | null): CompanySettingsFormState {
   return {
     name: company?.name ?? "",
+    enterprise_number: company?.enterprise_number ?? "",
     vat_number: company?.vat_number ?? "",
+    country_code: company?.country_code ?? "BE",
     email: company?.email ?? "",
     phone: company?.phone ?? "",
     address_line1: company?.address_line1 ?? "",
@@ -598,6 +621,9 @@ export function SettingsPage() {
   const [selectedDesignId, setSelectedDesignId] = useState<string | null>(null);
   const canUseElegantDesign = form.pdf_theme === "elegant";
   const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
+  const [einvoicingSetup, setEinvoicingSetup] = useState<EinvoicingSetupForm>(emptyEinvoicingSetup);
+  const [savingEinvoicing, setSavingEinvoicing] = useState(false);
+  const [einvoicingMessage, setEinvoicingMessage] = useState<string | null>(null);
 
   async function handleLogoUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -670,7 +696,7 @@ export function SettingsPage() {
 
     const { data, error } = await supabase
       .from("companies")
-      .select("id, name, vat_number, email, phone, website, iban, bic, logo_url, legal_mentions, accent_color")
+      .select("id, name, enterprise_number, vat_number, country_code, email, phone, website, iban, bic, logo_url, legal_mentions, accent_color")
       .eq("owner_user_id", user.id)
       .order("created_at", { ascending: true })
       .limit(1)
@@ -687,11 +713,12 @@ export function SettingsPage() {
       setForm(createInitialForm(null));
       setAvailableDesigns([]);
       setSelectedDesignId(null);
+      setEinvoicingSetup(emptyEinvoicingSetup);
       setLoading(false);
       return;
     }
 
-    const [settingsRes, addrRes] = await Promise.all([
+    const [settingsRes, addrRes, einvoicingRes] = await Promise.all([
       supabase
         .from("company_settings")
         .select("pdf_theme, pdf_accent_color, pdf_color_mode, default_tva_rate, default_quote_validity_days, default_deposit_percent, default_terms, default_notes")
@@ -703,6 +730,12 @@ export function SettingsPage() {
         .eq("entity_id", data.id)
         .eq("entity_type", "company")
         .eq("role", "main")
+        .maybeSingle(),
+      supabase
+        .from("company_einvoicing_profiles")
+        .select("connection_status, storecove_legal_entity_id, storecove_tenant_id, peppol_scheme, peppol_identifier")
+        .eq("company_id", data.id)
+        .eq("environment", "sandbox")
         .maybeSingle(),
     ]);
 
@@ -742,6 +775,16 @@ export function SettingsPage() {
       city: addrRes.data?.city ?? null,
       country: addrRes.data?.country ?? null,
     } as CompanySettings;
+
+    setEinvoicingSetup({
+      legalEntityId: einvoicingRes.data?.storecove_legal_entity_id
+        ? String(einvoicingRes.data.storecove_legal_entity_id)
+        : "",
+      tenantId: einvoicingRes.data?.storecove_tenant_id ?? "",
+      peppolScheme: einvoicingRes.data?.peppol_scheme ?? "",
+      peppolIdentifier: einvoicingRes.data?.peppol_identifier ?? "",
+      connectionStatus: einvoicingRes.data?.connection_status ?? "not_configured",
+    });
 
     const selectedDesign = assignedDesigns.find((design) => design.id === defaultDesignId) ?? assignedDesigns[0] ?? null;
     if (selectedDesign) {
@@ -856,7 +899,9 @@ export function SettingsPage() {
       .from("companies")
       .update({
         name,
+        enterprise_number: form.enterprise_number.trim() || null,
         vat_number: form.vat_number.trim() || null,
+        country_code: form.country_code.trim().toUpperCase() || "BE",
         email: form.email.trim() || null,
         phone: form.phone.trim() || null,
         website: form.website.trim() || null,
@@ -941,6 +986,57 @@ export function SettingsPage() {
 
     setSaving(false);
     await loadSettings();
+  }
+
+  async function handleEinvoicingSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!company) return;
+
+    const legalEntityId = einvoicingSetup.legalEntityId.trim();
+    const peppolScheme = einvoicingSetup.peppolScheme.trim();
+    const peppolIdentifier = einvoicingSetup.peppolIdentifier.trim();
+    if (legalEntityId && (!/^\d+$/.test(legalEntityId) || Number(legalEntityId) <= 0)) {
+      setError("L’identifiant LegalEntity doit être un nombre positif.");
+      return;
+    }
+    if (Boolean(peppolScheme) !== Boolean(peppolIdentifier)) {
+      setError("Le schéma et l’identifiant Peppol doivent être renseignés ensemble.");
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setError("Utilisateur non connecté.");
+      return;
+    }
+
+    setSavingEinvoicing(true);
+    setEinvoicingMessage(null);
+    setError(null);
+    const nextStatus = legalEntityId
+      ? (einvoicingSetup.connectionStatus === "active" ? "active" : "pending_validation")
+      : "not_configured";
+    const { error: profileError } = await supabase.from("company_einvoicing_profiles").upsert({
+      company_id: company.id,
+      environment: "sandbox",
+      connection_status: nextStatus,
+      storecove_legal_entity_id: legalEntityId ? Number(legalEntityId) : null,
+      storecove_tenant_id: einvoicingSetup.tenantId.trim() || null,
+      peppol_scheme: peppolScheme || null,
+      peppol_identifier: peppolIdentifier || null,
+      acts_as_sender: true,
+      acts_as_receiver: false,
+      created_by: user.id,
+    });
+    if (profileError) {
+      setError(profileError.message);
+      setSavingEinvoicing(false);
+      return;
+    }
+
+    setEinvoicingSetup((current) => ({ ...current, connectionStatus: nextStatus }));
+    setEinvoicingMessage("Configuration sandbox enregistrée. La validation réelle restera bloquée tant que la clé API n’est pas installée.");
+    setSavingEinvoicing(false);
   }
 
   // ── Loading / empty states ────────────────────────────────────────────────
@@ -1107,6 +1203,23 @@ export function SettingsPage() {
                     <TextInput
                       value={form.vat_number}
                       onChange={(e) => updateField("vat_number", e.target.value)}
+                    />
+                  </FormField>
+                </FormGrid>
+                <FormGrid columns="2">
+                  <FormField label="Numéro d’entreprise">
+                    <TextInput
+                      value={form.enterprise_number}
+                      onChange={(e) => updateField("enterprise_number", e.target.value)}
+                      placeholder="0123.456.789"
+                    />
+                  </FormField>
+                  <FormField label="Code pays">
+                    <TextInput
+                      value={form.country_code}
+                      onChange={(e) => updateField("country_code", e.target.value)}
+                      maxLength={2}
+                      placeholder="BE"
                     />
                   </FormField>
                 </FormGrid>
@@ -1503,6 +1616,77 @@ export function SettingsPage() {
           companyEmail={form.email || company.email}
           companyLogoUrl={form.logo_url || company.logo_url}
         />
+      )}
+
+      {activePage === "einvoicing" && (
+        <form className="settings-premium-page__layout" onSubmit={handleEinvoicingSubmit}>
+          <div className="settings-premium-page__center">
+            <Card>
+              <div className="settings-premium-page__section-header">
+                <div>
+                  <p className="settings-premium-page__section-eyebrow">Storecove sandbox</p>
+                  <h2 className="settings-premium-page__section-title">Préparer la connexion</h2>
+                </div>
+                <span className={`einvoicing-setup-status einvoicing-setup-status--${einvoicingSetup.connectionStatus}`}>
+                  {einvoicingSetup.connectionStatus === "active" ? "Active" : einvoicingSetup.connectionStatus === "pending_validation" ? "À valider" : "Non configurée"}
+                </span>
+              </div>
+              <p className="settings-premium-page__einvoicing-intro">
+                Vous pouvez déjà compléter les identifiants. La clé API restera exclusivement dans les secrets Supabase et ne sera jamais demandée dans cet écran.
+              </p>
+              <div className="settings-premium-page__form-block">
+                <FormGrid columns="2">
+                  <FormField label="LegalEntity ID Storecove">
+                    <TextInput
+                      inputMode="numeric"
+                      value={einvoicingSetup.legalEntityId}
+                      onChange={(event) => setEinvoicingSetup((current) => ({ ...current, legalEntityId: event.target.value }))}
+                      placeholder="Disponible après création du sender"
+                    />
+                  </FormField>
+                  <FormField label="Tenant ID (facultatif)">
+                    <TextInput
+                      value={einvoicingSetup.tenantId}
+                      onChange={(event) => setEinvoicingSetup((current) => ({ ...current, tenantId: event.target.value }))}
+                    />
+                  </FormField>
+                </FormGrid>
+                <FormGrid columns="2">
+                  <FormField label="Schéma Peppol de l’entreprise">
+                    <TextInput
+                      value={einvoicingSetup.peppolScheme}
+                      onChange={(event) => setEinvoicingSetup((current) => ({ ...current, peppolScheme: event.target.value }))}
+                      placeholder="BE:EN"
+                    />
+                  </FormField>
+                  <FormField label="Identifiant Peppol">
+                    <TextInput
+                      value={einvoicingSetup.peppolIdentifier}
+                      onChange={(event) => setEinvoicingSetup((current) => ({ ...current, peppolIdentifier: event.target.value }))}
+                      placeholder="0123456789"
+                    />
+                  </FormField>
+                </FormGrid>
+                {einvoicingMessage ? <p className="settings-premium-page__success-message">{einvoicingMessage}</p> : null}
+                {error ? <ErrorMessage message={error} /> : null}
+                <Button type="submit" disabled={savingEinvoicing}>{savingEinvoicing ? "Enregistrement…" : "Enregistrer la préparation sandbox"}</Button>
+              </div>
+            </Card>
+            <Card>
+              <div className="settings-premium-page__section-header">
+                <div>
+                  <p className="settings-premium-page__section-eyebrow">Activation</p>
+                  <h2 className="settings-premium-page__section-title">Ce qu’il restera à faire</h2>
+                </div>
+              </div>
+              <ol className="settings-premium-page__einvoicing-steps">
+                <li>Créer le compte développeur sandbox Storecove et la LegalEntity.</li>
+                <li>Installer la clé dans le secret serveur <code>STORECOVE_SANDBOX_API_KEY</code>.</li>
+                <li>Valider un premier destinataire de test et configurer le webhook de statuts.</li>
+              </ol>
+            </Card>
+          </div>
+        </form>
       )}
 
       {activePage === "abonnement" && (

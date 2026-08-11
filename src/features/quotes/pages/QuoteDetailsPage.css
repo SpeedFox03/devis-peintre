@@ -144,8 +144,9 @@
   box-shadow: 0 4px 14px rgba(86, 59, 41, 0.22);
 }
 
-/* Tablette : nav sort de la position absolue, passe sous l'intro */
-@media (max-width: 900px) {
+/* Quatre onglets : la nav passe sous l'intro avant de risquer de chevaucher
+   le titre ou les actions de la topbar. */
+@media (max-width: 1180px) {
   .quote-topbar-nav {
     position: static;
     transform: none;

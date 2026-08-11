@@ -29,7 +29,11 @@ Chaque entreprise relie son propre compte Resend depuis les paramètres. Les sec
 
 ## Facturation historique
 
-Les routes et composants frontend de facturation ainsi que le code des fonctions Edge Peppol ont été retirés. Le statut historique `invoiced` reste affichable et verrouillé afin de ne pas réécrire les anciens devis. Les tables, paiements, événements Peppol déjà enregistrés et routines SQL nécessaires à leur intégrité ne sont pas supprimés pendant cette migration.
+Les routes, composants frontend et fonctions Edge Peppol de la première
+expérimentation ont été retirés. Les tables et routines SQL correspondantes ne
+contenaient que des données de test et sont supprimées explicitement par la
+migration de nettoyage legacy. Le statut `invoiced` des devis reste une donnée
+indépendante et n'est pas modifié par ce nettoyage.
 
 ## Modèle de données cible
 

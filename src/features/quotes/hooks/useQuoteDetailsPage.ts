@@ -147,7 +147,7 @@ export function useQuoteDetailsPage() {
       ] = await Promise.all([
         supabase
           .from("quote_items")
-          .select("id, quote_id, room_id, item_type, category, label, description, unit, quantity, unit_price_ht, tva_rate, sort_order")
+          .select("id, quote_id, service_catalog_id, room_id, item_type, category, label, description, unit, quantity, unit_price_ht, tva_rate, sort_order")
           .eq("quote_id", quoteId)
           .order("sort_order", { ascending: true })
           .order("id", { ascending: true }),
@@ -312,7 +312,7 @@ export function useQuoteDetailsPage() {
     ] = await Promise.all([
       supabase
         .from("quote_items")
-        .select("id, quote_id, room_id, item_type, category, label, description, unit, quantity, unit_price_ht, tva_rate, sort_order")
+        .select("id, quote_id, service_catalog_id, room_id, item_type, category, label, description, unit, quantity, unit_price_ht, tva_rate, sort_order")
         .eq("quote_id", quoteId)
         .order("sort_order", { ascending: true })
         .order("id", { ascending: true }),
@@ -765,6 +765,7 @@ export function useQuoteDetailsPage() {
 
     const { error: insertError } = await supabase.from("quote_items").insert({
       quote_id: quoteId,
+      service_catalog_id: service.id,
       room_id: catalogRoomId || null,
       owner_user_id: user.id,
       item_type: "service",
@@ -849,6 +850,7 @@ export function useQuoteDetailsPage() {
 
     const duplicatedPayload = {
       quote_id: item.quote_id,
+      service_catalog_id: item.service_catalog_id,
       room_id: item.room_id,
       owner_user_id: user.id,
       item_type: item.item_type,

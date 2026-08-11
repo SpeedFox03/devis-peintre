@@ -759,3 +759,50 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
+.settings-premium-page__einvoicing-intro {
+  margin-bottom: 18px;
+  color: var(--text-soft);
+  line-height: 1.65;
+}
+
+.settings-premium-page__einvoicing-steps {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding-left: 22px;
+}
+
+.settings-premium-page__einvoicing-steps code {
+  overflow-wrap: anywhere;
+  color: var(--primary-strong);
+  font-size: .82em;
+}
+
+.settings-premium-page__success-message {
+  padding: 11px 13px;
+  border-radius: var(--radius-md);
+  color: var(--success);
+  background: var(--success-soft);
+  font-size: .86rem;
+}
+
+.einvoicing-setup-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  color: var(--text-soft);
+  background: var(--surface-muted);
+  font-size: .74rem;
+  font-weight: 800;
+}
+
+.einvoicing-setup-status--active {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.einvoicing-setup-status--pending_validation {
+  color: #7b5b27;
+  background: var(--warning-soft);
+}

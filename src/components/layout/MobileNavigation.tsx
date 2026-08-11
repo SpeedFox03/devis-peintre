@@ -5,6 +5,7 @@ import { useAuth } from "../../features/auth/hooks/useAuth";
 import {
   CatalogIcon,
   HomeIcon,
+  InvoiceIcon,
   LockIcon,
   MoreIcon,
   ProjectIcon,
@@ -39,7 +40,7 @@ export function MobileNavigation() {
     navigate("/login");
   }
 
-  const moreActive = ["/catalogue", "/parametres", "/abonnement", "/admin"].some((path) =>
+  const moreActive = ["/factures", "/catalogue", "/fournisseurs", "/parametres", "/abonnement", "/admin"].some((path) =>
     location.pathname.startsWith(path),
   );
 
@@ -68,9 +69,17 @@ export function MobileNavigation() {
         </div>
 
         <nav className="mobile-navigation__more-links" aria-label="Navigation secondaire">
+          <NavLink to="/factures" className="mobile-navigation__more-link" onClick={() => setMoreOpen(false)}>
+            <InvoiceIcon />
+            <span>Factures</span>
+          </NavLink>
           <NavLink to="/catalogue" className="mobile-navigation__more-link" onClick={() => setMoreOpen(false)}>
             <CatalogIcon />
             <span>Catalogue</span>
+          </NavLink>
+          <NavLink to="/fournisseurs" className="mobile-navigation__more-link" onClick={() => setMoreOpen(false)}>
+            <CatalogIcon />
+            <span>Fournisseurs</span>
           </NavLink>
           <NavLink to="/parametres" className="mobile-navigation__more-link" onClick={() => setMoreOpen(false)}>
             <SettingsIcon />

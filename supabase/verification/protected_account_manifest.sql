@@ -17,8 +17,6 @@ with protected_user as (
   select id from public.quote_rooms where quote_id in (select id from protected_quotes)
 ), protected_public_links as (
   select id from public.quote_public_links where quote_id in (select id from protected_quotes)
-), protected_invoices as (
-  select id from public.invoices where owner_user_id in (select id from protected_user)
 )
 select 'auth_users' as object_type, count(*)::numeric as object_count, null::numeric as financial_total from protected_user
 union all
@@ -51,14 +49,6 @@ union all
 select 'quote_email_deliveries', count(*)::numeric, null::numeric from public.quote_email_deliveries where quote_id in (select id from protected_quotes)
 union all
 select 'service_catalog', count(*)::numeric, null::numeric from public.service_catalog where owner_user_id in (select id from protected_user)
-union all
-select 'invoices', count(*)::numeric, coalesce(sum(total_ttc), 0)::numeric from public.invoices where id in (select id from protected_invoices)
-union all
-select 'invoice_items', count(*)::numeric, coalesce(sum(line_total_ttc), 0)::numeric from public.invoice_items where invoice_id in (select id from protected_invoices)
-union all
-select 'invoice_payments', count(*)::numeric, coalesce(sum(amount), 0)::numeric from public.invoice_payments where invoice_id in (select id from protected_invoices)
-union all
-select 'invoice_peppol_events', count(*)::numeric, null::numeric from public.invoice_peppol_events where invoice_id in (select id from protected_invoices)
 order by object_type;
 
 -- Inventaire des chemins Storage à copier physiquement.

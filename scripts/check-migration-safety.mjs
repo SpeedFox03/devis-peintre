@@ -12,13 +12,16 @@ const forbiddenPatterns = [
   { label: "DELETE FROM", pattern: /\bdelete\s+from\b/i },
 ];
 
-// Cette migration historique purge uniquement les compteurs techniques de
-// limitation vocale vieux de plus de 31 jours. Son contenu exact a été audité.
-// Toute modification changera l'empreinte et réactivera automatiquement le blocage.
-const approvedLegacyMigrationHashes = new Map([
+// Exceptions destructives explicitement auditées. Toute modification d'un de
+// ces fichiers change son empreinte et réactive automatiquement le blocage.
+const approvedMigrationHashes = new Map([
   [
     "20260807_add_quote_voice_draft_application.sql",
     "b4697b191c78e061046d0f46deb438587fa6d35cf252ee51d40f5cd6ffbd72f2",
+  ],
+  [
+    "20260811140000_remove_legacy_invoice_domain.sql",
+    "947e3fd02b85992569832e1a3c3fd933581ba7cb268572e9712b4a5f992d5dbc",
   ],
 ]);
 
@@ -33,7 +36,7 @@ for (const file of files) {
   const sql = await readFile(filePath, "utf8");
   const hash = createHash("sha256").update(sql).digest("hex");
 
-  if (approvedLegacyMigrationHashes.get(file) === hash) continue;
+  if (approvedMigrationHashes.get(file) === hash) continue;
 
   for (const { label, pattern } of forbiddenPatterns) {
     if (pattern.test(sql)) violations.push(`${file}: ${label}`);

@@ -1,0 +1,114 @@
+@startuml emission-nominale
+' =============================================================================
+' Emission d'une facture — sequence complete
+' Couvre les deux chemins (Peppol et repli e-mail) et le retour asynchrone
+' =============================================================================
+
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 12
+skinparam BoxPadding 8
+
+actor "Peintre" as P
+participant "Navigateur\n(React)" as UI
+box "Supabase" #F8F1E8
+  participant "Edge Function\nemit-sales-document" as FN
+  database "Postgres\n(RLS)" as PG
+  participant "Edge Function\neinvoice-webhook" as WH
+  database "Storage" as ST
+end box
+participant "Storecove" as SC
+participant "Reseau Peppol" as PEP
+participant "Resend" as MAIL
+
+== Preparation ==
+
+P -> UI : ouvre le devis accepte
+UI -> PG : rpc convert_quote_to_draft_document()
+activate PG
+note right of PG
+  Transaction unique :
+  - copie les lignes du devis
+  - recharge prix et TVA
+  - statut = brouillon
+  - aucun numero attribue
+end note
+PG --> UI : document brouillon
+deactivate PG
+
+P -> UI : verifie, corrige, clique **Emettre**
+
+== Emission (synchrone) ==
+
+UI -> FN : POST /emit-sales-document\n{document_id}
+activate FN
+FN -> FN : valide le JWT et\nl'appartenance a l'entreprise
+
+FN -> PG : rpc issue_sales_document(document_id)
+activate PG
+note right of PG
+  Transaction unique :
+  - reserve le numero (sequence atomique
+    par entreprise, sans trou)
+  - fige le snapshot des lignes
+  - statut = emis
+  - document devenu immuable
+end note
+PG --> FN : numero + snapshot
+deactivate PG
+
+FN -> PG : lit customer_einvoicing_profiles
+PG --> FN : identifiant de routage\n(ou aucun)
+
+alt Destinataire present sur le reseau Peppol
+
+  FN -> SC : POST /document_submissions\n(idempotencyGuid = document_id)
+  activate SC
+  SC --> FN : submission_id
+  deactivate SC
+  FN -> PG : insert einvoice_submissions
+  FN --> UI : emis, transmission en cours
+  SC -> PEP : AS4
+  PEP -> PEP : routage vers le point\nd'acces du destinataire
+
+else Destinataire absent du reseau (particuliers)
+
+  FN -> PG : lit le PDF genere
+  FN -> MAIL : envoi du PDF par e-mail
+  FN -> PG : statut = envoye (e-mail)
+  FN --> UI : emis, envoye par e-mail
+
+end
+deactivate FN
+
+UI --> P : confirmation + numero de facture
+
+== Retour de statut (asynchrone) ==
+
+SC -> WH : webhook (submitted / delivered / rejected)
+activate WH
+WH -> WH : verifie la signature HMAC
+WH -> PG : insert einvoice_events\n(deduplique sur l'id d'evenement)
+
+alt Remise confirmee
+  WH -> SC : GET du XML transmis\net de la preuve
+  SC --> WH : artefacts
+  WH -> ST : archive + empreinte SHA-256
+  WH -> PG : insert einvoice_artifacts
+  WH -> PG : statut = remis
+else Rejet
+  WH -> PG : statut = rejete
+  WH -> PG : motif traduit en francais
+  note right of PG
+    Le code technique (BR-CL-01, ...)
+    est converti en message actionnable
+    avant affichage.
+  end note
+end
+deactivate WH
+
+P -> UI : consulte le statut
+UI -> PG : lit le document et ses evenements
+UI --> P : envoye / remis / rejete + motif
+
+@enduml

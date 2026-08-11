@@ -108,6 +108,45 @@ export function CustomersPage() {
             </FormGrid>
 
             <FormGrid columns="2">
+              <FormField label="Numéro d’entreprise">
+                <TextInput
+                  value={form.enterprise_number}
+                  onChange={(e) => updateField("enterprise_number", e.target.value)}
+                  placeholder="0123.456.789"
+                />
+              </FormField>
+
+              <FormField label="Numéro de TVA">
+                <TextInput
+                  value={form.vat_number}
+                  onChange={(e) => updateField("vat_number", e.target.value)}
+                  placeholder="BE0123456789"
+                />
+              </FormField>
+            </FormGrid>
+
+            <FormGrid columns="2">
+              <FormField label="Type de destinataire">
+                <Select
+                  value={form.einvoicing_party_type}
+                  onChange={(e) => updateField("einvoicing_party_type", e.target.value as typeof form.einvoicing_party_type)}
+                >
+                  <option value="consumer">Particulier (B2C)</option>
+                  <option value="business">Entreprise (B2B)</option>
+                  <option value="government">Administration (B2G)</option>
+                </Select>
+              </FormField>
+
+              <FormField label="Code pays">
+                <TextInput
+                  value={form.country_code}
+                  onChange={(e) => updateField("country_code", e.target.value)}
+                  maxLength={2}
+                />
+              </FormField>
+            </FormGrid>
+
+            <FormGrid columns="2">
               <FormField label="Prénom">
                 <TextInput
                   value={form.first_name}

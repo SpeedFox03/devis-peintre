@@ -10,6 +10,7 @@ import { FormField } from "../../../components/ui/FormField/FormField";
 import { FormGrid } from "../../../components/ui/FormGrid/FormGrid";
 import { TextArea } from "../../../components/ui/TextArea/TextArea";
 import { TextInput } from "../../../components/ui/TextInput/TextInput";
+import { Select } from "../../../components/ui/Select/Select";
 import { LoadingBlock } from "../../../components/ui/LoadingBlock/LoadingBlock";
 import { ArchiveIcon, EyeIcon, PlusIcon } from "../../../components/ui/Icons/AppIcons";
 import { formatDisplayDate } from "../../../lib/formatters";
@@ -295,6 +296,14 @@ export function CustomerDetailsPage() {
                     <strong>{customer.phone || "-"}</strong>
                   </li>
                   <li>
+                    <span>Numéro d’entreprise</span>
+                    <strong>{customer.enterprise_number || "-"}</strong>
+                  </li>
+                  <li>
+                    <span>Numéro de TVA</span>
+                    <strong>{customer.vat_number || "-"}</strong>
+                  </li>
+                  <li>
                     <span>Adresse principale</span>
                     <strong>{addresses.billingAddress || "-"}</strong>
                   </li>
@@ -393,6 +402,62 @@ export function CustomerDetailsPage() {
                     />
                   </FormField>
                 </FormGrid>
+
+                <FormGrid columns="3">
+                  <FormField label="Numéro d’entreprise">
+                    <TextInput
+                      value={form.enterprise_number}
+                      onChange={(e) => updateField("enterprise_number", e.target.value)}
+                      placeholder="0123.456.789"
+                    />
+                  </FormField>
+                  <FormField label="Numéro de TVA">
+                    <TextInput
+                      value={form.vat_number}
+                      onChange={(e) => updateField("vat_number", e.target.value)}
+                      placeholder="BE0123456789"
+                    />
+                  </FormField>
+                  <FormField label="Code pays">
+                    <TextInput
+                      value={form.country_code}
+                      onChange={(e) => updateField("country_code", e.target.value)}
+                      maxLength={2}
+                    />
+                  </FormField>
+                </FormGrid>
+
+                <div className="customer-details-premium-page__address-block">
+                  <h3 className="customer-details-premium-page__subsection-title">
+                    Facturation électronique
+                  </h3>
+                  <FormGrid columns="3">
+                    <FormField label="Type de destinataire">
+                      <Select
+                        value={form.einvoicing_party_type}
+                        onChange={(e) => updateField("einvoicing_party_type", e.target.value as typeof form.einvoicing_party_type)}
+                      >
+                        <option value="consumer">Particulier (B2C)</option>
+                        <option value="business">Entreprise (B2B)</option>
+                        <option value="government">Administration (B2G)</option>
+                      </Select>
+                    </FormField>
+                    <FormField label="Schéma Peppol">
+                      <TextInput
+                        value={form.einvoicing_endpoint_scheme}
+                        onChange={(e) => updateField("einvoicing_endpoint_scheme", e.target.value)}
+                        placeholder="BE:EN"
+                      />
+                    </FormField>
+                    <FormField label="Identifiant Peppol">
+                      <TextInput
+                        value={form.einvoicing_endpoint_identifier}
+                        onChange={(e) => updateField("einvoicing_endpoint_identifier", e.target.value)}
+                        placeholder="0123456789"
+                      />
+                    </FormField>
+                  </FormGrid>
+                </div>
 
                 <div className="customer-details-premium-page__address-block">
                   <h3 className="customer-details-premium-page__subsection-title">

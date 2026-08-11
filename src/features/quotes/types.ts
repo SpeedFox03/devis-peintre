@@ -29,6 +29,7 @@ export type QuoteDetails = {
 export type QuoteItem = {
   id: string;
   quote_id: string;
+  service_catalog_id: string | null;
   room_id: string | null;
   item_type: string;
   category: string | null;

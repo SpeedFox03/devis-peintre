@@ -1,0 +1,99 @@
+@startuml decision-routage
+' =============================================================================
+' Decision de routage — comment un document emis trouve son canal
+' C'est le coeur de la logique metier : Peppol ou repli e-mail
+' =============================================================================
+
+skinparam shadowing false
+skinparam ActivityBackgroundColor #FFFAF4
+skinparam ActivityBorderColor #6F523C
+skinparam ActivityDiamondBackgroundColor #F8F1E8
+
+start
+
+:Document emis
+(numero reserve, snapshot fige);
+
+if (Le client a-t-il un\nnumero d'entreprise ?) then (non)
+  #FDEBD0:Canal = e-mail PDF;
+  note right
+    Cas majoritaire : particuliers.
+    Le B2C est exempte de l'obligation,
+    le PDF reste parfaitement legal.
+  end note
+else (oui)
+
+  if (Profil de routage\ndeja verifie et frais ?) then (non)
+    :Lookup sur le reseau
+    (SML puis SMP);
+    :Enregistre le resultat dans
+    customer_einvoicing_profiles
+    avec sa date de verification;
+  else (oui)
+    :Reutilise le profil en cache;
+  endif
+
+  if (Participant trouve\nsur le reseau ?) then (non)
+    #FDEBD0:Canal = e-mail PDF;
+    note right
+      Entreprise pas encore raccordee.
+      Ne pas bloquer : envoyer le PDF
+      et re-verifier au prochain envoi.
+    end note
+  else (oui)
+    if (Accepte le type de document\n(facture / note de credit) ?) then (non)
+      #FDEBD0:Canal = e-mail PDF;
+    else (oui)
+      #DFF0D8:Canal = Peppol;
+    endif
+  endif
+endif
+
+if (Canal retenu ?) then (Peppol)
+
+  :Construit la charge utile
+  (JSON Storecove);
+  :POST document_submissions
+  avec idempotencyGuid;
+
+  if (Reponse Storecove ?) then (erreur technique)
+    :Statut = echec de transmission;
+    :File d'attente de reprise
+    (backoff exponentiel);
+    note right
+      L'idempotencyGuid garantit
+      qu'une reprise ne cree pas
+      de doublon cote reseau.
+    end note
+    stop
+  else (acceptee)
+    :Statut = transmission en cours;
+    :Attend les webhooks;
+
+    if (Evenement recu ?) then (remis)
+      #DFF0D8:Statut = remis;
+      :Archive XML + preuve
+      avec empreinte SHA-256;
+      stop
+    else (rejete)
+      #F5C6CB:Statut = rejete;
+      :Traduit le code de validation
+      en message francais actionnable;
+      :Propose la correction
+      (note de credit si deja remis);
+      stop
+    endif
+  endif
+
+else (e-mail PDF)
+  :Envoi du PDF via Resend;
+  if (Envoi accepte ?) then (non)
+    #F5C6CB:Statut = echec d'envoi;
+    stop
+  else (oui)
+    #DFF0D8:Statut = envoye;
+    stop
+  endif
+endif
+
+@enduml

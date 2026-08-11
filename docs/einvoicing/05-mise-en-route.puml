@@ -1,0 +1,103 @@
+@startuml mise-en-route-entreprise
+' =============================================================================
+' Mise en route d'une entreprise — provisionnement Storecove
+' Contient le point le plus sensible de toute l'integration :
+' l'enregistrement en RECEPTION, qui peut casser le flux entrant du client.
+' =============================================================================
+
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "Peintre" as P
+participant "Navigateur" as UI
+box "Supabase" #F8F1E8
+  participant "Edge Function\nprovision-einvoicing" as FN
+  database "Postgres" as PG
+end box
+participant "Storecove" as SC
+participant "Annuaire Peppol\n(SML / SMP)" as SMP
+
+== Ce que le peintre saisit ==
+
+P -> UI : ouvre Parametres > Facturation electronique
+UI -> PG : lit company_settings
+PG --> UI : nom, TVA, adresse, IBAN, BIC
+note over UI
+  Deja renseignes dans l'application.
+  Affiches en lecture pour verification,
+  pas ressaisis.
+end note
+
+UI -> UI : deduit l'identifiant Peppol\nBE0123456789 -> 0208:0123456789
+
+P -> UI : 1. valide les informations affichees
+P -> UI : 2. coche le consentement d'envoi en son nom
+P -> UI : 3. saisit son dernier numero de facture
+P -> UI : 4. repond : "recevez-vous deja vos factures\n   fournisseurs par voie electronique ?"
+
+== Provisionnement ==
+
+UI -> FN : POST /provision-einvoicing
+activate FN
+FN -> FN : valide le JWT et l'entreprise
+
+FN -> PG : amorce sales_document_sequences\n(dernier numero + 1)
+
+FN -> SC : POST /legal_entities\n(nom, adresse, TVA, identifiant Peppol)
+activate SC
+SC --> FN : legal_entity_id
+deactivate SC
+FN -> PG : insert company_einvoicing_profiles\n(environnement sandbox ou production)
+
+group Point critique
+
+  alt Le peintre recoit deja ailleurs (Odoo, Billit, comptable)
+
+    FN -> PG : receive_enabled = false
+    note right of FN #FDEBD0
+      **Ne rien enregistrer en reception.**
+      Son numero d'entreprise reste route
+      vers son point d'acces actuel.
+      Toucher a cela couperait l'arrivee
+      de ses factures fournisseurs.
+      L'emission fonctionne malgre tout :
+      envoyer ne demande aucune
+      inscription au SMP.
+    end note
+
+  else Il ne recoit nulle part et le souhaite
+
+    FN -> SC : POST peppol_identifier\n(enregistrement en reception)
+    SC -> SMP : publie l'endpoint AS4\net les types de documents acceptes
+    SMP --> SC : participant enregistre
+    SC --> FN : confirmation
+    FN -> PG : receive_enabled = true
+
+  end
+
+end
+deactivate FN
+
+FN --> UI : profil actif
+UI --> P : "Votre entreprise est prete a emettre."
+
+== Verification par client professionnel ==
+
+P -> UI : saisit le numero d'entreprise d'un client
+UI -> FN : lookup du participant
+activate FN
+FN -> SC : recherche dans l'annuaire
+SC -> SMP : interroge SML puis SMP
+SMP --> SC : endpoint + types acceptes\n(ou introuvable)
+SC --> FN : resultat
+FN -> PG : upsert customer_einvoicing_profiles\n(+ date de verification)
+deactivate FN
+FN --> UI : statut de routage
+
+alt Participant trouve
+  UI --> P : badge vert\n"recoit les factures electroniques"
+else Introuvable
+  UI --> P : badge neutre\n"recevra un PDF par e-mail"
+end
+
+@enduml

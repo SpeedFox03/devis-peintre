@@ -20,6 +20,9 @@ import { AdminPage } from "../features/admin/pages/AdminPage";
 import { PublicQuotePage } from "../features/quotes/pages/PublicQuotePage";
 import { SubscriptionRequiredRoute } from "../features/subscriptions/SubscriptionRequiredRoute";
 import { SubscriptionPage } from "../features/subscriptions/pages/SubscriptionPage";
+import { InvoicesPage } from "../features/invoices/pages/InvoicesPage";
+import { InvoiceDetailsPage } from "../features/invoices/pages/InvoiceDetailsPage";
+import { SupplyCatalogPage } from "../features/supplies/pages/SupplyCatalogPage";
 
 export const router = createBrowserRouter([
   {
@@ -66,6 +69,14 @@ export const router = createBrowserRouter([
                 path: "devis/:quoteId",
                 element: <QuoteDetailsPage />,
               },
+              {
+                path: "factures",
+                element: <InvoicesPage />,
+              },
+              {
+                path: "factures/:invoiceId",
+                element: <InvoiceDetailsPage />,
+              },
             ],
           },
           {
@@ -91,6 +102,10 @@ export const router = createBrowserRouter([
           {
             path: "catalogue",
             element: <ServiceCatalogPage />,
+          },
+          {
+            path: "fournisseurs",
+            element: <SupplyCatalogPage />,
           },
           {
             path: "parametres",

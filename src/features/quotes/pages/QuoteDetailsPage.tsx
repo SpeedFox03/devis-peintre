@@ -17,6 +17,7 @@ import { QuoteClientResponseBanner } from "../components/QuoteClientResponse/Quo
 import { QuoteEmailButton } from "../components/QuoteEmailButton/QuoteEmailButton";
 import { QuotePdfPreview } from "../components/QuotePdfPreview/QuotePdfPreview";
 import { QuoteVoiceAssistant } from "../components/QuoteVoiceAssistant/QuoteVoiceAssistant";
+import { QuoteSuppliesSection } from "../../supplies/components/QuoteSuppliesSection";
 import { useQuoteDetailsPage } from "../hooks/useQuoteDetailsPage";
 import {
   getQuoteStatusLabel,
@@ -37,6 +38,10 @@ const quotePages = [
   {
     id: "details",
     label: "Informations",
+  },
+  {
+    id: "supplies",
+    label: "Fournitures",
   },
   {
     id: "preview",
@@ -572,6 +577,11 @@ export function QuoteDetailsPage() {
               </div>
             </form>
           </div>
+        ) : activePage === "supplies" ? (
+          <QuoteSuppliesSection
+            items={items}
+            quoteSubtotalHt={quote.subtotal_ht}
+          />
         ) : (
           <QuotePdfPreview
             quoteId={quote.id}

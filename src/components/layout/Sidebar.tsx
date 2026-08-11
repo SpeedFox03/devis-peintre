@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import {
   CatalogIcon,
   HomeIcon,
+  InvoiceIcon,
   LockIcon,
   ProjectIcon,
   QuoteIcon,
@@ -51,6 +52,11 @@ export function Sidebar() {
             <span className="app-sidebar__link-icon"><QuoteIcon /></span>
             <span>Devis</span>
           </NavLink>
+
+          <NavLink to="/factures" className={getNavLinkClassName}>
+            <span className="app-sidebar__link-icon"><InvoiceIcon /></span>
+            <span>Factures</span>
+          </NavLink>
         </div>
 
         <div className="app-sidebar__section">
@@ -59,6 +65,11 @@ export function Sidebar() {
           <NavLink to="/catalogue" className={getNavLinkClassName}>
             <span className="app-sidebar__link-icon"><CatalogIcon /></span>
             <span>Catalogue</span>
+          </NavLink>
+
+          <NavLink to="/fournisseurs" className={getNavLinkClassName}>
+            <span className="app-sidebar__link-icon"><CatalogIcon /></span>
+            <span>Fournisseurs</span>
           </NavLink>
         </div>
       </nav>

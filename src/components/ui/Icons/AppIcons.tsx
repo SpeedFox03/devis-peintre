@@ -166,6 +166,14 @@ export function ProjectIcon() {
   );
 }
 
+export function InvoiceIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true">
+      <path d="M208,24H48A16,16,0,0,0,32,40V216a8,8,0,0,0,12.44,6.66L64,209.6l19.56,13.06a8,8,0,0,0,8.88,0L112,209.6l19.56,13.06a8,8,0,0,0,8.88,0L160,209.6l19.56,13.06A8,8,0,0,0,192,216V40h16a8,8,0,0,1,8,8V184a8,8,0,0,0,16,0V48A24,24,0,0,0,208,24ZM176,201.05l-11.56-7.71a8,8,0,0,0-8.88,0L136,206.4l-19.56-13.06a8,8,0,0,0-8.88,0L88,206.4,68.44,193.34a8,8,0,0,0-8.88,0L48,201.05V40H176ZM72,88a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H80A8,8,0,0,1,72,88Zm0,40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H80A8,8,0,0,1,72,128Zm0,40a8,8,0,0,1,8-8h40a8,8,0,0,1,0,16H80A8,8,0,0,1,72,168Z" />
+    </svg>
+  );
+}
+
 export function MoreIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true">

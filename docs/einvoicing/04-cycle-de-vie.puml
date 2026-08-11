@@ -1,0 +1,90 @@
+@startuml cycle-de-vie-document-vente
+' =============================================================================
+' Cycle de vie d'un document de vente (sales_documents)
+' La frontiere critique : avant emission tout est modifiable,
+' apres emission plus rien ne l'est.
+' =============================================================================
+
+skinparam shadowing false
+skinparam state {
+  BackgroundColor #FFFAF4
+  BorderColor #6F523C
+  BackgroundColor<<termine>> #DFF0D8
+  BackgroundColor<<probleme>> #F5C6CB
+}
+
+state Brouillon
+state Emis
+state TransmissionEnCours
+state EchecTransmission <<probleme>>
+state Envoye
+state Rejete <<probleme>>
+state Remis
+state PartiellementPaye
+state Paye <<termine>>
+state Credite <<termine>>
+state Annule <<termine>>
+
+Brouillon : modifiable librement
+Brouillon : aucun numero attribue
+Brouillon : supprimable
+
+Emis : numero definitif attribue
+Emis : contenu immuable
+Emis : plus aucune politique RLS d'ecriture
+
+Remis : preuve archivee
+Remis : XML archive avec empreinte SHA-256
+
+Credite : une note de credit a ete emise en regard
+
+[*] --> Brouillon : conversion d'un devis accepte\nou creation manuelle
+
+Brouillon --> Brouillon : modifier les lignes
+Brouillon --> Annule : annuler
+Brouillon --> Emis : **emettre**\n(reserve le numero, fige le snapshot)
+
+note right of Emis
+  Frontiere legale.
+  Au-dela de ce point, une erreur
+  ne se corrige que par une
+  note de credit.
+end note
+
+Emis --> TransmissionEnCours : canal Peppol
+Emis --> Envoye : canal e-mail PDF
+
+TransmissionEnCours --> Envoye : accuse de soumission
+TransmissionEnCours --> EchecTransmission : erreur technique
+EchecTransmission --> TransmissionEnCours : reprise\n(meme idempotencyGuid)
+
+Envoye --> Remis : accuse de remise
+Envoye --> Rejete : rejet du destinataire\nou du reseau
+
+Rejete --> TransmissionEnCours : correction avant remise
+Rejete --> Credite : si le document circule deja
+
+Envoye --> PartiellementPaye : paiement partiel
+Envoye --> Paye : paiement integral
+Remis --> PartiellementPaye : paiement partiel
+Remis --> Paye : paiement integral
+
+PartiellementPaye --> PartiellementPaye : paiement supplementaire
+PartiellementPaye --> Paye : solde recu
+PartiellementPaye --> Remis : annulation d'un paiement
+Paye --> PartiellementPaye : annulation d'un paiement
+
+Remis --> Credite : erreur constatee
+Paye --> Credite : remboursement
+
+Annule --> [*]
+Paye --> [*]
+Credite --> [*]
+
+legend right
+  Une note de credit est elle-meme un
+  document de vente : elle suit exactement
+  le meme cycle, avec des montants negatifs.
+endlegend
+
+@enduml

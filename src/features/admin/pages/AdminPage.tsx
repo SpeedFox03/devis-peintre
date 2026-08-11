@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Button } from "../../../components/ui/Button/Button";
 import { Card } from "../../../components/ui/Card/Card";
@@ -26,6 +26,14 @@ const tabs: Array<{ id: AdminView; label: string }> = [
 
 const emptyPromotion = { code: "", discount_type: "percentage", value: "", starts_at: "", ends_at: "", max_redemptions: "" };
 const emptyDesign = { name: "", slug: "", description: "", renderer_key: "standard", visibility: "private" };
+type AccountSort = "recent" | "oldest" | "name" | "company" | "activity";
+
+function normalizeSearchValue(value: string | null | undefined) {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("fr");
+}
 
 export function AdminPage() {
   const [activeView, setActiveView] = useState<AdminView>("overview");
@@ -105,7 +113,17 @@ export function AdminPage() {
       </header>
 
       <nav className="admin-page__tabs" aria-label="Sections d’administration">
-        {tabs.map((tab) => <button key={tab.id} type="button" className={activeView === tab.id ? "admin-page__tab--active" : ""} onClick={() => setActiveView(tab.id)}>{tab.label}</button>)}
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            className={activeView === tab.id ? "admin-page__tab--active" : ""}
+            aria-current={activeView === tab.id ? "page" : undefined}
+            onClick={() => setActiveView(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
       </nav>
 
       {error ? <ErrorMessage message={error} /> : null}
@@ -159,8 +177,89 @@ function Overview({ data }: { data: AdminConsoleData }) {
 }
 
 function Accounts({ data }: { data: AdminConsoleData }) {
-  if (!data.accounts?.length) return <EmptyState title="Aucun compte" description="Les comptes apparaîtront ici après activation." />;
-  return <Card className="admin-page__table-wrap"><table><thead><tr><th>Utilisateur</th><th>Entreprise</th><th>Rôle</th><th>Inscription</th><th>Dernière activité</th><th>Abonnement</th><th>Échéance</th><th>Compte</th></tr></thead><tbody>{data.accounts.map((account) => <tr key={account.user_id}><td><strong>{account.full_name || account.email}</strong><small>{account.email}</small></td><td>{account.company_name || "—"}</td><td>{account.role || "—"}</td><td>{formatDisplayDate(account.created_at)}</td><td>{formatDisplayDate(account.last_seen_at)}</td><td><span className="admin-page__status">{account.subscription_status}{account.billing_interval ? ` · ${account.billing_interval === "year" ? "annuel" : "mensuel"}` : ""}</span></td><td>{formatDisplayDate(account.current_period_end)}</td><td><span className="admin-page__status">{account.status}</span></td></tr>)}</tbody></table></Card>;
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<AccountSort>("recent");
+  const accounts = data.accounts;
+  const visibleAccounts = useMemo(() => {
+    const normalizedQuery = normalizeSearchValue(query.trim());
+    const filtered = (accounts ?? []).filter((account) => {
+      if (!normalizedQuery) return true;
+      return normalizeSearchValue([
+        account.full_name,
+        account.email,
+        account.company_name,
+        account.role,
+        account.status,
+        account.subscription_status,
+      ].filter(Boolean).join(" ")).includes(normalizedQuery);
+    });
+
+    return filtered.sort((left, right) => {
+      if (sort === "oldest") return new Date(left.created_at).getTime() - new Date(right.created_at).getTime();
+      if (sort === "name") return (left.full_name || left.email).localeCompare(right.full_name || right.email, "fr", { sensitivity: "base" });
+      if (sort === "company") {
+        if (!left.company_name) return right.company_name ? 1 : 0;
+        if (!right.company_name) return -1;
+        return left.company_name.localeCompare(right.company_name, "fr", { sensitivity: "base" });
+      }
+      if (sort === "activity") return new Date(right.last_seen_at || 0).getTime() - new Date(left.last_seen_at || 0).getTime();
+      return new Date(right.created_at).getTime() - new Date(left.created_at).getTime();
+    });
+  }, [accounts, query, sort]);
+
+  if (!accounts?.length) return <EmptyState title="Aucun compte" description="Les comptes apparaîtront ici après activation." />;
+  return (
+    <div className="admin-page__accounts">
+      <Card className="admin-page__account-tools">
+        <FormField label="Rechercher">
+          <TextInput
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Nom, e-mail ou entreprise…"
+          />
+        </FormField>
+        <FormField label="Trier par">
+          <Select value={sort} onChange={(event) => setSort(event.target.value as AccountSort)}>
+            <option value="recent">Inscription récente</option>
+            <option value="oldest">Inscription ancienne</option>
+            <option value="name">Nom A–Z</option>
+            <option value="company">Entreprise A–Z</option>
+            <option value="activity">Dernière activité</option>
+          </Select>
+        </FormField>
+        <span className="admin-page__account-count" aria-live="polite">
+          {visibleAccounts.length} compte{visibleAccounts.length === 1 ? "" : "s"}
+        </span>
+      </Card>
+
+      {visibleAccounts.length ? (
+        <Card className="admin-page__table-wrap">
+          <table>
+            <thead>
+              <tr><th>Utilisateur</th><th>Entreprise</th><th>Rôle</th><th>Inscription</th><th>Dernière activité</th><th>Abonnement</th><th>Échéance</th><th>Compte</th></tr>
+            </thead>
+            <tbody>
+              {visibleAccounts.map((account) => (
+                <tr key={account.user_id}>
+                  <td className="admin-page__cell--primary" data-label="Utilisateur"><strong>{account.full_name || account.email}</strong><small>{account.email}</small></td>
+                  <td data-label="Entreprise">{account.company_name || "—"}</td>
+                  <td data-label="Rôle">{account.role || "—"}</td>
+                  <td data-label="Inscription">{formatDisplayDate(account.created_at)}</td>
+                  <td data-label="Dernière activité">{formatDisplayDate(account.last_seen_at)}</td>
+                  <td data-label="Abonnement"><span className="admin-page__status">{account.subscription_status}{account.billing_interval ? ` · ${account.billing_interval === "year" ? "annuel" : "mensuel"}` : ""}</span></td>
+                  <td data-label="Échéance">{formatDisplayDate(account.current_period_end)}</td>
+                  <td data-label="Compte"><span className="admin-page__status">{account.status}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      ) : (
+        <EmptyState title="Aucun résultat" description="Essayez un autre nom, e-mail, entreprise ou statut." />
+      )}
+    </div>
+  );
 }
 
 function Subscriptions({
@@ -278,18 +377,18 @@ function Subscriptions({
             <tbody>
               {data.subscriptions.map((subscription) => (
                 <tr key={subscription.id}>
-                  <td><strong>{subscription.company_name}</strong></td>
-                  <td>{subscription.plan_name}</td>
-                  <td>
+                  <td className="admin-page__cell--primary" data-label="Entreprise"><strong>{subscription.company_name}</strong></td>
+                  <td data-label="Formule">{subscription.plan_name}</td>
+                  <td data-label="Fréquence">
                     {subscription.billing_interval === "year" ? "Annuelle" : "Mensuelle"}
                   </td>
-                  <td><span className="admin-page__status">{subscription.status}</span></td>
-                  <td>
+                  <td data-label="Statut"><span className="admin-page__status">{subscription.status}</span></td>
+                  <td data-label="Échéance">
                     {subscription.current_period_end
                       ? formatDisplayDate(subscription.current_period_end)
                       : "Accès permanent"}
                   </td>
-                  <td>
+                  <td className="admin-page__cell--action" data-label="Action">
                     <Button
                       type="button"
                       size="sm"
@@ -442,5 +541,23 @@ function Promotions({ data, onChanged }: { data: AdminConsoleData; onChanged: ()
     setSavingId(null);
   }
   if (!data.promotions?.length) return <EmptyState title="Aucun code promotionnel" description="Créez un code avec une remise et une période de validité." />;
-  return <Card className="admin-page__table-wrap"><table><thead><tr><th>Code</th><th>Remise</th><th>Période</th><th>Utilisations</th><th>Statut</th><th>Action</th></tr></thead><tbody>{data.promotions.map((promotion) => <tr key={promotion.id}><td><strong>{promotion.code}</strong></td><td>{promotion.discount_label}</td><td>{formatDisplayDate(promotion.starts_at)} → {formatDisplayDate(promotion.ends_at)}</td><td>{promotion.redemption_count}{promotion.max_redemptions ? ` / ${promotion.max_redemptions}` : ""}</td><td><span className="admin-page__status">{promotion.active ? "Actif" : "Inactif"}</span></td><td><Button type="button" size="sm" variant="secondary" disabled={savingId === promotion.id} onClick={() => void togglePromotion(promotion.id, !promotion.active)}>{promotion.active ? "Désactiver" : "Activer"}</Button></td></tr>)}</tbody></table></Card>;
+  return (
+    <Card className="admin-page__table-wrap">
+      <table>
+        <thead><tr><th>Code</th><th>Remise</th><th>Période</th><th>Utilisations</th><th>Statut</th><th>Action</th></tr></thead>
+        <tbody>
+          {data.promotions.map((promotion) => (
+            <tr key={promotion.id}>
+              <td className="admin-page__cell--primary" data-label="Code"><strong>{promotion.code}</strong></td>
+              <td data-label="Remise">{promotion.discount_label}</td>
+              <td data-label="Période">{formatDisplayDate(promotion.starts_at)} → {formatDisplayDate(promotion.ends_at)}</td>
+              <td data-label="Utilisations">{promotion.redemption_count}{promotion.max_redemptions ? ` / ${promotion.max_redemptions}` : ""}</td>
+              <td data-label="Statut"><span className="admin-page__status">{promotion.active ? "Actif" : "Inactif"}</span></td>
+              <td className="admin-page__cell--action" data-label="Action"><Button type="button" size="sm" variant="secondary" disabled={savingId === promotion.id} onClick={() => void togglePromotion(promotion.id, !promotion.active)}>{promotion.active ? "Désactiver" : "Activer"}</Button></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Card>
+  );
 }

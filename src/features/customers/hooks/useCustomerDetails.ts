@@ -7,11 +7,19 @@ import { supabase } from "../../../lib/supabase";
 
 export type CustomerDetails = {
   id: string;
+  company_id: string;
   company_name: string | null;
   first_name: string | null;
   last_name: string | null;
   email: string | null;
   phone: string | null;
+  enterprise_number: string | null;
+  vat_number: string | null;
+  country_code: string | null;
+  einvoicing_party_type: "business" | "consumer" | "government";
+  einvoicing_endpoint_scheme: string | null;
+  einvoicing_endpoint_identifier: string | null;
+  einvoicing_discovery_status: string;
 
   billing_address_line1: string | null;
   billing_address_line2: string | null;
@@ -47,6 +55,12 @@ export type CustomerFormState = {
   last_name: string;
   email: string;
   phone: string;
+  enterprise_number: string;
+  vat_number: string;
+  country_code: string;
+  einvoicing_party_type: "business" | "consumer" | "government";
+  einvoicing_endpoint_scheme: string;
+  einvoicing_endpoint_identifier: string;
 
   billing_address_line1: string;
   billing_address_line2: string;
@@ -72,6 +86,12 @@ export function createInitialForm(customer: CustomerDetails | null): CustomerFor
     last_name: customer?.last_name ?? "",
     email: customer?.email ?? "",
     phone: customer?.phone ?? "",
+    enterprise_number: customer?.enterprise_number ?? "",
+    vat_number: customer?.vat_number ?? "",
+    country_code: customer?.country_code ?? "BE",
+    einvoicing_party_type: customer?.einvoicing_party_type ?? "consumer",
+    einvoicing_endpoint_scheme: customer?.einvoicing_endpoint_scheme ?? "",
+    einvoicing_endpoint_identifier: customer?.einvoicing_endpoint_identifier ?? "",
 
     billing_address_line1: customer?.billing_address_line1 ?? "",
     billing_address_line2: customer?.billing_address_line2 ?? "",
@@ -156,7 +176,7 @@ export function useCustomerDetails() {
     const [customerRes, quotesRes, addressesRes] = await Promise.all([
       supabase
         .from("customers")
-        .select("id, company_name, first_name, last_name, email, phone, notes, archived_at, created_at")
+        .select("id, company_id, company_name, first_name, last_name, email, phone, enterprise_number, vat_number, country_code, notes, archived_at, created_at")
         .eq("id", customerId)
         .single(),
       supabase
@@ -187,8 +207,19 @@ export function useCustomerDetails() {
     const billing = addrs.find((a) => a.role === "billing");
     const jobsite = addrs.find((a) => a.role === "jobsite");
 
+    const { data: einvoicingProfile } = await supabase
+      .from("customer_einvoicing_profiles")
+      .select("party_type, endpoint_scheme, endpoint_identifier, discovery_status")
+      .eq("customer_id", customerId)
+      .eq("environment", "sandbox")
+      .maybeSingle();
+
     const loadedCustomer: CustomerDetails = {
       ...customerRes.data,
+      einvoicing_party_type: einvoicingProfile?.party_type ?? "consumer",
+      einvoicing_endpoint_scheme: einvoicingProfile?.endpoint_scheme ?? null,
+      einvoicing_endpoint_identifier: einvoicingProfile?.endpoint_identifier ?? null,
+      einvoicing_discovery_status: einvoicingProfile?.discovery_status ?? "unknown",
       billing_address_line1: billing?.line1 ?? null,
       billing_address_line2: billing?.line2 ?? null,
       billing_postal_code: billing?.postal_code ?? null,
@@ -245,6 +276,14 @@ export function useCustomerDetails() {
     setSaving(true);
     setError(null);
 
+    const endpointScheme = form.einvoicing_endpoint_scheme.trim();
+    const endpointIdentifier = form.einvoicing_endpoint_identifier.trim();
+    if (Boolean(endpointScheme) !== Boolean(endpointIdentifier)) {
+      setError("Le schéma et l’identifiant Peppol doivent être renseignés ensemble.");
+      setSaving(false);
+      return;
+    }
+
     // Champs core uniquement — les adresses vont dans la table addresses
     const corePayload = {
       company_name: form.company_name || null,
@@ -252,6 +291,9 @@ export function useCustomerDetails() {
       last_name: form.last_name || null,
       email: form.email || null,
       phone: form.phone || null,
+      enterprise_number: form.enterprise_number.trim() || null,
+      vat_number: form.vat_number.trim() || null,
+      country_code: form.country_code.trim().toUpperCase() || "BE",
       notes: form.notes || null,
     };
 
@@ -315,10 +357,32 @@ export function useCustomerDetails() {
       await supabase.from("addresses").insert(newAddresses);
     }
 
+    const { error: profileError } = await supabase.from("customer_einvoicing_profiles").upsert({
+      customer_id: customer.id,
+      company_id: customer.company_id,
+      environment: "sandbox",
+      party_type: form.einvoicing_party_type,
+      endpoint_scheme: endpointScheme || null,
+      endpoint_identifier: endpointIdentifier || null,
+      discovery_status: "unknown",
+      last_discovered_at: null,
+      last_error_message: null,
+    });
+
+    if (profileError) {
+      setError(profileError.message);
+      setSaving(false);
+      return;
+    }
+
     // Mise à jour locale du customer — pas de rechargement complet
     const updatedCustomer: CustomerDetails = {
       ...customer,
       ...corePayload,
+      einvoicing_party_type: form.einvoicing_party_type,
+      einvoicing_endpoint_scheme: endpointScheme || null,
+      einvoicing_endpoint_identifier: endpointIdentifier || null,
+      einvoicing_discovery_status: "unknown",
       billing_address_line1: form.billing_address_line1 || null,
       billing_address_line2: form.billing_address_line2 || null,
       billing_postal_code: form.billing_postal_code || null,

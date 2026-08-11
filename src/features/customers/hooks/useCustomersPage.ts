@@ -7,6 +7,7 @@ import { supabase } from "../../../lib/supabase";
 
 export type CustomerRow = {
   id: string;
+  company_id: string;
   company_name: string | null;
   first_name: string | null;
   last_name: string | null;
@@ -23,6 +24,10 @@ type QuoteCustomerRef = {
 
 export type CustomerFormState = {
   company_name: string;
+  enterprise_number: string;
+  vat_number: string;
+  country_code: string;
+  einvoicing_party_type: "business" | "consumer" | "government";
   first_name: string;
   last_name: string;
   email: string;
@@ -42,6 +47,10 @@ export type CustomerStatusFilter = "active" | "archived";
 
 export const initialForm: CustomerFormState = {
   company_name: "",
+  enterprise_number: "",
+  vat_number: "",
+  country_code: "BE",
+  einvoicing_party_type: "consumer",
   first_name: "",
   last_name: "",
   email: "",
@@ -90,7 +99,7 @@ export function useCustomersPage() {
     const [customersRes, quotesRes] = await Promise.all([
       supabase
         .from("customers")
-        .select("id, company_name, first_name, last_name, email, phone, created_at, archived_at")
+        .select("id, company_id, company_name, first_name, last_name, email, phone, created_at, archived_at")
         .order("created_at", { ascending: false }),
       supabase.from("quotes").select("customer_id"),
     ]);
@@ -247,6 +256,9 @@ export function useCustomersPage() {
     const payload = {
       owner_user_id: user.id,
       company_name: form.company_name || null,
+      enterprise_number: form.enterprise_number.trim() || null,
+      vat_number: form.vat_number.trim() || null,
+      country_code: form.country_code.trim().toUpperCase() || "BE",
       first_name: form.first_name || null,
       last_name: form.last_name || null,
       email: form.email || null,
@@ -258,7 +270,7 @@ export function useCustomersPage() {
     const { data: inserted, error: insertError } = await supabase
       .from("customers")
       .insert(payload)
-      .select("id, company_name, first_name, last_name, email, phone, created_at, archived_at")
+      .select("id, company_id, company_name, first_name, last_name, email, phone, created_at, archived_at")
       .single();
 
     if (insertError) {
@@ -293,6 +305,14 @@ export function useCustomersPage() {
     if (addressEntries.length > 0) {
       await supabase.from("addresses").insert(addressEntries);
     }
+
+    await supabase.from("customer_einvoicing_profiles").upsert({
+      customer_id: inserted.id,
+      company_id: inserted.company_id,
+      environment: "sandbox",
+      party_type: form.einvoicing_party_type,
+      discovery_status: "unknown",
+    });
 
     const newCustomerRow: CustomerRow = {
       ...(inserted as Omit<CustomerRow, "billing_city">),

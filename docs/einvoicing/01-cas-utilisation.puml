@@ -1,0 +1,133 @@
+@startuml cas-utilisation-facturation
+' =============================================================================
+' Périmètre "émission de facture" — vue d'ensemble des cas d'utilisation
+' Vert  = déjà présent dans l'application
+' Orange = à construire
+' =============================================================================
+
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor<<existant>> #DFF0D8
+  BorderColor<<existant>> #5A9E4B
+  BackgroundColor<<construire>> #FDEBD0
+  BorderColor<<construire>> #D68910
+}
+skinparam actor {
+  BorderColor #6F523C
+}
+
+actor "Peintre" as P
+actor "Comptable" as CPT
+actor "Client B2B\n(assujetti TVA)" as B2B
+actor "Client B2C\n(particulier)" as B2C
+
+actor "Storecove" as SC <<systeme externe>>
+actor "Reseau Peppol" as PEP <<systeme externe>>
+actor "Service e-mail" as MAIL <<systeme externe>>
+
+rectangle "Devis Peintre" {
+
+  package "1. Mise en route (une fois)" {
+    usecase "Completer le profil\nde facturation" as U11 <<construire>>
+    usecase "Amorcer la sequence\nde numerotation" as U12 <<construire>>
+    usecase "Declarer le mode de\nreception des factures\nfournisseurs" as U13 <<construire>>
+    usecase "Enregistrer l'entreprise\ncomme emetteur" as U14 <<construire>>
+  }
+
+  package "2. Referentiel client" {
+    usecase "Saisir le numero\nd'entreprise du client" as U21 <<construire>>
+    usecase "Verifier la presence\nsur le reseau (lookup)" as U22 <<construire>>
+    usecase "Gerer la fiche client" as U23 <<existant>>
+  }
+
+  package "3. Preparation du document" {
+    usecase "Accepter le devis\nen ligne" as U31 <<existant>>
+    usecase "Convertir un devis\nen brouillon de facture" as U32 <<construire>>
+    usecase "Creer une facture\nd'acompte" as U33 <<construire>>
+    usecase "Creer une situation\nde travaux" as U34 <<construire>>
+    usecase "Creer la facture finale\n(deduction des acomptes)" as U35 <<construire>>
+    usecase "Modifier un brouillon" as U36 <<construire>>
+    usecase "Annuler un brouillon" as U37 <<construire>>
+  }
+
+  package "4. Emission" {
+    usecase "Emettre le document\n(reserver le numero,\nfiger le snapshot)" as U41 <<construire>>
+    usecase "Transmettre par Peppol" as U42 <<construire>>
+    usecase "Transmettre par e-mail\n(repli)" as U43 <<existant>>
+    usecase "Generer le PDF" as U44 <<existant>>
+    usecase "Retransmettre\napres echec" as U45 <<construire>>
+  }
+
+  package "5. Suivi et preuve" {
+    usecase "Recevoir les statuts\n(webhooks)" as U51 <<construire>>
+    usecase "Traduire un rejet\nen message clair" as U52 <<construire>>
+    usecase "Archiver le XML\net la preuve d'envoi" as U53 <<construire>>
+    usecase "Consulter l'historique\nd'un document" as U54 <<construire>>
+  }
+
+  package "6. Correction et paiement" {
+    usecase "Emettre une\nnote de credit" as U61 <<construire>>
+    usecase "Enregistrer\nun paiement" as U62 <<construire>>
+    usecase "Annuler\nun paiement" as U63 <<construire>>
+  }
+
+  package "7. Sortie comptable" {
+    usecase "Exporter le journal\nde ventes (CSV)" as U71 <<construire>>
+    usecase "Exporter l'UBL\nd'un document" as U72 <<construire>>
+    usecase "Telecharger les PDF" as U73 <<existant>>
+  }
+}
+
+P --> U11
+P --> U12
+P --> U13
+P --> U21
+P --> U32
+P --> U33
+P --> U34
+P --> U35
+P --> U36
+P --> U37
+P --> U41
+P --> U45
+P --> U54
+P --> U61
+P --> U62
+P --> U63
+
+B2C --> U31
+B2B --> U31
+
+CPT --> U71
+CPT --> U72
+CPT --> U73
+
+U11 ..> U14 : <<include>>
+U21 ..> U22 : <<include>>
+U31 ..> U32 : <<extend>>
+U41 ..> U44 : <<include>>
+U41 ..> U42 : <<extend>>
+U41 ..> U43 : <<extend>>
+U42 ..> U51 : <<include>>
+U51 ..> U53 : <<include>>
+U51 ..> U52 : <<extend>>
+
+U14 --> SC
+U22 --> SC
+U42 --> SC
+SC --> PEP
+PEP --> B2B
+U43 --> MAIL
+MAIL --> B2C
+
+legend right
+  |= Couleur |= Signification |
+  |<#DFF0D8> Vert | Deja present dans l'application |
+  |<#FDEBD0> Orange | A construire |
+  Les tables du domaine existent deja
+  (migration 20260811130000). Ce qui manque
+  est la logique et les ecrans.
+endlegend
+
+@enduml
