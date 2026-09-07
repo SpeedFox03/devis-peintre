@@ -1,26 +1,11 @@
-export const PAINT_CATEGORIES = [
-  "preparation_support",
-  "protection_chantier",
-  "lessivage",
-  "grattage",
-  "rebouchage",
-  "enduit",
-  "poncage",
-  "impression",
-  "peinture_mur",
-  "peinture_plafond",
-  "boiseries",
-  "portes",
-  "plinthes",
-  "radiateurs",
-  "ferronneries",
-  "facade",
-  "nettoyage_fin_chantier",
-  "other",
-] as const;
+// Les catégories vivent désormais en base (catalog_categories), filtrées par
+// les métiers actifs de l'entreprise. Voir CatalogTaxonomyContext.
+//
+// Les unités restent ici : elles sont communes à tous les métiers.
 
 export const PAINT_UNITS = [
   "m2",
+  "m3",
   "ml",
   "qty",
   "h",
@@ -29,56 +14,26 @@ export const PAINT_UNITS = [
   "jour",
 ] as const;
 
-export type PaintCategory = (typeof PAINT_CATEGORIES)[number];
 export type PaintUnit = (typeof PAINT_UNITS)[number];
 
-export function getCategoryLabel(category: string | null | undefined) {
-  switch (category) {
-    case "preparation_support":
-      return "Préparation support";
-    case "protection_chantier":
-      return "Protection chantier";
-    case "lessivage":
-      return "Lessivage";
-    case "grattage":
-      return "Grattage";
-    case "rebouchage":
-      return "Rebouchage";
-    case "enduit":
-      return "Enduit";
-    case "poncage":
-      return "Ponçage";
-    case "impression":
-      return "Impression";
-    case "peinture_mur":
-      return "Peinture mur";
-    case "peinture_plafond":
-      return "Peinture plafond";
-    case "boiseries":
-      return "Boiseries";
-    case "portes":
-      return "Portes";
-    case "plinthes":
-      return "Plinthes";
-    case "radiateurs":
-      return "Radiateurs";
-    case "ferronneries":
-      return "Ferronneries";
-    case "facade":
-      return "Façade";
-    case "nettoyage_fin_chantier":
-      return "Nettoyage fin de chantier";
-    case "other":
-      return "Autre";
-    default:
-      return category || "Autre";
-  }
+/**
+ * Dernier recours quand un slug de categorie n'existe pas en base : une
+ * ancienne valeur, ou une categorie desactivee depuis. Vaut mieux qu'un
+ * identifiant technique affiche tel quel.
+ */
+export function formatCategorySlug(slug: string) {
+  const readable = slug.replace(/_/g, " ").trim();
+  return readable
+    ? readable.charAt(0).toUpperCase() + readable.slice(1)
+    : "Autre";
 }
 
 export function getUnitLabel(unit: string | null | undefined) {
   switch (unit) {
     case "m2":
       return "m²";
+    case "m3":
+      return "m³";
     case "ml":
       return "mètre linéaire";
     case "qty":

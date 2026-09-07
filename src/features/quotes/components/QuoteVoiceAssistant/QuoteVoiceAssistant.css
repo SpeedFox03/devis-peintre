@@ -459,3 +459,18 @@
     animation: none;
   }
 }
+
+/* Sélecteur de métier : visible seulement quand l'entreprise en cumule
+   plusieurs. Restreindre réduit le catalogue envoyé et affine les règles. */
+.quote-voice-assistant__trade {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+
+.quote-voice-assistant__trade select {
+  min-width: 11rem;
+}

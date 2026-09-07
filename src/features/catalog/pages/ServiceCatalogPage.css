@@ -126,10 +126,18 @@
   justify-content: flex-start;
 }
 
+/* La recherche occupe sa propre ligne : c'est le filtre le plus utilisé et
+   les noms de prestations sont longs. Les sélecteurs suivent en dessous. */
 .catalog-premium-page__filters-grid {
   display: grid;
   gap: 16px;
-  grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr) minmax(220px, 1fr);
+}
+
+/* auto-fit garde la ligne équilibrée que le filtre Métier soit affiché ou non. */
+.catalog-premium-page__filters-row {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
 .catalog-premium-page__price-tabs {
@@ -217,10 +225,6 @@
 @media (max-width: 1100px) {
   .catalog-premium-page__stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .catalog-premium-page__filters-grid {
-    grid-template-columns: 1fr;
   }
 
   .catalog-premium-page__price-tabs {

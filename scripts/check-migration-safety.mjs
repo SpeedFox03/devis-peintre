@@ -23,6 +23,15 @@ const approvedMigrationHashes = new Map([
     "20260811140000_remove_legacy_invoice_domain.sql",
     "947e3fd02b85992569832e1a3c3fd933581ba7cb268572e9712b4a5f992d5dbc",
   ],
+  // Un seul DELETE FROM, dans deactivate_company_trade : il retire une ligne de
+  // company_trades, c'est-a-dire un drapeau d'activation de metier, borne a
+  // l'entreprise de l'appelant et a un metier precis. Aucune donnee metier
+  // n'est touchee : les prestations du catalogue sont masquees via is_active,
+  // jamais supprimees, et la fonction refuse de retirer le dernier metier.
+  [
+    "20260812140000_add_trades_and_trade_catalogs.sql",
+    "f762e568d06450be9ea931917b26772720cdc0fe29aa70d7d6d930878146fdf7",
+  ],
 ]);
 
 const files = (await readdir(migrationsDirectory))

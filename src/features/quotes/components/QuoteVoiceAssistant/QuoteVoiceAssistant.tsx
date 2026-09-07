@@ -12,12 +12,8 @@ import {
 import { TextArea } from "../../../../components/ui/TextArea/TextArea";
 import { TextInput } from "../../../../components/ui/TextInput/TextInput";
 import { Select } from "../../../../components/ui/Select/Select";
-import {
-  getCategoryLabel,
-  getUnitLabel,
-  PAINT_CATEGORIES,
-  PAINT_UNITS,
-} from "../../../catalog/catalogOptions";
+import { getUnitLabel, PAINT_UNITS } from "../../../catalog/catalogOptions";
+import { useCatalogTaxonomy } from "../../../catalog/catalogTaxonomy";
 import type { ServiceCatalogPricingBasis } from "../../../catalog/types";
 import { supabase } from "../../../../lib/supabase";
 import type { QuoteStatus } from "../../types";
@@ -167,6 +163,10 @@ export function QuoteVoiceAssistant({
   defaultTvaRate,
   onApplied,
 }: QuoteVoiceAssistantProps) {
+  const { categories, activeTrades } = useCatalogTaxonomy();
+  // Restreindre le métier réduit le catalogue envoyé au modèle et lui applique
+  // les règles du métier. Vide = tous les métiers actifs.
+  const [selectedTrade, setSelectedTrade] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [clarificationText, setClarificationText] = useState("");
@@ -247,6 +247,7 @@ export function QuoteVoiceAssistant({
                 quoteId,
                 transcript: body.transcript,
                 contextTranscript: body.contextTranscript,
+                trade: selectedTrade || undefined,
               },
       }
     );
@@ -379,6 +380,7 @@ export function QuoteVoiceAssistant({
         const formData = new FormData();
         formData.append("quoteId", quoteId);
         formData.append("audio", audioFile);
+        if (selectedTrade) formData.append("trade", selectedTrade);
         if (recordingPurpose === "clarification" && draft) {
           formData.append("contextTranscript", draft.transcript);
         }
@@ -819,6 +821,25 @@ export function QuoteVoiceAssistant({
         </div>
 
         <div className="quote-voice-assistant__header-actions">
+          {activeTrades.length > 1 && (
+            <label className="quote-voice-assistant__trade">
+              <span>Métier</span>
+              <Select
+                value={selectedTrade}
+                onChange={(event) => setSelectedTrade(event.target.value)}
+                disabled={isRecording || isBusy}
+                aria-label="Métier de la dictée"
+              >
+                <option value="">Tous mes métiers</option>
+                {activeTrades.map((trade) => (
+                  <option key={trade.slug} value={trade.slug}>
+                    {trade.name}
+                  </option>
+                ))}
+              </Select>
+            </label>
+          )}
+
           {isRecording ? (
             <Button
               type="button"
@@ -1203,9 +1224,9 @@ export function QuoteVoiceAssistant({
                               )
                             }
                           >
-                            {PAINT_CATEGORIES.map((category) => (
-                              <option key={category} value={category}>
-                                {getCategoryLabel(category)}
+                            {categories.map((category) => (
+                              <option key={category.slug} value={category.slug}>
+                                {category.label}
                               </option>
                             ))}
                           </Select>

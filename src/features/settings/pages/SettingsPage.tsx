@@ -10,6 +10,7 @@ import { FormGrid } from "../../../components/ui/FormGrid/FormGrid";
 import { TextArea } from "../../../components/ui/TextArea/TextArea";
 import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import { EmailSettingsPanel } from "../components/EmailSettingsPanel";
+import { TradesPanel } from "../components/TradesPanel";
 import { SubscriptionPanel } from "../components/SubscriptionPanel";
 import { env } from "../../../lib/env";
 import "./SettingsPage.css";
@@ -18,6 +19,7 @@ import "./SettingsPage.css";
 
 const settingsPages = [
   { id: "informations", label: "Informations" },
+  { id: "metiers",      label: "Métiers" },
   { id: "einvoicing",  label: "E-facturation" },
   { id: "apparence",    label: "Apparence" },
   { id: "emails",       label: "E-mails" },
@@ -1609,6 +1611,8 @@ export function SettingsPage() {
       )}
 
       {/* ══ PAGE : E-MAILS ═══════════════════════════════════════════════════ */}
+      {activePage === "metiers" && <TradesPanel />}
+
       {activePage === "emails" && (
         <EmailSettingsPanel
           companyId={company.id}

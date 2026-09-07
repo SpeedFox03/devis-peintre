@@ -1,0 +1,149 @@
+.trades-panel {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.trades-panel__header {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.trades-panel__eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.trades-panel__title {
+  margin: 0;
+  font-size: 1.35rem;
+  color: var(--text-strong);
+}
+
+.trades-panel__intro {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--text-soft);
+  line-height: 1.55;
+}
+
+.trades-panel__notice {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: 0.9rem;
+}
+
+.trades-panel__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.trades-panel__card {
+  display: grid;
+  gap: 0.7rem;
+  align-content: start;
+}
+
+.trades-panel__card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.trades-panel__card-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--text-strong);
+}
+
+.trades-panel__badge {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+.trades-panel__badge--on {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.trades-panel__badge--off {
+  background: var(--surface-muted);
+  color: var(--text-soft);
+  border: 1px solid var(--border);
+}
+
+.trades-panel__card-text {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.trades-panel__card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.trades-panel__card-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-soft);
+}
+
+.trades-panel__confirm {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+}
+
+.trades-panel__confirm-title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.trades-panel__confirm-text {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.trades-panel__update {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  background: var(--warning-soft);
+}
+
+.trades-panel__update-title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.trades-panel__update-text {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-soft);
+}

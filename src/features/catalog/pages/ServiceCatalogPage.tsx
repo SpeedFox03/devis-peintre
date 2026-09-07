@@ -20,12 +20,8 @@ import {
   RestoreIcon,
   TrashIcon,
 } from "../../../components/ui/Icons/AppIcons";
-import {
-  PAINT_CATEGORIES,
-  PAINT_UNITS,
-  getCategoryLabel,
-  getUnitLabel,
-} from "../catalogOptions";
+import { PAINT_UNITS, getUnitLabel } from "../catalogOptions";
+import { useCatalogTaxonomy } from "../catalogTaxonomy";
 import {
   SERVICE_CATALOG_PRICE_TIERS,
   getServiceCatalogPrice,
@@ -78,6 +74,7 @@ function formatCurrency(value: number) {
 }
 
 export function ServiceCatalogPage() {
+  const { categories, getCategoryLabel, activeTrades } = useCatalogTaxonomy();
   const [services, setServices] = useState<ServiceCatalogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -94,6 +91,7 @@ export function ServiceCatalogPage() {
   const [form, setForm] = useState<ServiceCatalogFormState>(initialForm);
 
   const [search, setSearch] = useState("");
+  const [tradeFilter, setTradeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priceTier, setPriceTier] = useState<ServiceCatalogPriceTier>("medium");
@@ -105,7 +103,7 @@ export function ServiceCatalogPage() {
     const { data, error } = await supabase
       .from("service_catalog")
       .select(
-        "id, name, category, default_unit, default_unit_price_low_ht, default_unit_price_ht, default_unit_price_high_ht, default_tva_rate, default_description, default_metadata, is_active, created_at"
+        "id, name, category, default_unit, default_unit_price_low_ht, default_unit_price_ht, default_unit_price_high_ht, default_tva_rate, default_description, default_metadata, is_active, trade_id, created_at"
       )
       .order("created_at", { ascending: false });
 
@@ -139,14 +137,20 @@ export function ServiceCatalogPage() {
       const matchesCategory =
         categoryFilter === "all" || service.category === categoryFilter;
 
+      const matchesTrade =
+        tradeFilter === "all" ||
+        (tradeFilter === "none"
+          ? !service.trade_id
+          : service.trade_id === tradeFilter);
+
       const matchesStatus =
         statusFilter === "all" ||
         (statusFilter === "active" && service.is_active) ||
         (statusFilter === "inactive" && !service.is_active);
 
-      return matchesSearch && matchesCategory && matchesStatus;
+      return matchesSearch && matchesCategory && matchesTrade && matchesStatus;
     });
-  }, [services, search, categoryFilter, statusFilter]);
+  }, [services, search, categoryFilter, tradeFilter, statusFilter]);
 
   function updateField<K extends keyof ServiceCatalogFormState>(
     field: K,
@@ -517,9 +521,9 @@ export function ServiceCatalogPage() {
                   value={form.category}
                   onChange={(e) => updateField("category", e.target.value)}
                 >
-                  {PAINT_CATEGORIES.map((category) => (
-                    <option key={category} value={category}>
-                      {getCategoryLabel(category)}
+                  {categories.map((category) => (
+                    <option key={category.slug} value={category.slug}>
+                      {category.label}
                     </option>
                   ))}
                 </Select>
@@ -702,30 +706,49 @@ export function ServiceCatalogPage() {
                 />
               </FormField>
 
-              <FormField label="Catégorie">
-                <Select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                >
-                  <option value="all">Toutes</option>
-                  {PAINT_CATEGORIES.map((category) => (
-                    <option key={category} value={category}>
-                      {getCategoryLabel(category)}
-                    </option>
-                  ))}
-                </Select>
-              </FormField>
+              <div className="catalog-premium-page__filters-row">
+                {activeTrades.length > 1 && (
+                  <FormField label="Métier">
+                    <Select
+                      value={tradeFilter}
+                      onChange={(e) => setTradeFilter(e.target.value)}
+                    >
+                      <option value="all">Tous</option>
+                      {activeTrades.map((trade) => (
+                        <option key={trade.id} value={trade.id}>
+                          {trade.name}
+                        </option>
+                      ))}
+                      <option value="none">Prestations personnelles</option>
+                    </Select>
+                  </FormField>
+                )}
 
-              <FormField label="Statut">
-                <Select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <option value="all">Tous</option>
-                  <option value="active">Actives</option>
-                  <option value="inactive">Inactives</option>
-                </Select>
-              </FormField>
+                <FormField label="Catégorie">
+                  <Select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                  >
+                    <option value="all">Toutes</option>
+                    {categories.map((category) => (
+                      <option key={category.slug} value={category.slug}>
+                        {category.label}
+                      </option>
+                    ))}
+                  </Select>
+                </FormField>
+
+                <FormField label="Statut">
+                  <Select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <option value="all">Tous</option>
+                    <option value="active">Actives</option>
+                    <option value="inactive">Inactives</option>
+                  </Select>
+                </FormField>
+              </div>
             </div>
           </div>
         </Card>

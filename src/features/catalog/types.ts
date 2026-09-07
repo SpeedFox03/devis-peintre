@@ -25,6 +25,8 @@ export type ServiceCatalogItem = {
   default_description: string | null;
   default_metadata: ServiceCatalogMetadata;
   is_active: boolean;
+  /** Métier d'origine. Null pour une prestation créée par l'artisan. */
+  trade_id?: string | null;
 };
 
 export type ServiceCatalogFormState = {

@@ -5,11 +5,8 @@ import { Select } from "../../../components/ui/Select/Select";
 import { TextInput } from "../../../components/ui/TextInput/TextInput";
 import { Button } from "../../../components/ui/Button/Button";
 import { PlusIcon } from "../../../components/ui/Icons/AppIcons";
-import {
-  PAINT_CATEGORIES,
-  getCategoryLabel,
-  getUnitLabel,
-} from "../catalogOptions";
+import { getUnitLabel } from "../catalogOptions";
+import { useCatalogTaxonomy } from "../catalogTaxonomy";
 import type { ServiceCatalogItem } from "../types";
 import "./QuoteCatalogPicker.css";
 
@@ -43,6 +40,8 @@ export function QuoteCatalogPicker({
   onRoomChange,
   onAdd,
 }: QuoteCatalogPickerProps) {
+  const { categories, getCategoryLabel } = useCatalogTaxonomy();
+
   const filteredServices = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
@@ -85,9 +84,9 @@ export function QuoteCatalogPicker({
             onChange={(e) => onCategoryChange(e.target.value)}
           >
             <option value="all">Toutes</option>
-            {PAINT_CATEGORIES.map((category) => (
-              <option key={category} value={category}>
-                {getCategoryLabel(category)}
+            {categories.map((category) => (
+              <option key={category.slug} value={category.slug}>
+                {category.label}
               </option>
             ))}
           </Select>
