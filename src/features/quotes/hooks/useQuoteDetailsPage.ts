@@ -496,6 +496,12 @@ export function useQuoteDetailsPage() {
       return;
     }
 
+    const tvaRate = Number(quoteGeneralForm.tva_rate);
+    if (!quoteGeneralForm.tva_rate.trim() || !Number.isFinite(tvaRate) || tvaRate < 0 || tvaRate > 100) {
+      setError("Le taux de TVA doit être compris entre 0 et 100.");
+      return;
+    }
+
     setSavingGeneral(true);
     setError(null);
 
@@ -506,7 +512,7 @@ export function useQuoteDetailsPage() {
       status: quoteGeneralForm.status,
       issue_date: quoteGeneralForm.issue_date,
       valid_until: quoteGeneralForm.valid_until || null,
-      tva_rate: Number(quoteGeneralForm.tva_rate || 21),
+      tva_rate: tvaRate,
       notes: quoteGeneralForm.notes.trim() || null,
       terms: quoteGeneralForm.terms.trim() || null,
     };
@@ -522,8 +528,20 @@ export function useQuoteDetailsPage() {
       return;
     }
 
-    setSavingGeneral(false);
+    // Updating quote information does not fire the quote_items totals triggers.
+    // Reuse the database calculation so discounts and rounding stay consistent.
+    const { error: totalsError } = await supabase.rpc("recalculate_quote_totals", {
+      p_quote_id: quote.id,
+    });
+
+    if (totalsError) {
+      setError(`Les informations ont été enregistrées, mais le recalcul de la TVA a échoué. Réenregistrez le devis pour réessayer. ${totalsError.message}`);
+      setSavingGeneral(false);
+      return;
+    }
+
     await reloadQuoteData();
+    setSavingGeneral(false);
   }
 
   function openCreateItemForm() {
